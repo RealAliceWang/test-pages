@@ -1,7 +1,7 @@
 import {
   Building2, Phone, Server, Clock, Calendar,
   Box, AlertTriangle,
-  Mail, User as UserIcon, Wifi, WifiOff, Link2, Shield,
+  Mail, Wifi, WifiOff, Link2, Shield,
 } from 'lucide-react';
 import Header from '../components/layout/Header';
 import { currentUser, myModuleUsages, type MyModuleUsage } from '../data/mock';
@@ -42,8 +42,8 @@ export default function Profile() {
           <div className="px-6 pt-6 pb-5">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-5">
-                <div className="w-[72px] h-[72px] rounded-full bg-gradient-to-br from-[#F59E0B] to-[#D97706] flex items-center justify-center overflow-hidden shadow-md shrink-0">
-                  <UserIcon size={36} className="text-white" />
+                <div className="w-[72px] h-[72px] rounded-full overflow-hidden shadow-md shrink-0">
+                  <img src="./avatar.jpg" alt="avatar" className="w-full h-full object-cover" />
                 </div>
                 <div>
                   <div className="flex items-center gap-3">

@@ -24,11 +24,8 @@ export default function Header({ title, subtitle, role = '产品经理', userNam
             <p className="text-[14px] font-medium text-[#1D2129] leading-tight">{userName}</p>
             <p className="text-[14px] text-[#86909C] leading-tight">{role}</p>
           </div>
-          <div className="w-[34px] h-[34px] rounded-full bg-[#E5E6EB] flex items-center justify-center overflow-hidden">
-            <svg viewBox="0 0 34 34" className="text-[#C9CDD4]">
-              <circle cx="17" cy="12" r="5.5" fill="currentColor" />
-              <ellipse cx="17" cy="31" rx="11" ry="10" fill="currentColor" />
-            </svg>
+          <div className="w-[34px] h-[34px] rounded-full overflow-hidden">
+            <img src="./avatar.jpg" alt="avatar" className="w-full h-full object-cover" />
           </div>
         </div>
       </div>
