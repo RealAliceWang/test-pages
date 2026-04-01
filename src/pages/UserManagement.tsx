@@ -51,7 +51,7 @@ export default function UserManagement() {
             <thead>
               <tr className="border-b border-[#E5E6EB]">
                 {['用户信息', '部门', '联系方式', '模块数量', '状态', '注册时间', '关联企业', '操作'].map((h) => (
-                  <th key={h} className="text-left text-[14px] font-medium text-[#86909C] px-5 py-3">{h}</th>
+                  <th key={h} className="text-left text-[14px] font-normal text-[#86909C] px-5 py-3">{h}</th>
                 ))}
               </tr>
             </thead>
@@ -60,11 +60,11 @@ export default function UserManagement() {
                 <tr key={u.id} className="hover:bg-[#F7F8FA] transition-colors" style={{ borderTop: i ? '1px solid #F2F3F5' : 'none' }}>
                   <td className="px-5 py-[14px]">
                     <div className="flex items-center gap-3">
-                      <div className="w-[36px] h-[36px] rounded-full flex items-center justify-center text-white text-[14px] font-bold shrink-0" style={{ background: u.avatarColor }}>
+                      <div className="w-[36px] h-[36px] rounded-full flex items-center justify-center text-white text-[14px] font-normal shrink-0" style={{ background: u.avatarColor }}>
                         {u.name.charAt(0)}
                       </div>
                       <div>
-                        <p className="text-[14px] font-semibold text-[#1D2129]">{u.name}</p>
+                        <p className="text-[14px] font-normal text-[#1D2129]">{u.name}</p>
                         <p className="text-[14px] text-[#4E5969]">{u.code}</p>
                       </div>
                     </div>

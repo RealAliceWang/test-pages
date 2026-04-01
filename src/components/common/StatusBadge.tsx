@@ -14,7 +14,7 @@ const map: Record<string, { bg: string; fg: string }> = {
 export default function StatusBadge({ status }: { status: string }) {
   const c = map[status] || map['可申请'];
   return (
-    <span className={`inline-block rounded px-[8px] py-[2px] text-[14px] font-semibold leading-[18px] ${c.bg} ${c.fg}`}>
+    <span className={`inline-block rounded px-[8px] py-[2px] text-[14px] font-normal leading-[18px] ${c.bg} ${c.fg}`}>
       {status}
     </span>
   );
