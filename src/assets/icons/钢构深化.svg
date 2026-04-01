@@ -1,0 +1,21 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_87_5736)">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M9 2V30H1V2H9Z" fill="#80BBFF"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M3 2V30H1V2H3Z" fill="#0056FF"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M9 2V30H7V2H9Z" fill="#0056FF"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M18 12V20H9V12H18Z" fill="#80BBFF"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M18 18V20H9V18H18Z" fill="#1C71D8"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M18 12V14H9V12H18Z" fill="#1C71D8"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M31 12V20H22V12H31Z" fill="#80BBFF"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M31 18V20H22V18H31Z" fill="#1C71D8"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M31 12V14H22V12H31Z" fill="#1C71D8"/>
+<path d="M26.5 13.5V18.5H13.5V13.5H26.5Z" fill="#80BBFF" stroke="#0056FF"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M18 15V17H16V15H18Z" fill="#0056FF"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M24 15V17H22V15H24Z" fill="#0056FF"/>
+</g>
+<defs>
+<clipPath id="clip0_87_5736">
+<rect width="32" height="32" fill="white"/>
+</clipPath>
+</defs>
+</svg>
