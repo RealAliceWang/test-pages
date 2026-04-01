@@ -29,6 +29,7 @@ jobs:
 
       - run: npm ci
       - run: npm run build
+      - run: cp dist/build-entry.html dist/index.html
 
       - uses: actions/configure-pages@v4
       - uses: actions/upload-pages-artifact@v3
