@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { Users, UserCheck, UserCog, UserX, MoreVertical } from 'lucide-react';
 import Header from '../components/layout/Header';
-import StatCard from '../components/common/StatCard';
+import type { UserRole } from '../components/layout/Layout';
 import TabFilter from '../components/common/TabFilter';
 import SearchBar from '../components/common/SearchBar';
 import StatusBadge from '../components/common/StatusBadge';
@@ -10,6 +11,7 @@ import { users, type UserStatus } from '../data/mock';
 const filters: (UserStatus | '全部用户')[] = ['全部用户', '使用中', '待审核', '停用'];
 
 export default function UserManagement() {
+  const { role, setRole } = useOutletContext<{ role: UserRole; setRole: (r: UserRole) => void }>();
   const [tab, setTab] = useState(0);
   const [search, setSearch] = useState('');
   const [menu, setMenu] = useState<string | null>(null);
@@ -32,16 +34,30 @@ export default function UserManagement() {
 
   return (
     <div className="min-h-screen">
-      <Header title="用户管理" subtitle="管理用户信息和角色分配" role="系统管理员" userName="管理员" />
+      <Header title="用户管理" subtitle="管理用户信息和角色分配" role={role} onRoleChange={setRole} />
       <div className="p-6 flex flex-col gap-5">
         <div className="grid grid-cols-4 gap-5">
-          <StatCard icon={<Users size={22} color="#1C71D8" />} iconBg="bg-[#E8F3FF]" value={users.length} label="总用户数" />
-          <StatCard icon={<UserCheck size={22} color="#00B42A" />} iconBg="bg-[#E8FFEA]" value={cnt('使用中')} label="使用中" />
-          <StatCard icon={<UserCog size={22} color="#D4770B" />} iconBg="bg-[#FFF3E8]" value={cnt('待审核')} label="待审核" />
-          <StatCard icon={<UserX size={22} color="#86909C" />} iconBg="bg-[#F2F3F5]" value={cnt('停用')} label="已停用" />
+          {([
+            { icon: <Users size={22} className="text-white" />, value: users.length, label: '总用户数', gradient: 'linear-gradient(135deg, #1C71D8 0%, #3584E4 100%)' },
+            { icon: <UserCheck size={22} className="text-white" />, value: cnt('使用中'), label: '使用中', gradient: 'linear-gradient(135deg, #00B42A 0%, #34D058 100%)' },
+            { icon: <UserCog size={22} className="text-white" />, value: cnt('待审核'), label: '待审核', gradient: 'linear-gradient(135deg, #F77234 0%, #F99D1C 100%)' },
+            { icon: <UserX size={22} className="text-white" />, value: cnt('停用'), label: '已停用', gradient: 'linear-gradient(135deg, #86909C 0%, #A8B2BD 100%)' },
+          ]).map((s, i) => (
+            <div key={i} className="relative rounded-lg px-5 py-5 overflow-hidden" style={{ background: s.gradient }}>
+              <div className="absolute top-2 right-2 w-[56px] h-[56px] rounded-full bg-white/10" />
+              <div className="absolute -bottom-3 -right-3 w-[36px] h-[36px] rounded-full bg-white/[0.07]" />
+              <div className="relative flex items-center gap-4">
+                <div className="w-[44px] h-[44px] rounded-lg bg-white/20 flex items-center justify-center shrink-0">{s.icon}</div>
+                <div>
+                  <p className="text-[26px] font-bold text-white leading-none">{s.value}</p>
+                  <p className="text-[14px] text-white/75 mt-1.5">{s.label}</p>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
 
-        <div className="flex items-center justify-between">
+        <div className="bg-white rounded-lg px-5 py-3 flex items-center justify-between">
           <TabFilter tabs={filters.map((s) => ({ label: s }))} activeIndex={tab} onChange={setTab} />
           <div className="w-[220px]"><SearchBar placeholder="搜索用户姓名、邮箱或部门..." value={search} onChange={setSearch} /></div>
         </div>

@@ -1,4 +1,5 @@
-import { useState, type FormEvent } from 'react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Clock, Users as UsersIcon, ChevronRight, Activity, Box, CreditCard,
 } from 'lucide-react';
@@ -6,7 +7,6 @@ import Header from '../components/layout/Header';
 import StatCard from '../components/common/StatCard';
 import TabFilter from '../components/common/TabFilter';
 import SearchBar from '../components/common/SearchBar';
-import Modal from '../components/common/Modal';
 import StatusBadge from '../components/common/StatusBadge';
 import { modules, paidModuleCategories, type Module } from '../data/mock';
 import { moduleIconMap } from '../assets/moduleIcons';
@@ -16,15 +16,11 @@ const icons: Record<string, { el: React.ReactNode; bg: string }> = Object.fromEn
   Object.keys(moduleIconMap).map(k => [k, { el: getIcon(k), bg: 'bg-transparent' }])
 );
 
-const inputCls = "w-full h-[40px] px-3 text-[14px] text-[#1D2129] bg-[#F7F8FA] border border-[#E5E6EB] rounded outline-none placeholder:text-[#C9CDD4] focus:border-[#1C71D8] focus:bg-white transition-all";
-const textareaCls = "w-full px-3 py-2.5 text-[14px] text-[#1D2129] bg-[#F7F8FA] border border-[#E5E6EB] rounded outline-none placeholder:text-[#C9CDD4] focus:border-[#1C71D8] focus:bg-white transition-all resize-none";
-const labelCls = "block text-[14px] font-semibold text-[#1D2129] mb-1.5";
-
 export default function PaidModules() {
+  const navigate = useNavigate();
   const [tab, setTab] = useState(0);
   const [search, setSearch] = useState('');
-  const [buyModule, setBuyModule] = useState<Module | null>(null);
-  const [purchased, setPurchased] = useState<Set<string>>(new Set());
+  const [purchased] = useState<Set<string>>(new Set());
 
   const paidModules = modules.filter((m) => m.price);
   const cat = paidModuleCategories[tab];
@@ -41,15 +37,6 @@ export default function PaidModules() {
     if (m.status === '已开通') return '已购买';
     return m.status;
   };
-
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    if (!buyModule) return;
-    setPurchased((p) => new Set(p).add(buyModule.id));
-    setBuyModule(null);
-  };
-
-  const ic = buyModule ? (icons[buyModule.icon] || icons.building) : icons.building;
 
   return (
     <div className="min-h-screen">
@@ -99,7 +86,7 @@ export default function PaidModules() {
                 <div className="px-5 pb-5">
                   {s === '可购买' ? (
                     <button
-                      onClick={() => setBuyModule(m)}
+                      onClick={() => navigate(`/purchase/${m.id}`)}
                       className="w-full h-[36px] rounded text-[14px] font-semibold text-white flex items-center justify-center gap-[2px] transition-all duration-150 hover:brightness-110 active:scale-[0.98]"
                       style={{ background: 'linear-gradient(135deg, #F77234 0%, #F99D1C 100%)' }}
                     >
@@ -117,87 +104,6 @@ export default function PaidModules() {
         </div>
       </div>
 
-      {/* Purchase modal */}
-      <Modal
-        open={!!buyModule}
-        onClose={() => setBuyModule(null)}
-        width={560}
-        header={
-          buyModule ? (
-            <div className="flex items-center gap-3">
-              <div className={`w-[40px] h-[40px] rounded-lg ${ic.bg} flex items-center justify-center shrink-0`}>{ic.el}</div>
-              <div>
-                <h3 className="text-[16px] font-bold text-[#1D2129]">购买模块</h3>
-                <p className="text-[14px] text-[#86909C]">{buyModule.name}（商业版）</p>
-              </div>
-            </div>
-          ) : undefined
-        }
-      >
-        {buyModule && (
-          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-            <div className="grid grid-cols-3 gap-4 bg-[#F7F8FA] rounded p-4">
-              <div>
-                <p className="text-[14px] text-[#86909C] mb-1">模块编号</p>
-                <p className="text-[14px] font-bold text-[#1D2129]">{buyModule.code}</p>
-              </div>
-              <div>
-                <p className="text-[14px] text-[#86909C] mb-1">授权期限</p>
-                <p className="text-[14px] font-bold text-[#1D2129]">{buyModule.duration} 天</p>
-              </div>
-              <div>
-                <p className="text-[14px] text-[#86909C] mb-1">费用</p>
-                <p className="text-[16px] font-bold text-[#F77234]">¥{buyModule.price!.toLocaleString()}/年</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-x-4 gap-y-4">
-              <div>
-                <label className={labelCls}>购买人姓名 <span className="text-[#F53F3F]">*</span></label>
-                <input required className={inputCls} placeholder="请输入姓名" />
-              </div>
-              <div>
-                <label className={labelCls}>所属部门 <span className="text-[#F53F3F]">*</span></label>
-                <input required className={inputCls} placeholder="请输入部门" />
-              </div>
-              <div>
-                <label className={labelCls}>联系电话 <span className="text-[#F53F3F]">*</span></label>
-                <input required className={inputCls} placeholder="请输入手机号" />
-              </div>
-              <div>
-                <label className={labelCls}>电子邮箱 <span className="text-[#F53F3F]">*</span></label>
-                <input required type="email" className={inputCls} placeholder="请输入邮箱" />
-              </div>
-            </div>
-
-            <div>
-              <label className={labelCls}>购买理由 <span className="text-[#F53F3F]">*</span></label>
-              <textarea required className={textareaCls} rows={3} placeholder="请说明购买该模块的业务需求..." />
-            </div>
-
-            <div className="bg-[#FFF7E8] border border-[#FFDCA1] rounded px-4 py-3 text-[14px] text-[#D4770B] leading-[20px]">
-              <strong>付费说明：</strong>提交购买申请后，我们将在1个工作日内联系您确认订单，付款完成后即时开通模块权限。
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 pt-1">
-              <button
-                type="button"
-                onClick={() => setBuyModule(null)}
-                className="h-[42px] rounded text-[14px] font-medium text-[#4E5969] bg-[#F2F3F5] hover:bg-[#E5E6EB] transition-colors"
-              >
-                取消
-              </button>
-              <button
-                type="submit"
-                className="h-[42px] rounded text-[14px] font-semibold text-white transition-all hover:brightness-110 active:scale-[0.99]"
-                style={{ background: 'linear-gradient(135deg, #F77234 0%, #F99D1C 100%)' }}
-              >
-                提交购买申请
-              </button>
-            </div>
-          </form>
-        )}
-      </Modal>
     </div>
   );
 }

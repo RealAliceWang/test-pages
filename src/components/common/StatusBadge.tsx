@@ -9,6 +9,10 @@ const map: Record<string, { bg: string; fg: string }> = {
   '已拒绝': { bg: 'bg-[#FFECE8]', fg: 'text-[#F53F3F]' },
   '使用中': { bg: 'bg-[#E8FFEA]', fg: 'text-[#00B42A]' },
   '停用':   { bg: 'bg-[#F2F3F5]', fg: 'text-[#86909C]' },
+  '待支付': { bg: 'bg-[#FFF7E8]', fg: 'text-[#D4770B]' },
+  '已支付': { bg: 'bg-[#E8F3FF]', fg: 'text-[#1C71D8]' },
+  '已完成': { bg: 'bg-[#E8FFEA]', fg: 'text-[#00B42A]' },
+  '已取消': { bg: 'bg-[#F2F3F5]', fg: 'text-[#86909C]' },
 };
 
 export default function StatusBadge({ status }: { status: string }) {

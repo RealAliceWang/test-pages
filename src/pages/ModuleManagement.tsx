@@ -83,7 +83,7 @@ export default function ModuleManagement() {
                     </div>
                     <StatusBadge status={s} />
                   </div>
-                  <p className="text-[14px] text-[#4E5969] leading-[20px] flex-1">{m.description}</p>
+                  <p className="text-[14px] text-[#4E5969] leading-[20px] flex-1 line-clamp-2">{m.description}</p>
                   <div className="flex items-center justify-between mt-3">
                     <div className="flex items-center gap-5 text-[14px] text-[#6B7785]">
                       <span className="inline-flex items-center gap-[4px]"><Clock size={12} /> {m.duration}天</span>

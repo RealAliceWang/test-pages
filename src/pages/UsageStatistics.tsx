@@ -1,13 +1,15 @@
 import { useState } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { Clock, Users, Box, Activity, ChevronDown, Calendar } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
 import Header from '../components/layout/Header';
-import StatCard from '../components/common/StatCard';
+import type { UserRole } from '../components/layout/Layout';
 import { usageTrend, moduleDistribution, moduleRanking, departmentUsage } from '../data/mock';
 
 const ranges = ['最近7天', '最近30天', '最近90天'];
 
 export default function UsageStatistics() {
+  const { role, setRole } = useOutletContext<{ role: UserRole; setRole: (r: UserRole) => void }>();
   const [range, setRange] = useState('最近7天');
   const [open, setOpen] = useState(false);
 
@@ -16,17 +18,31 @@ export default function UsageStatistics() {
 
   return (
     <div className="min-h-screen">
-      <Header title="使用统计" subtitle="查看系统使用情况和数据分析" />
+      <Header title="使用统计" subtitle="查看系统使用情况和数据分析" role={role} onRoleChange={setRole} />
       <div className="p-6 flex flex-col gap-5">
         <div className="grid grid-cols-4 gap-5">
-          <StatCard horizontal icon={<Clock size={22} color="#1C71D8" />} iconBg="bg-[#E8F3FF]" value="1,245" unit="小时" label="总使用时长" />
-          <StatCard horizontal icon={<Users size={22} color="#00B42A" />} iconBg="bg-[#E8FFEA]" value="89" unit="人" label="活跃用户" />
-          <StatCard horizontal icon={<Box size={22} color="#D4770B" />} iconBg="bg-[#FFF3E8]" value="15" unit="个" label="使用模块" />
-          <StatCard horizontal icon={<Activity size={22} color="#F53F3F" />} iconBg="bg-[#FFECE8]" value="3.5" unit="小时/天" label="平均在线" />
+          {([
+            { icon: <Clock size={22} className="text-white" />, value: '1,245', unit: '小时', label: '总使用时长', gradient: 'linear-gradient(135deg, #1C71D8 0%, #3584E4 100%)' },
+            { icon: <Users size={22} className="text-white" />, value: '89', unit: '人', label: '活跃用户', gradient: 'linear-gradient(135deg, #00B42A 0%, #34C759 100%)' },
+            { icon: <Box size={22} className="text-white" />, value: '15', unit: '个', label: '使用模块', gradient: 'linear-gradient(135deg, #F77234 0%, #F99D1C 100%)' },
+            { icon: <Activity size={22} className="text-white" />, value: '3.5', unit: '小时/天', label: '平均在线', gradient: 'linear-gradient(135deg, #F53F3F 0%, #F76560 100%)' },
+          ]).map((s, i) => (
+            <div key={i} className="relative rounded-lg px-5 py-5 overflow-hidden" style={{ background: s.gradient }}>
+              <div className="absolute top-2 right-2 w-[56px] h-[56px] rounded-full bg-white/10" />
+              <div className="absolute -bottom-3 -right-3 w-[36px] h-[36px] rounded-full bg-white/[0.07]" />
+              <div className="relative flex items-center gap-4">
+                <div className="w-[44px] h-[44px] rounded-lg bg-white/20 flex items-center justify-center shrink-0">{s.icon}</div>
+                <div>
+                  <p className="text-[26px] font-bold text-white leading-none">{s.value} <span className="text-[14px] font-normal text-white/75">{s.unit}</span></p>
+                  <p className="text-[14px] text-white/75 mt-1.5">{s.label}</p>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
 
         {/* Time selector */}
-        <div className="flex items-center gap-2">
+        <div className="bg-white rounded-lg px-5 py-3 flex items-center gap-2">
           <Calendar size={14} className="text-[#C9CDD4]" />
           <span className="text-[14px] text-[#86909C]">时间范围</span>
           <div className="relative">

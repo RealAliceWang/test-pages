@@ -1,23 +1,27 @@
 import { NavLink } from 'react-router-dom';
-import { Box, CreditCard, FileText, BarChart3, Users, Settings, PanelLeftClose, PanelLeftOpen, UserCircle } from 'lucide-react';
+import { Box, FileText, BarChart3, Users, Settings, PanelLeftClose, PanelLeftOpen, UserCircle, LayoutGrid } from 'lucide-react';
+import type { UserRole } from './Layout';
 import logoUrl from '../../../logo.png';
 
 interface SidebarProps {
   collapsed: boolean;
   onToggle: () => void;
+  role: UserRole;
 }
 
 const navItems = [
-  { path: '/', icon: UserCircle, label: '个人信息' },
-  { path: '/modules', icon: Box, label: '免费模块' },
-  { path: '/paid-modules', icon: CreditCard, label: '付费模块' },
-  { path: '/applications', icon: FileText, label: '申请记录' },
-  { path: '/statistics', icon: BarChart3, label: '使用统计' },
-  { path: '/users', icon: Users, label: '用户管理' },
-  { path: '/settings', icon: Settings, label: '系统设置' },
+  { path: '/', icon: UserCircle, label: '个人信息', adminOnly: false },
+  { path: '/modules', icon: LayoutGrid, label: '模块中心', adminOnly: false },
+  { path: '/my-modules', icon: Box, label: '我的模块', adminOnly: false },
+  { path: '/orders', icon: FileText, label: '订单记录', adminOnly: false },
+  { path: '/statistics', icon: BarChart3, label: '使用统计', adminOnly: false },
+  { path: '/users', icon: Users, label: '用户管理', adminOnly: true },
+  { path: '/settings', icon: Settings, label: '系统设置', adminOnly: true },
 ];
 
-export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
+export default function Sidebar({ collapsed, onToggle, role }: SidebarProps) {
+  const visibleItems = navItems.filter((item) => !item.adminOnly || role === 'admin');
+
   return (
     <aside
       className={`fixed left-0 top-0 h-screen flex flex-col z-50 transition-all duration-300 ${
@@ -49,31 +53,39 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       <div className="mx-5 h-px bg-white/8 mb-4" />
 
       <nav className="flex-1 px-3 pb-4 flex flex-col gap-1.5 overflow-y-auto">
-        {navItems.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            end={item.path === '/'}
-            className={({ isActive }) =>
-              `group relative flex items-center gap-3 h-[42px] rounded-lg text-[16px] transition-all duration-200 ${
-                collapsed ? 'justify-center px-0' : 'px-3'
-              } ${
-                isActive
-                  ? 'bg-[#1C71D8] text-white font-semibold'
-                  : 'text-white/50 hover:bg-white/[0.06] hover:text-white/80'
-              }`
-            }
-          >
-            {({ isActive }) => (
-              <>
-                {isActive && !collapsed && (
-                  <span className="absolute left-0 top-[10px] bottom-[10px] w-[3px] rounded-r-full bg-white/80" />
-                )}
-                <item.icon size={18} strokeWidth={1.7} className="shrink-0" />
-                {!collapsed && <span className="tracking-[0.2px]">{item.label}</span>}
-              </>
+        {visibleItems.map((item, i) => (
+          <div key={item.path}>
+            {/* Separator before admin section */}
+            {item.adminOnly && !visibleItems[i - 1]?.adminOnly && (
+              <div className="mx-2 my-2">
+                <div className="h-px bg-white/8" />
+                {!collapsed && <p className="text-[12px] text-white/30 mt-2 mb-1 px-1">管理功能</p>}
+              </div>
             )}
-          </NavLink>
+            <NavLink
+              to={item.path}
+              end={item.path === '/'}
+              className={({ isActive }) =>
+                `group relative flex items-center gap-3 h-[42px] rounded-lg text-[16px] transition-all duration-200 ${
+                  collapsed ? 'justify-center px-0' : 'px-3'
+                } ${
+                  isActive
+                    ? 'bg-[#1C71D8] text-white font-semibold'
+                    : 'text-white/50 hover:bg-white/[0.06] hover:text-white/80'
+                }`
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  {isActive && !collapsed && (
+                    <span className="absolute left-0 top-[10px] bottom-[10px] w-[3px] rounded-r-full bg-white/80" />
+                  )}
+                  <item.icon size={18} strokeWidth={1.7} className="shrink-0" />
+                  {!collapsed && <span className="tracking-[0.2px]">{item.label}</span>}
+                </>
+              )}
+            </NavLink>
+          </div>
         ))}
       </nav>
 

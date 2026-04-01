@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { Bell, Mail, CheckCircle, Clock, Save, RotateCcw } from 'lucide-react';
 import Header from '../components/layout/Header';
+import type { UserRole } from '../components/layout/Layout';
 import Toggle from '../components/common/Toggle';
 import { defaultNotificationSettings } from '../data/mock';
 
@@ -12,6 +14,7 @@ const iconCfg: Record<string, { el: React.ReactNode; bg: string }> = {
 };
 
 export default function SystemSettings() {
+  const { role, setRole } = useOutletContext<{ role: UserRole; setRole: (r: UserRole) => void }>();
   const [settings, setSettings] = useState(defaultNotificationSettings.map((s) => ({ ...s })));
   const [days, setDays] = useState(7);
   const [saved, setSaved] = useState(false);
@@ -22,7 +25,7 @@ export default function SystemSettings() {
 
   return (
     <div className="min-h-screen">
-      <Header title="通知设置" subtitle="管理系统通知方式和提醒规则" />
+      <Header title="通知设置" subtitle="管理系统通知方式和提醒规则" role={role} onRoleChange={setRole} />
       <div className="p-6">
         <div className="max-w-[1000px] mx-auto">
           <div className="bg-white rounded overflow-hidden">
