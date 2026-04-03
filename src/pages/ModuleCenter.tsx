@@ -17,8 +17,8 @@ const icons: Record<string, { el: React.ReactNode; bg: string }> = Object.fromEn
   Object.keys(moduleIconMap).map(k => [k, { el: getIcon(k), bg: 'bg-transparent' }])
 );
 
-const inputCls = "w-full h-[40px] px-3 text-[14px] text-[#1D2129] bg-[#F7F8FA] border border-[#E5E6EB] rounded outline-none placeholder:text-[#C9CDD4] focus:border-[#1C71D8] focus:bg-white transition-all";
-const textareaCls = "w-full px-3 py-2.5 text-[14px] text-[#1D2129] bg-[#F7F8FA] border border-[#E5E6EB] rounded outline-none placeholder:text-[#C9CDD4] focus:border-[#1C71D8] focus:bg-white transition-all resize-none";
+const inputCls = "w-full h-[40px] px-3 text-[14px] text-[#1D2129] bg-[#F7F8FA] border border-[#E5E6EB] rounded-lg outline-none placeholder:text-[#C9CDD4] focus:border-[#1C71D8] focus:bg-white transition-all";
+const textareaCls = "w-full px-3 py-2.5 text-[14px] text-[#1D2129] bg-[#F7F8FA] border border-[#E5E6EB] rounded-lg outline-none placeholder:text-[#C9CDD4] focus:border-[#1C71D8] focus:bg-white transition-all resize-none";
 const labelCls = "block text-[14px] font-semibold text-[#1D2129] mb-1.5";
 
 type PriceFilter = '全部' | '免费' | '付费';
@@ -74,10 +74,10 @@ export default function ModuleCenter() {
   const ic = applyModule ? (icons[applyModule.icon] || icons.building) : icons.building;
 
   const stats = [
-    { icon: <Box size={22} className="text-white" />, value: modules.length, label: '模块总数', gradient: 'linear-gradient(135deg, #1C71D8 0%, #3584E4 100%)' },
-    { icon: <Activity size={22} className="text-white" />, value: activeCount, label: '已开通', gradient: 'linear-gradient(135deg, #00B42A 0%, #34D058 100%)' },
-    { icon: <CreditCard size={22} className="text-white" />, value: paidCount, label: '付费模块', gradient: 'linear-gradient(135deg, #F77234 0%, #F99D1C 100%)' },
-    { icon: <Sparkles size={22} className="text-white" />, value: freeCount, label: '免费模块', gradient: 'linear-gradient(135deg, #722ED1 0%, #9254DE 100%)' },
+    { icon: <Box size={22} />, value: modules.length, label: '模块总数', accent: '#2563EB', bg: 'rgba(59,130,246,0.08)', border: 'rgba(59,130,246,0.18)', iconBg: 'rgba(59,130,246,0.12)', dot: 'rgba(59,130,246,0.10)' },
+    { icon: <Activity size={22} />, value: activeCount, label: '已开通', accent: '#16A34A', bg: 'rgba(34,197,94,0.08)', border: 'rgba(34,197,94,0.18)', iconBg: 'rgba(34,197,94,0.12)', dot: 'rgba(34,197,94,0.10)' },
+    { icon: <CreditCard size={22} />, value: paidCount, label: '付费模块', accent: '#EA580C', bg: 'rgba(251,146,60,0.08)', border: 'rgba(251,146,60,0.18)', iconBg: 'rgba(251,146,60,0.12)', dot: 'rgba(251,146,60,0.10)' },
+    { icon: <Sparkles size={22} />, value: freeCount, label: '免费模块', accent: '#7C3AED', bg: 'rgba(139,92,246,0.08)', border: 'rgba(139,92,246,0.18)', iconBg: 'rgba(139,92,246,0.12)', dot: 'rgba(139,92,246,0.10)' },
   ];
 
   return (
@@ -86,16 +86,17 @@ export default function ModuleCenter() {
 
       <div className="p-6 flex flex-col gap-5">
         {/* Stats */}
-        <div className="grid grid-cols-4 gap-5">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
           {stats.map((s, i) => (
-            <div key={i} className="relative rounded-lg px-5 py-5 overflow-hidden" style={{ background: s.gradient }}>
-              <div className="absolute top-2 right-2 w-[56px] h-[56px] rounded-full bg-white/10" />
-              <div className="absolute -bottom-3 -right-3 w-[36px] h-[36px] rounded-full bg-white/[0.07]" />
+            <div key={i} className="relative rounded-xl px-5 py-5 overflow-hidden backdrop-blur-sm"
+              style={{ background: s.bg, border: `1px solid ${s.border}`, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+              <div className="absolute -top-4 -right-4 w-[72px] h-[72px] rounded-full" style={{ background: s.dot }} />
+              <div className="absolute bottom-2 right-8 w-[32px] h-[32px] rounded-full" style={{ background: s.dot }} />
               <div className="relative flex items-center gap-4">
-                <div className="w-[44px] h-[44px] rounded-lg bg-white/20 flex items-center justify-center shrink-0">{s.icon}</div>
+                <div className="w-[44px] h-[44px] rounded-xl flex items-center justify-center shrink-0" style={{ background: s.iconBg, color: s.accent }}>{s.icon}</div>
                 <div>
-                  <p className="text-[26px] font-bold text-white leading-none">{s.value}</p>
-                  <p className="text-[14px] text-white/75 mt-1.5">{s.label}</p>
+                  <p className="text-[26px] font-bold leading-none" style={{ color: s.accent }}>{s.value}</p>
+                  <p className="text-[14px] mt-1.5 text-text-muted">{s.label}</p>
                 </div>
               </div>
             </div>
@@ -106,10 +107,10 @@ export default function ModuleCenter() {
         <div className="bg-white rounded-lg px-5 py-3 flex items-center justify-between">
           <TabFilter tabs={moduleCategories.map((c) => ({ label: c }))} activeIndex={catTab} onChange={setCatTab} />
           <div className="flex items-center gap-3">
-            <div className="flex items-center bg-[#F2F3F5] rounded-lg p-[3px]">
+            <div className="flex items-center bg-[#F2F3F5] rounded-[4px] p-[3px]">
               {priceFilters.map((f) => (
                 <button key={f} onClick={() => setPriceTab(f)}
-                  className={`h-[28px] px-3.5 rounded-md text-[13px] font-medium transition-all ${
+                  className={`h-[28px] px-3.5 rounded-[2px] text-[13px] font-medium transition-all ${
                     priceTab === f ? 'bg-white text-[#1D2129] shadow-sm' : 'text-[#86909C] hover:text-[#4E5969]'
                   }`}>
                   {f}
@@ -121,6 +122,13 @@ export default function ModuleCenter() {
         </div>
 
         {/* Cards */}
+        {list.length === 0 && (
+          <div className="bg-white rounded-[--radius-md] py-16 text-center">
+            <Box size={48} className="mx-auto mb-4 text-text-placeholder" />
+            <p className="text-[16px] text-text-muted mb-2">没有找到匹配的模块</p>
+            <p className="text-[14px] text-text-placeholder">试试调整筛选条件或搜索关键词</p>
+          </div>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
           {list.map((m) => {
             const s = displayStatus(m);
@@ -133,8 +141,6 @@ export default function ModuleCenter() {
                   isPaid ? 'border border-[#FFF3E8]' : 'border border-transparent hover:border-[#E5E6EB]'
                 }`}
               >
-                {/* Paid indicator strip */}
-                {isPaid && <div className="h-[3px] rounded-t-lg" style={{ background: 'linear-gradient(90deg, #F77234 0%, #F99D1C 100%)' }} />}
 
                 <div className="px-5 pt-4 pb-3 flex-1 flex flex-col">
                   <div className="flex items-start justify-between mb-3">
@@ -144,28 +150,28 @@ export default function ModuleCenter() {
                         <div className="flex items-center gap-2">
                           <p className="text-[14px] font-bold text-[#1D2129] leading-snug">{m.name}</p>
                           {isPaid ? (
-                            <span className="px-1.5 py-[2px] text-[11px] font-semibold rounded-[4px] leading-none"
+                            <span className="px-1.5 py-[2px] text-[11px] font-semibold rounded-[2px] leading-none"
                               style={{ background: 'linear-gradient(135deg, #FFF3E8 0%, #FFE8D4 100%)', color: '#E8601A' }}>
                               商业版
                             </span>
                           ) : (
-                            <span className="px-1.5 py-[2px] text-[11px] font-semibold bg-[#E8FFEA] text-[#00994D] rounded-[4px] leading-none">
+                            <span className="px-1.5 py-[2px] text-[11px] font-semibold bg-[#E8FFEA] text-[#00994D] rounded-[2px] leading-none">
                               免费
                             </span>
                           )}
                         </div>
-                        <p className="text-[13px] text-[#86909C] mt-[3px]">{m.code}</p>
+                        <p className="text-[14px] text-text-muted mt-[3px]">{m.code}</p>
                       </div>
                     </div>
                     <StatusBadge status={s} />
                   </div>
 
-                  <p className="text-[13px] text-[#4E5969] leading-[20px] flex-1 line-clamp-2">{m.description}</p>
+                  <p className="text-[14px] text-text-secondary leading-[22px] flex-1 line-clamp-2">{m.description}</p>
 
                   <div className="flex items-center justify-between mt-3 pt-3 border-t border-[#F2F3F5]">
-                    <div className="flex items-center gap-4 text-[13px] text-[#86909C]">
-                      <span className="inline-flex items-center gap-[3px]"><Clock size={12} /> {m.duration}天</span>
-                      <span className="inline-flex items-center gap-[3px]"><UsersIcon size={12} /> {m.nodes}节点</span>
+                    <div className="flex items-center gap-4 text-[14px] text-text-muted">
+                      <span className="inline-flex items-center gap-1"><Clock size={13} /> {m.duration}天</span>
+                      <span className="inline-flex items-center gap-1"><UsersIcon size={13} /> {m.nodes}节点</span>
                     </div>
                     {isPaid && (
                       <span className="text-[16px] font-bold text-[#F77234]">
@@ -179,13 +185,13 @@ export default function ModuleCenter() {
                   {canAction ? (
                     <button
                       onClick={() => handleModuleAction(m)}
-                      className="w-full h-[36px] rounded-lg text-[14px] font-semibold text-white flex items-center justify-center gap-[2px] transition-all duration-150 hover:brightness-110 active:scale-[0.98]"
+                      className="w-full h-[36px] rounded-[--radius-sm] text-[14px] font-semibold text-white flex items-center justify-center gap-1 cursor-pointer transition-all hover:brightness-110"
                       style={{ background: isPaid ? 'linear-gradient(135deg, #F77234 0%, #F99D1C 100%)' : 'linear-gradient(135deg, #1C71D8 0%, #3584E4 100%)' }}
                     >
-                      {isPaid ? '立即购买' : '申请试用'} <ChevronRight size={15} strokeWidth={2.5} className="text-white/70" />
+                      {isPaid ? '立即购买' : '申请试用'} <ChevronRight size={15} strokeWidth={2.5} />
                     </button>
                   ) : (
-                    <div className="w-full h-[36px] rounded-lg bg-[#F7F8FA] text-[13px] text-[#86909C] font-medium flex items-center justify-center">
+                    <div className="w-full h-[36px] rounded-[--radius-sm] bg-surface-secondary text-[14px] text-text-muted font-medium flex items-center justify-center">
                       {s === '已开通' || s === '已购买' ? s : '审核中'}
                     </div>
                   )}
@@ -232,8 +238,8 @@ export default function ModuleCenter() {
               <strong>温馨提示：</strong>提交申请后，我们将在1-2个工作日内完成审核，审核结果将通过邮件和短信通知您。
             </div>
             <div className="grid grid-cols-2 gap-3 pt-1">
-              <button type="button" onClick={() => setApplyModule(null)} className="h-[42px] rounded text-[14px] font-medium text-[#4E5969] border border-[#C9CDD4] bg-white hover:border-[#86909C] transition-colors">取消</button>
-              <button type="submit" className="h-[42px] rounded text-[14px] font-semibold text-white transition-all hover:brightness-110 active:scale-[0.99]" style={{ background: '#1C71D8' }}>提交申请</button>
+              <button type="button" onClick={() => setApplyModule(null)} className="h-[42px] rounded-[2px] text-[14px] font-medium text-[#4E5969] border border-[#C9CDD4] bg-white hover:border-[#86909C] transition-colors">取消</button>
+              <button type="submit" className="h-[42px] rounded-[2px] text-[14px] font-semibold text-white transition-all hover:brightness-110 active:scale-[0.99]" style={{ background: '#1C71D8' }}>提交申请</button>
             </div>
           </form>
         )}

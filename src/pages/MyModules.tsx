@@ -51,18 +51,19 @@ export default function MyModules() {
         {/* Stats */}
         <div className="grid grid-cols-3 gap-5">
           {([
-            { icon: <Box size={22} className="text-white" />, value: activeCount, label: '使用中', gradient: 'linear-gradient(135deg, #1C71D8 0%, #3584E4 100%)' },
-            { icon: <AlertTriangle size={22} className="text-white" />, value: expiringCount, label: '即将到期', gradient: 'linear-gradient(135deg, #F5A623 0%, #F7C948 100%)' },
-            { icon: <Clock size={22} className="text-white" />, value: expiredCount, label: '已过期', gradient: 'linear-gradient(135deg, #86909C 0%, #A8B2BD 100%)' },
+            { icon: <Box size={22} />, value: activeCount, label: '使用中', accent: '#2563EB', bg: 'rgba(59,130,246,0.08)', border: 'rgba(59,130,246,0.18)', iconBg: 'rgba(59,130,246,0.12)', dot: 'rgba(59,130,246,0.10)' },
+            { icon: <AlertTriangle size={22} />, value: expiringCount, label: '即将到期', accent: '#D97706', bg: 'rgba(251,191,36,0.08)', border: 'rgba(251,191,36,0.18)', iconBg: 'rgba(251,191,36,0.12)', dot: 'rgba(251,191,36,0.10)' },
+            { icon: <Clock size={22} />, value: expiredCount, label: '已过期', accent: '#6B7280', bg: 'rgba(107,114,128,0.08)', border: 'rgba(107,114,128,0.18)', iconBg: 'rgba(107,114,128,0.12)', dot: 'rgba(107,114,128,0.10)' },
           ]).map((s, i) => (
-            <div key={i} className="relative rounded-lg px-5 py-5 overflow-hidden" style={{ background: s.gradient }}>
-              <div className="absolute top-2 right-2 w-[56px] h-[56px] rounded-full bg-white/10" />
-              <div className="absolute -bottom-3 -right-3 w-[36px] h-[36px] rounded-full bg-white/[0.07]" />
+            <div key={i} className="relative rounded-xl px-5 py-5 overflow-hidden backdrop-blur-sm"
+              style={{ background: s.bg, border: `1px solid ${s.border}`, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+              <div className="absolute -top-4 -right-4 w-[72px] h-[72px] rounded-full" style={{ background: s.dot }} />
+              <div className="absolute bottom-2 right-8 w-[32px] h-[32px] rounded-full" style={{ background: s.dot }} />
               <div className="relative flex items-center gap-4">
-                <div className="w-[44px] h-[44px] rounded-lg bg-white/20 flex items-center justify-center shrink-0">{s.icon}</div>
+                <div className="w-[44px] h-[44px] rounded-xl flex items-center justify-center shrink-0" style={{ background: s.iconBg, color: s.accent }}>{s.icon}</div>
                 <div>
-                  <p className="text-[26px] font-bold text-white leading-none">{s.value}</p>
-                  <p className="text-[14px] text-white/75 mt-1.5">{s.label}</p>
+                  <p className="text-[26px] font-bold leading-none" style={{ color: s.accent }}>{s.value}</p>
+                  <p className="text-[13px] mt-1.5 text-[#86909C]">{s.label}</p>
                 </div>
               </div>
             </div>
@@ -134,7 +135,7 @@ export default function MyModules() {
                   {/* Renewal button for expiring/expired */}
                   {(m.status === '即将到期' || m.status === '已过期') && (
                     <button onClick={() => navigate('/modules')}
-                      className="mt-3 w-full h-[32px] rounded text-[13px] font-semibold text-white flex items-center justify-center gap-1 transition-all hover:brightness-110"
+                      className="mt-3 w-full h-[32px] rounded-[4px] text-[13px] font-semibold text-white flex items-center justify-center gap-1 transition-all hover:brightness-110"
                       style={{ background: m.status === '已过期' ? 'linear-gradient(135deg, #F77234 0%, #F99D1C 100%)' : 'linear-gradient(135deg, #1C71D8 0%, #3584E4 100%)' }}>
                       <RefreshCw size={13} /> {m.status === '已过期' ? '重新购买' : '续费'}
                     </button>

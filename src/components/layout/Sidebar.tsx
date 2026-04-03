@@ -29,7 +29,7 @@ export default function Sidebar({ collapsed, onToggle, role }: SidebarProps) {
       }`}
       style={{ background: 'linear-gradient(180deg, #0F2744 0%, #162D50 50%, #1A3358 100%)' }}
     >
-      <div className={`mx-3 mt-5 mb-4 shrink-0 rounded-lg overflow-hidden ${collapsed ? 'px-0' : ''}`}
+      <div className={`mx-3 mt-5 mb-4 shrink-0 rounded-[--radius-md] overflow-hidden ${collapsed ? 'px-0' : ''}`}
         style={{ background: 'linear-gradient(135deg, rgba(28,113,216,0.15) 0%, rgba(28,113,216,0.05) 100%)' }}
       >
         <div className={`${collapsed ? 'py-5 flex flex-col items-center' : 'px-5 py-5'}`}>
@@ -37,13 +37,21 @@ export default function Sidebar({ collapsed, onToggle, role }: SidebarProps) {
           {!collapsed && (
             <div className="flex items-center justify-between mt-3">
               <span className="text-[14px] font-medium text-white/50 tracking-[1px] uppercase select-none">云授权系统</span>
-              <button onClick={onToggle} className="w-6 h-6 flex items-center justify-center rounded hover:bg-white/10 transition-colors">
+              <button
+                onClick={onToggle}
+                aria-label="收起侧边栏"
+                className="w-6 h-6 flex items-center justify-center rounded cursor-pointer hover:bg-white/10 transition-colors"
+              >
                 <PanelLeftClose size={14} className="text-white/40" />
               </button>
             </div>
           )}
           {collapsed && (
-            <button onClick={onToggle} className="w-6 h-6 flex items-center justify-center rounded hover:bg-white/10 transition-colors mt-3">
+            <button
+              onClick={onToggle}
+              aria-label="展开侧边栏"
+              className="w-6 h-6 flex items-center justify-center rounded cursor-pointer hover:bg-white/10 transition-colors mt-3"
+            >
               <PanelLeftOpen size={14} className="text-white/40" />
             </button>
           )}
@@ -52,10 +60,9 @@ export default function Sidebar({ collapsed, onToggle, role }: SidebarProps) {
 
       <div className="mx-5 h-px bg-white/8 mb-4" />
 
-      <nav className="flex-1 px-3 pb-4 flex flex-col gap-1.5 overflow-y-auto">
+      <nav className="flex-1 px-3 pb-4 flex flex-col gap-1.5 overflow-y-auto" aria-label="主导航">
         {visibleItems.map((item, i) => (
           <div key={item.path}>
-            {/* Separator before admin section */}
             {item.adminOnly && !visibleItems[i - 1]?.adminOnly && (
               <div className="mx-2 my-2">
                 <div className="h-px bg-white/8" />
@@ -65,12 +72,13 @@ export default function Sidebar({ collapsed, onToggle, role }: SidebarProps) {
             <NavLink
               to={item.path}
               end={item.path === '/'}
+              aria-label={item.label}
               className={({ isActive }) =>
-                `group relative flex items-center gap-3 h-[42px] rounded-lg text-[16px] transition-all duration-200 ${
+                `group relative flex items-center gap-3 h-[42px] rounded-[--radius-md] text-[16px] cursor-pointer transition-all duration-200 ${
                   collapsed ? 'justify-center px-0' : 'px-3'
                 } ${
                   isActive
-                    ? 'bg-[#1C71D8] text-white font-semibold'
+                    ? 'bg-primary text-white font-semibold'
                     : 'text-white/50 hover:bg-white/[0.06] hover:text-white/80'
                 }`
               }

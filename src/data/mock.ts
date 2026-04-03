@@ -93,6 +93,14 @@ export const applicationRecords: ApplicationRecord[] = [
   { id: '6', code: 'AR006', moduleName: '高级分析', moduleCode: '26D103', applicant: '用户名', department: '产品部', applyTime: '2026-03-28 09:30', status: '审核中' },
   { id: '7', code: 'AR007', moduleName: '屋架桁架', moduleCode: '26D106', applicant: '用户名', department: '产品部', applyTime: '2026-03-29 14:00', status: '已通过' },
   { id: '8', code: 'AR008', moduleName: '网架网壳', moduleCode: '26D107', applicant: '用户名', department: '产品部', applyTime: '2026-03-30 10:15', status: '待审核' },
+  { id: '9', code: 'AR009', moduleName: '辅助结构', moduleCode: '26D109', applicant: '用户名', department: '产品部', applyTime: '2026-03-27 16:40', status: '已通过' },
+  { id: '10', code: 'AR010', moduleName: '幕墙', moduleCode: '26D110', applicant: '用户名', department: '产品部', applyTime: '2026-03-26 10:20', status: '已拒绝' },
+  { id: '11', code: 'AR011', moduleName: '变电构架', moduleCode: '26D113', applicant: '用户名', department: '产品部', applyTime: '2026-03-25 11:15', status: '已通过' },
+  { id: '12', code: 'AR012', moduleName: '光伏支架', moduleCode: '26D114', applicant: '用户名', department: '产品部', applyTime: '2026-03-24 09:00', status: '审核中' },
+  { id: '13', code: 'AR013', moduleName: '参数化建模', moduleCode: '26D126', applicant: '用户名', department: '产品部', applyTime: '2026-03-31 08:45', status: '待审核' },
+  { id: '14', code: 'AR014', moduleName: '通廊', moduleCode: '26D115', applicant: '张三', department: '技术部', applyTime: '2026-03-30 15:30', status: '审核中' },
+  { id: '15', code: 'AR015', moduleName: '抗震分析', moduleCode: '26D120', applicant: '李四', department: '设计部', applyTime: '2026-03-29 10:00', status: '待审核' },
+  { id: '16', code: 'AR016', moduleName: '储罐', moduleCode: '26D122', applicant: '王五', department: '产品部', applyTime: '2026-03-28 14:20', status: '已通过' },
 ];
 
 // Purchase order types and data
@@ -148,7 +156,7 @@ export const users: User[] = [
   { id: '6', code: 'U006', name: '周八', department: '技术部', email: 'zhouba@example.com', phone: '133****2345', moduleCount: 4, status: '使用中', registerTime: '2025-02-01', company: '公司F', avatarColor: '#EC4899' },
 ];
 
-// Usage statistics data
+// Usage statistics data — admin view (system-wide)
 export const usageTrend = [
   { date: '03-21', usage: 42, activeUsers: 48 },
   { date: '03-22', usage: 55, activeUsers: 52 },
@@ -157,6 +165,17 @@ export const usageTrend = [
   { date: '03-25', usage: 65, activeUsers: 62 },
   { date: '03-26', usage: 70, activeUsers: 68 },
   { date: '03-27', usage: 72, activeUsers: 73 },
+];
+
+// Usage statistics data — user view (personal)
+export const myUsageTrend = [
+  { date: '03-21', usage: 5, duration: 2.5 },
+  { date: '03-22', usage: 8, duration: 3.8 },
+  { date: '03-23', usage: 3, duration: 1.2 },
+  { date: '03-24', usage: 7, duration: 3.5 },
+  { date: '03-25', usage: 9, duration: 4.2 },
+  { date: '03-26', usage: 6, duration: 3.0 },
+  { date: '03-27', usage: 10, duration: 4.8 },
 ];
 
 export const moduleDistribution = [
@@ -175,12 +194,28 @@ export const moduleRanking = [
   { name: '数据导入', count: 75 },
 ];
 
+export const myModuleRanking = [
+  { name: '建筑结构', count: 52 },
+  { name: '基本分析', count: 48 },
+  { name: '多高层', count: 35 },
+  { name: '基础设计', count: 30 },
+  { name: '钢构深化', count: 18 },
+];
+
 export const departmentUsage = [
   { name: '技术部', current: 38, total: 45 },
   { name: '设计部', current: 28, total: 32 },
   { name: '产品部', current: 25, total: 28 },
   { name: '运营部', current: 15, total: 18 },
   { name: '市场部', current: 10, total: 12 },
+];
+
+export const myModuleStats = [
+  { name: '建筑结构', usedDays: 52, totalDays: 90, status: '使用中' as const },
+  { name: '基本分析', usedDays: 48, totalDays: 90, status: '使用中' as const },
+  { name: '多高层', usedDays: 81, totalDays: 90, status: '即将到期' as const },
+  { name: '基础设计', usedDays: 30, totalDays: 90, status: '使用中' as const },
+  { name: '钢构深化', usedDays: 18, totalDays: 90, status: '使用中' as const },
 ];
 
 // Current user profile (logged-in user)
