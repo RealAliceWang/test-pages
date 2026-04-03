@@ -177,7 +177,7 @@ export default function Profile() {
                 <div className="flex items-center gap-2">
                   <p className="text-[14px] text-[#1D2129]">{u.company}</p>
                   {u.companyVerified && (
-                    <span className="inline-flex items-center gap-[3px] px-[6px] py-[1px] rounded border border-[#F77234] text-[14px] font-medium text-[#F77234] whitespace-nowrap">
+                    <span className="inline-flex items-center gap-[3px] px-[6px] py-[1px] rounded border border-[#F77234] text-[14px] font-normal text-[#F77234] whitespace-nowrap">
                       <svg viewBox="0 0 14 14" width="13" height="13" fill="none"><path d="M7 1l1.5 2.1L11 2.5l-.2 2.6 2.2 1.4-1.7 2 .8 2.5-2.5.6L9 13.5 7 12l-2 1.5-.6-1.9-2.5-.6.8-2.5L1 6.5l2.2-1.4L3 2.5l2.5.6L7 1z" fill="#F77234"/><path d="M5.5 7l1.2 1.2L9 5.8" stroke="#fff" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       已认证
                     </span>
@@ -207,7 +207,7 @@ export default function Profile() {
               <ReadonlyField label="服务器IP" icon={<Server size={20} className="text-[#F53F3F]" />} iconBg="bg-[#FFECE8]">
                 <div className="flex items-center gap-2">
                   <p className="text-[14px] text-[#1D2129]">{u.serverIp}</p>
-                  <span className={`inline-flex items-center gap-1 px-2 py-[1px] rounded-full text-[14px] font-medium ${u.serverConnected ? 'bg-[#E8FFEA] text-[#00B42A]' : 'bg-[#FFECE8] text-[#F53F3F]'}`}>
+                  <span className={`inline-flex items-center gap-1 px-2 py-[1px] rounded-full text-[14px] font-normal ${u.serverConnected ? 'bg-[#E8FFEA] text-[#00B42A]' : 'bg-[#FFECE8] text-[#F53F3F]'}`}>
                     {u.serverConnected ? <Wifi size={12} /> : <WifiOff size={12} />}
                     {u.serverConnected ? '已连接' : '未连接'}
                   </span>

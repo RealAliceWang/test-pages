@@ -148,12 +148,12 @@ export default function ModuleCenter() {
                         <div className="flex items-center gap-2">
                           <p className="text-[14px] font-bold text-[#1D2129] leading-snug">{m.name}</p>
                           {isPaid ? (
-                            <span className="px-1.5 py-[2px] text-[11px] font-semibold rounded-sm leading-none"
+                            <span className="px-1.5 py-[2px] text-[11px] font-normal rounded-sm leading-none"
                               style={{ background: 'linear-gradient(135deg, #FFF3E8 0%, #FFE8D4 100%)', color: '#E8601A' }}>
                               商业版
                             </span>
                           ) : (
-                            <span className="px-1.5 py-[2px] text-[11px] font-semibold bg-[#E8FFEA] text-[#00994D] rounded-sm leading-none">
+                            <span className="px-1.5 py-[2px] text-[11px] font-normal bg-[#E8FFEA] text-[#00994D] rounded-sm leading-none">
                               免费
                             </span>
                           )}

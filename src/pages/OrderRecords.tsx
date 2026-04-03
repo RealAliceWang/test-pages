@@ -67,7 +67,7 @@ export default function OrderRecords() {
               recordType === 'trial' ? 'bg-primary text-white' : 'bg-surface text-text-secondary border border-border hover:border-text-placeholder'
             }`}>
             <FileText size={16} /> 试用申请
-            <span className={`px-1.5 py-[1px] rounded text-[12px] font-semibold ${recordType === 'trial' ? 'bg-white/20 text-white' : 'bg-surface-hover text-text-muted'}`}>
+            <span className={`px-1.5 py-[1px] rounded text-[12px] font-normal ${recordType === 'trial' ? 'bg-white/20 text-white' : 'bg-surface-hover text-text-muted'}`}>
               {myTrialRecords.length}
             </span>
           </button>
@@ -76,7 +76,7 @@ export default function OrderRecords() {
               recordType === 'purchase' ? 'bg-orange text-white' : 'bg-surface text-text-secondary border border-border hover:border-text-placeholder'
             }`}>
             <ShoppingCart size={16} /> 购买订单
-            <span className={`px-1.5 py-[1px] rounded text-[12px] font-semibold ${recordType === 'purchase' ? 'bg-white/20 text-white' : 'bg-surface-hover text-text-muted'}`}>
+            <span className={`px-1.5 py-[1px] rounded text-[12px] font-normal ${recordType === 'purchase' ? 'bg-white/20 text-white' : 'bg-surface-hover text-text-muted'}`}>
               {myPurchaseOrders.length}
             </span>
           </button>
