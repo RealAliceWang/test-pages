@@ -15,7 +15,7 @@ export default function TabFilter({ tabs, activeIndex, onChange }: TabFilterProp
           role="tab"
           aria-selected={i === activeIndex}
           onClick={() => onChange(i)}
-          className={`h-[32px] px-[14px] rounded-[--radius-sm] text-[14px] font-medium cursor-pointer transition-all duration-150 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none ${
+          className={`h-[32px] px-[14px] rounded-sm text-[14px] font-medium cursor-pointer transition-all duration-150 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none ${
             i === activeIndex
               ? 'bg-primary text-white'
               : 'text-text-secondary hover:bg-surface-hover'

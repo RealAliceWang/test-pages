@@ -29,7 +29,7 @@ export default function Sidebar({ collapsed, onToggle, role }: SidebarProps) {
       }`}
       style={{ background: 'linear-gradient(180deg, #0F2744 0%, #162D50 50%, #1A3358 100%)' }}
     >
-      <div className={`mx-3 mt-5 mb-4 shrink-0 rounded-[--radius-md] overflow-hidden ${collapsed ? 'px-0' : ''}`}
+      <div className={`mx-3 mt-5 mb-4 shrink-0 rounded-md overflow-hidden ${collapsed ? 'px-0' : ''}`}
         style={{ background: 'linear-gradient(135deg, rgba(28,113,216,0.15) 0%, rgba(28,113,216,0.05) 100%)' }}
       >
         <div className={`${collapsed ? 'py-5 flex flex-col items-center' : 'px-5 py-5'}`}>
@@ -74,7 +74,7 @@ export default function Sidebar({ collapsed, onToggle, role }: SidebarProps) {
               end={item.path === '/'}
               aria-label={item.label}
               className={({ isActive }) =>
-                `group relative flex items-center gap-3 h-[42px] rounded-[--radius-md] text-[16px] cursor-pointer transition-all duration-200 ${
+                `group relative flex items-center gap-3 h-[42px] rounded-sm text-[16px] cursor-pointer transition-all duration-200 ${
                   collapsed ? 'justify-center px-0' : 'px-3'
                 } ${
                   isActive

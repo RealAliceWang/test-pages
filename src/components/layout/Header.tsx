@@ -23,7 +23,7 @@ export default function Header({ title, subtitle, role, onRoleChange, userName =
           <button
             onClick={() => onRoleChange(role === 'admin' ? 'user' : 'admin')}
             aria-label={`当前为${role === 'admin' ? '管理员' : '用户'}视角，点击切换`}
-            className={`h-[32px] px-3 rounded-[--radius-md] text-[14px] font-medium inline-flex items-center gap-1.5 cursor-pointer transition-all ${
+            className={`h-[32px] px-3 rounded-sm text-[14px] font-medium inline-flex items-center gap-1.5 cursor-pointer transition-all ${
               role === 'admin'
                 ? 'bg-orange-bg text-orange border border-orange/30'
                 : 'bg-primary-bg text-primary border border-primary/30'
@@ -37,7 +37,7 @@ export default function Header({ title, subtitle, role, onRoleChange, userName =
 
         <button
           aria-label="通知"
-          className="relative w-8 h-8 flex items-center justify-center rounded-[--radius-md] cursor-pointer hover:bg-surface-hover transition-colors"
+          className="relative w-8 h-8 flex items-center justify-center rounded-sm cursor-pointer hover:bg-surface-hover transition-colors"
         >
           <Bell size={18} className="text-text-secondary" />
           <span className="absolute top-[5px] right-[6px] w-[6px] h-[6px] bg-danger rounded-full ring-[1.5px] ring-white" />

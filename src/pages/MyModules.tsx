@@ -47,20 +47,20 @@ export default function MyModules() {
     <div className="min-h-screen">
       <Header title="我的模块" subtitle="管理已开通的模块，查看使用情况与到期时间" role={role} onRoleChange={setRole} />
 
-      <div className="p-6 flex flex-col gap-5">
+      <div className="p-6 flex flex-col gap-4">
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-5">
+        <div className="grid grid-cols-3 gap-4">
           {([
             { icon: <Box size={22} />, value: activeCount, label: '使用中', accent: '#2563EB', bg: 'rgba(59,130,246,0.08)', border: 'rgba(59,130,246,0.18)', iconBg: 'rgba(59,130,246,0.12)', dot: 'rgba(59,130,246,0.10)' },
             { icon: <AlertTriangle size={22} />, value: expiringCount, label: '即将到期', accent: '#D97706', bg: 'rgba(251,191,36,0.08)', border: 'rgba(251,191,36,0.18)', iconBg: 'rgba(251,191,36,0.12)', dot: 'rgba(251,191,36,0.10)' },
             { icon: <Clock size={22} />, value: expiredCount, label: '已过期', accent: '#6B7280', bg: 'rgba(107,114,128,0.08)', border: 'rgba(107,114,128,0.18)', iconBg: 'rgba(107,114,128,0.12)', dot: 'rgba(107,114,128,0.10)' },
           ]).map((s, i) => (
-            <div key={i} className="relative rounded-xl px-5 py-5 overflow-hidden backdrop-blur-sm"
+            <div key={i} className="relative rounded-lg px-5 py-5 overflow-hidden backdrop-blur-sm"
               style={{ background: s.bg, border: `1px solid ${s.border}`, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
               <div className="absolute -top-4 -right-4 w-[72px] h-[72px] rounded-full" style={{ background: s.dot }} />
               <div className="absolute bottom-2 right-8 w-[32px] h-[32px] rounded-full" style={{ background: s.dot }} />
               <div className="relative flex items-center gap-4">
-                <div className="w-[44px] h-[44px] rounded-xl flex items-center justify-center shrink-0" style={{ background: s.iconBg, color: s.accent }}>{s.icon}</div>
+                <div className="w-[44px] h-[44px] rounded-lg flex items-center justify-center shrink-0" style={{ background: s.iconBg, color: s.accent }}>{s.icon}</div>
                 <div>
                   <p className="text-[26px] font-bold leading-none" style={{ color: s.accent }}>{s.value}</p>
                   <p className="text-[13px] mt-1.5 text-[#86909C]">{s.label}</p>
@@ -71,16 +71,16 @@ export default function MyModules() {
         </div>
 
         {/* Filter tabs */}
-        <div className="bg-white rounded-lg px-5 py-3 flex items-center justify-between">
+        <div className="bg-white rounded-md px-5 py-3 flex items-center justify-between">
           <TabFilter tabs={tabs} activeIndex={tab} onChange={setTab} />
           <button onClick={() => navigate('/modules')}
-            className="h-[32px] px-3 text-[14px] font-medium text-[#1C71D8] bg-[#E8F3FF] rounded inline-flex items-center gap-[6px] hover:bg-[#D6E8FF] transition-colors">
+            className="h-[32px] px-3 text-[14px] font-medium text-[#1C71D8] bg-[#E8F3FF] rounded-sm inline-flex items-center gap-[6px] hover:bg-[#D6E8FF] transition-colors">
             浏览更多模块 <ChevronRight size={14} />
           </button>
         </div>
 
         {/* Module cards */}
-        <div className="grid grid-cols-2 xl:grid-cols-3 gap-5">
+        <div className="grid grid-cols-2 xl:grid-cols-3 gap-4">
           {list.map((m) => {
             const sc = statusStyle(m.status);
             const pct = Math.min(100, Math.round((m.usedDays / m.totalDays) * 100));
@@ -92,7 +92,7 @@ export default function MyModules() {
             const dashOffset = circumference * (1 - pct / 100);
 
             return (
-              <div key={m.moduleId} className="bg-white rounded-lg px-5 py-5 flex items-center gap-5">
+              <div key={m.moduleId} className="bg-white rounded-md px-5 py-5 flex items-center gap-4">
                 {/* Ring chart */}
                 <div className="relative shrink-0" style={{ width: 96, height: 96 }}>
                   <svg width="96" height="96" viewBox="0 0 96 96">
@@ -109,14 +109,14 @@ export default function MyModules() {
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2">
-                    <div className="w-[48px] h-[48px] rounded-lg flex items-center justify-center shrink-0">
+                    <div className="w-[48px] h-[48px] rounded-md flex items-center justify-center shrink-0">
                       {getModuleIcon(m.icon)}
                     </div>
                     <div className="min-w-0">
                       <p className="text-[14px] font-bold text-[#1D2129] truncate">{m.moduleName}</p>
                       <p className="text-[14px] text-[#86909C]">{m.moduleCode}</p>
                     </div>
-                    <span className={`ml-auto inline-block px-2 py-[2px] rounded text-[14px] font-medium shrink-0 ${sc.bg} ${sc.text}`}>
+                    <span className={`ml-auto inline-block px-2 py-[2px] rounded-sm text-[14px] font-normal shrink-0 ${sc.bg} ${sc.text}`}>
                       {m.status}
                     </span>
                   </div>
@@ -135,7 +135,7 @@ export default function MyModules() {
                   {/* Renewal button for expiring/expired */}
                   {(m.status === '即将到期' || m.status === '已过期') && (
                     <button onClick={() => navigate('/modules')}
-                      className="mt-3 w-full h-[32px] rounded-[4px] text-[13px] font-semibold text-white flex items-center justify-center gap-1 transition-all hover:brightness-110"
+                      className="mt-3 w-full h-[32px] rounded-sm text-[13px] font-semibold text-white flex items-center justify-center gap-1 transition-all hover:brightness-110"
                       style={{ background: m.status === '已过期' ? 'linear-gradient(135deg, #F77234 0%, #F99D1C 100%)' : 'linear-gradient(135deg, #1C71D8 0%, #3584E4 100%)' }}>
                       <RefreshCw size={13} /> {m.status === '已过期' ? '重新购买' : '续费'}
                     </button>
@@ -147,11 +147,11 @@ export default function MyModules() {
         </div>
 
         {list.length === 0 && (
-          <div className="bg-white rounded-lg py-16 text-center">
+          <div className="bg-white rounded-md py-16 text-center">
             <Box size={48} className="mx-auto mb-4 text-[#C9CDD4]" />
             <p className="text-[16px] text-[#86909C] mb-3">暂无{sel === '全部' ? '' : sel}模块</p>
             <button onClick={() => navigate('/modules')}
-              className="h-[36px] px-4 rounded text-[14px] font-medium text-[#1C71D8] bg-[#E8F3FF] hover:bg-[#D6E8FF] transition-colors inline-flex items-center gap-1">
+              className="h-[36px] px-4 rounded-sm text-[14px] font-medium text-[#1C71D8] bg-[#E8F3FF] hover:bg-[#D6E8FF] transition-colors inline-flex items-center gap-1">
               去模块中心看看 <ChevronRight size={14} />
             </button>
           </div>

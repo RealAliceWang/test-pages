@@ -29,7 +29,7 @@ interface EditableFieldProps {
 function EditableField({ label, value, icon, iconBg, editing, editValue, onEdit, onCancel, onSave, onChange, type = 'text' }: EditableFieldProps) {
   return (
     <div className="flex items-center gap-4 group">
-      <div className={`w-[42px] h-[42px] rounded-lg ${iconBg} flex items-center justify-center shrink-0`}>{icon}</div>
+      <div className={`w-[42px] h-[42px] rounded-md ${iconBg} flex items-center justify-center shrink-0`}>{icon}</div>
       <div className="flex-1 min-w-0">
         <p className="text-[14px] text-[#86909C]">{label}</p>
         {editing ? (
@@ -65,7 +65,7 @@ interface ReadonlyFieldProps {
 function ReadonlyField({ label, children, icon, iconBg }: ReadonlyFieldProps) {
   return (
     <div className="flex items-center gap-4">
-      <div className={`w-[42px] h-[42px] rounded-lg ${iconBg} flex items-center justify-center shrink-0`}>{icon}</div>
+      <div className={`w-[42px] h-[42px] rounded-md ${iconBg} flex items-center justify-center shrink-0`}>{icon}</div>
       <div className="min-w-0">
         <p className="text-[14px] text-[#86909C]">{label}</p>
         <div className="mt-1">{children}</div>
@@ -115,9 +115,9 @@ export default function Profile() {
     <div className="min-h-screen">
       <Header title="个人信息" subtitle="查看您的账户信息与模块使用情况" role={role} onRoleChange={setRole} />
 
-      <div className="p-6 flex flex-col gap-6">
+      <div className="p-6 flex flex-col gap-4">
         {/* Profile card */}
-        <div className="bg-white rounded-lg overflow-hidden">
+        <div className="bg-white rounded-md overflow-hidden">
           {/* User header area */}
           <div className="px-6 pt-6 pb-5">
             <div className="flex items-start justify-between">
@@ -162,7 +162,7 @@ export default function Profile() {
 
               {/* Save indicator */}
               {saved && (
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#E8FFEA] text-[#00B42A] text-[13px] font-medium animate-pulse">
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#E8FFEA] text-[#00B42A] text-[13px] font-medium animate-pulse">
                   <Save size={14} /> 已保存
                 </div>
               )}
@@ -224,9 +224,9 @@ export default function Profile() {
         </div>
 
         {/* Bottom section: two columns */}
-        <div className="grid grid-cols-5 gap-6">
+        <div className="grid grid-cols-5 gap-4">
           {/* Left: Module overview */}
-          <div className="col-span-3 bg-white rounded-lg px-6 py-5">
+          <div className="col-span-3 bg-white rounded-md px-6 py-5">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-[16px] font-bold text-[#1D2129]">模块概览</h2>
               <Link to="/my-modules" className="text-[14px] text-[#1C71D8] hover:underline inline-flex items-center gap-1">
@@ -239,11 +239,11 @@ export default function Profile() {
                 { icon: <AlertTriangle size={20} />, value: expiringCount, label: '即将到期', accent: '#D97706', bg: 'rgba(251,191,36,0.08)', border: 'rgba(251,191,36,0.18)', iconBg: 'rgba(251,191,36,0.12)', dot: 'rgba(251,191,36,0.10)' },
                 { icon: <Clock size={20} />, value: expiredCount, label: '已过期', accent: '#6B7280', bg: 'rgba(107,114,128,0.08)', border: 'rgba(107,114,128,0.18)', iconBg: 'rgba(107,114,128,0.12)', dot: 'rgba(107,114,128,0.10)' },
               ]).map((s, i) => (
-                <div key={i} className="relative rounded-xl px-4 py-4 overflow-hidden"
+                <div key={i} className="relative rounded-lg px-4 py-4 overflow-hidden"
                   style={{ background: s.bg, border: `1px solid ${s.border}` }}>
                   <div className="absolute -top-3 -right-3 w-[52px] h-[52px] rounded-full" style={{ background: s.dot }} />
                   <div className="relative flex items-center gap-3">
-                    <div className="w-[38px] h-[38px] rounded-xl flex items-center justify-center shrink-0" style={{ background: s.iconBg, color: s.accent }}>{s.icon}</div>
+                    <div className="w-[38px] h-[38px] rounded-lg flex items-center justify-center shrink-0" style={{ background: s.iconBg, color: s.accent }}>{s.icon}</div>
                     <div>
                       <p className="text-[22px] font-bold leading-none" style={{ color: s.accent }}>{s.value}</p>
                       <p className="text-[12px] mt-1 text-[#86909C]">{s.label}</p>
@@ -263,7 +263,7 @@ export default function Profile() {
                   const pct = Math.round((m.usedDays / m.totalDays) * 100);
                   const barColor = isExpired ? '#C9CDD4' : isExpiring ? '#F59E0B' : '#2563EB';
                   return (
-                    <div key={m.moduleId} className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-[#FAFBFC] hover:bg-[#F2F3F5] transition-colors">
+                    <div key={m.moduleId} className="flex items-center gap-3 px-3 py-2.5 rounded-md bg-[#FAFBFC] hover:bg-[#F2F3F5] transition-colors">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
                           <span className="text-[13px] font-medium text-[#1D2129]">{m.moduleName}</span>
@@ -281,9 +281,9 @@ export default function Profile() {
           </div>
 
           {/* Right: Account & Security */}
-          <div className="col-span-2 flex flex-col gap-6">
+          <div className="col-span-2 flex flex-col gap-4">
             {/* Security status */}
-            <div className="bg-white rounded-lg px-6 py-5">
+            <div className="bg-white rounded-md px-6 py-5">
               <h2 className="text-[16px] font-bold text-[#1D2129] mb-4">账户安全</h2>
               <div className="flex items-center gap-4 mb-4">
                 <div className="relative w-[56px] h-[56px]">
@@ -325,7 +325,7 @@ export default function Profile() {
             </div>
 
             {/* Login activity */}
-            <div className="bg-white rounded-lg px-6 py-5">
+            <div className="bg-white rounded-md px-6 py-5">
               <h2 className="text-[16px] font-bold text-[#1D2129] mb-4">登录动态</h2>
               <div className="flex flex-col gap-3">
                 {([
@@ -334,7 +334,7 @@ export default function Profile() {
                   { time: '2026-03-28 08:55', device: 'Safari / iOS', ip: '10.0.1.5', loc: '上海', current: false },
                 ]).map((log, i) => (
                   <div key={i} className="flex items-start gap-3">
-                    <div className={`w-[30px] h-[30px] rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${i === 0 ? 'bg-[rgba(59,130,246,0.12)]' : 'bg-[#F7F8FA]'}`}>
+                    <div className={`w-[30px] h-[30px] rounded-md flex items-center justify-center shrink-0 mt-0.5 ${i === 0 ? 'bg-[rgba(59,130,246,0.12)]' : 'bg-[#F7F8FA]'}`}>
                       {i === 0 ? <LogIn size={14} className="text-[#2563EB]" /> : <Monitor size={14} className="text-[#C9CDD4]" />}
                     </div>
                     <div className="flex-1 min-w-0">

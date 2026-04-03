@@ -96,7 +96,7 @@ export default function UserManagement() {
                   <td className="px-5 py-[14px] text-[14px] text-[#4E5969]">{u.company}</td>
                   <td className="px-5 py-[14px]">
                     <div className="relative">
-                      <button onClick={() => setMenu(menu === u.id ? null : u.id)} className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-[#F2F3F5] transition-colors">
+                      <button onClick={() => setMenu(menu === u.id ? null : u.id)} className="w-7 h-7 flex items-center justify-center rounded-sm hover:bg-[#F2F3F5] transition-colors">
                         <MoreVertical size={14} className="text-[#86909C]" />
                       </button>
                       {menu === u.id && (

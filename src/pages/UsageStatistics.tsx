@@ -16,7 +16,7 @@ function ChartSkeleton() {
   return (
     <div className="animate-pulse flex flex-col gap-3 pt-4">
       <div className="h-4 bg-surface-hover rounded w-1/3" />
-      <div className="h-[280px] bg-surface-hover rounded-[--radius-md]" />
+      <div className="h-[280px] bg-surface-hover rounded-md" />
       <div className="flex gap-4 justify-center">
         <div className="h-3 bg-surface-hover rounded w-16" />
         <div className="h-3 bg-surface-hover rounded w-16" />
@@ -50,7 +50,7 @@ export default function UsageStatistics() {
   }, []);
 
   const isAdmin = role === 'admin';
-  const card = "bg-surface rounded-[--radius-md] p-5";
+  const card = "bg-surface rounded-md p-5";
 
   const adminCards = [
     { icon: <Clock size={32} />, value: '1,245', unit: '小时', label: '总使用时长', accent: '#2563EB', bar: '#2563EB', trend: '+12%', up: true },
@@ -80,11 +80,11 @@ export default function UsageStatistics() {
         role={role}
         onRoleChange={setRole}
       />
-      <div className="p-6 flex flex-col gap-5">
+      <div className="p-6 flex flex-col gap-4">
         {/* Summary cards — responsive */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {(isAdmin ? adminCards : userCards).map((s, i) => (
-            <div key={i} className="relative bg-surface rounded-[--radius-lg] overflow-hidden"
+            <div key={i} className="relative bg-surface rounded-lg overflow-hidden"
               style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
               <div className="h-[3px]" style={{ background: s.bar }} />
               <div className="px-5 pt-4 pb-5">
@@ -107,7 +107,7 @@ export default function UsageStatistics() {
         </div>
 
         {/* Time selector — click outside to close */}
-        <div className="bg-surface rounded-[--radius-md] px-5 py-3 flex items-center gap-2">
+        <div className="bg-surface rounded-md px-5 py-3 flex items-center gap-2">
           <Calendar size={14} className="text-text-placeholder" />
           <span className="text-[14px] text-text-muted">时间范围</span>
           <div className="relative" ref={dropdownRef}>
@@ -115,13 +115,13 @@ export default function UsageStatistics() {
               onClick={() => setOpen(!open)}
               aria-expanded={open}
               aria-haspopup="listbox"
-              className="h-[30px] px-3 text-[14px] bg-surface-hover rounded-[--radius-sm] cursor-pointer inline-flex items-center gap-[6px] hover:bg-border transition-colors"
+              className="h-[30px] px-3 text-[14px] bg-surface-hover rounded-sm cursor-pointer inline-flex items-center gap-[6px] hover:bg-border transition-colors"
             >
               {range} <ChevronDown size={13} className="text-text-placeholder" />
             </button>
             {open && (
               <div
-                className="absolute top-full left-0 mt-1 bg-surface border border-border rounded-[--radius-md] overflow-hidden z-10 min-w-[110px]"
+                className="absolute top-full left-0 mt-1 bg-surface border border-border rounded-md overflow-hidden z-10 min-w-[110px]"
                 style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }}
                 role="listbox"
               >
@@ -142,7 +142,7 @@ export default function UsageStatistics() {
         </div>
 
         {/* Charts top row — responsive */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div className={card}>
             <h3 className="text-[14px] font-bold text-text mb-4">使用趋势分析</h3>
             {!chartsLoaded ? <ChartSkeleton /> : (
@@ -188,7 +188,7 @@ export default function UsageStatistics() {
         </div>
 
         {/* Charts bottom row — responsive */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div className={card}>
             <h3 className="text-[14px] font-bold text-text mb-4">
               {isAdmin ? '模块使用排行' : '我的模块使用排行'}
@@ -233,7 +233,7 @@ export default function UsageStatistics() {
                       <div className="flex items-center gap-2">
                         <span className="text-[14px] text-text-secondary">{m.name}</span>
                         <span
-                          className="text-[12px] px-1.5 py-[1px] rounded-[--radius-sm]"
+                          className="text-[12px] px-1.5 py-[1px] rounded-sm"
                           style={{
                             color: statusColors[m.status],
                             backgroundColor: statusColors[m.status] + '15',

@@ -31,13 +31,13 @@ export default function Modal({ open, onClose, title, header, children, width = 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center" role="dialog" aria-modal="true" aria-label={title}>
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-surface rounded-[--radius-lg] shadow-xl overflow-hidden" style={{ width, maxHeight: '85vh' }}>
+      <div className="relative bg-surface rounded-lg shadow-xl overflow-hidden" style={{ width, maxHeight: '85vh' }}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           {header || <h3 className="text-[16px] font-bold text-text">{title}</h3>}
           <button
             onClick={onClose}
             aria-label="关闭"
-            className="w-7 h-7 flex items-center justify-center rounded-[--radius-sm] cursor-pointer hover:bg-surface-hover transition-colors"
+            className="w-7 h-7 flex items-center justify-center rounded-sm cursor-pointer hover:bg-surface-hover transition-colors"
           >
             <X size={16} className="text-text-muted" />
           </button>

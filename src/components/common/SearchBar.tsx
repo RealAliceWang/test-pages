@@ -15,7 +15,7 @@ export default function SearchBar({ placeholder, value, onChange }: SearchBarPro
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full h-[32px] pl-[30px] pr-3 text-[14px] bg-surface border border-border rounded-[--radius-sm] placeholder:text-text-placeholder focus:border-primary focus:ring-2 focus:ring-primary/10 focus:outline-none transition-all"
+        className="w-full h-[32px] pl-[30px] pr-3 text-[14px] bg-surface border border-border rounded-sm placeholder:text-text-placeholder focus:border-primary focus:ring-2 focus:ring-primary/10 focus:outline-none transition-all"
       />
     </div>
   );
