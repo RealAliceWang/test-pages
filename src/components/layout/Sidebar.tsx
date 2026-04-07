@@ -1,26 +1,22 @@
 import { NavLink } from 'react-router-dom';
-import { Box, FileText, BarChart3, Users, Settings, PanelLeftClose, PanelLeftOpen, UserCircle, LayoutGrid } from 'lucide-react';
-import type { UserRole } from './Layout';
+import { Box, FileText, BarChart3, PanelLeftClose, PanelLeftOpen, UserCircle, LayoutGrid } from 'lucide-react';
 import logoUrl from '../../../logo.png';
 
 interface SidebarProps {
   collapsed: boolean;
   onToggle: () => void;
-  role: UserRole;
 }
 
 const navItems = [
-  { path: '/', icon: UserCircle, label: '个人信息', adminOnly: false },
-  { path: '/modules', icon: LayoutGrid, label: '模块中心', adminOnly: false },
-  { path: '/my-modules', icon: Box, label: '我的模块', adminOnly: false },
-  { path: '/orders', icon: FileText, label: '订单记录', adminOnly: false },
-  { path: '/statistics', icon: BarChart3, label: '使用统计', adminOnly: false },
-  { path: '/users', icon: Users, label: '用户管理', adminOnly: true },
-  { path: '/settings', icon: Settings, label: '系统设置', adminOnly: true },
+  { path: '/', icon: UserCircle, label: '个人信息' },
+  { path: '/modules', icon: LayoutGrid, label: '模块中心' },
+  { path: '/my-modules', icon: Box, label: '我的模块' },
+  { path: '/orders', icon: FileText, label: '订单记录' },
+  { path: '/statistics', icon: BarChart3, label: '使用统计' },
 ];
 
-export default function Sidebar({ collapsed, onToggle, role }: SidebarProps) {
-  const visibleItems = navItems.filter((item) => !item.adminOnly || role === 'admin');
+export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
+  const visibleItems = navItems;
 
   return (
     <aside
@@ -61,14 +57,8 @@ export default function Sidebar({ collapsed, onToggle, role }: SidebarProps) {
       <div className="mx-5 h-px bg-white/8 mb-4" />
 
       <nav className="flex-1 px-3 pb-4 flex flex-col gap-1.5 overflow-y-auto" aria-label="主导航">
-        {visibleItems.map((item, i) => (
+        {visibleItems.map((item) => (
           <div key={item.path}>
-            {item.adminOnly && !visibleItems[i - 1]?.adminOnly && (
-              <div className="mx-2 my-2">
-                <div className="h-px bg-white/8" />
-                {!collapsed && <p className="text-[12px] text-white/30 mt-2 mb-1 px-1">管理功能</p>}
-              </div>
-            )}
             <NavLink
               to={item.path}
               end={item.path === '/'}

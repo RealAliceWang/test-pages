@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   Box, AlertTriangle, Clock, ChevronRight, RefreshCw,
 } from 'lucide-react';
 import Header from '../components/layout/Header';
-import type { UserRole } from '../components/layout/Layout';
+
 import TabFilter from '../components/common/TabFilter';
 import { myModuleUsages, type MyModuleUsage } from '../data/mock';
 import { moduleIconMap } from '../assets/moduleIcons';
@@ -28,7 +28,7 @@ const statusFilters: StatusFilter[] = ['全部', '使用中', '即将到期', '�
 
 export default function MyModules() {
   const navigate = useNavigate();
-  const { role, setRole } = useOutletContext<{ role: UserRole; setRole: (r: UserRole) => void }>();
+
   const [tab, setTab] = useState(0);
 
   const sel = statusFilters[tab];
@@ -45,7 +45,7 @@ export default function MyModules() {
 
   return (
     <div className="min-h-screen">
-      <Header title="我的模块" subtitle="管理已开通的模块，查看使用情况与到期时间" role={role} onRoleChange={setRole} />
+      <Header title="我的模块" subtitle="管理已开通的模块，查看使用情况与到期时间" />
 
       <div className="p-6 flex flex-col gap-4">
         {/* Stats */}
@@ -92,7 +92,7 @@ export default function MyModules() {
             const dashOffset = circumference * (1 - pct / 100);
 
             return (
-              <div key={m.moduleId} className="bg-white rounded-md px-5 py-5 flex items-center gap-4">
+              <div key={m.moduleId} className="bg-white rounded-md px-5 py-5 flex items-center gap-4 cursor-pointer hover:shadow-[0_4px_20px_rgba(0,0,0,0.08)] hover:-translate-y-[1px] transition-all duration-200" onClick={() => navigate(`/module/${m.moduleId}`)}>
                 {/* Ring chart */}
                 <div className="relative shrink-0" style={{ width: 96, height: 96 }}>
                   <svg width="96" height="96" viewBox="0 0 96 96">
@@ -134,7 +134,7 @@ export default function MyModules() {
                   </div>
                   {/* Renewal button for expiring/expired */}
                   {(m.status === '即将到期' || m.status === '已过期') && (
-                    <button onClick={() => navigate('/modules')}
+                    <button onClick={(e) => { e.stopPropagation(); navigate('/modules'); }}
                       className="mt-3 w-full h-[32px] rounded-sm text-[13px] font-semibold text-white flex items-center justify-center gap-1 transition-all hover:brightness-110"
                       style={{ background: m.status === '已过期' ? 'linear-gradient(135deg, #F77234 0%, #F99D1C 100%)' : 'linear-gradient(135deg, #1C71D8 0%, #3584E4 100%)' }}>
                       <RefreshCw size={13} /> {m.status === '已过期' ? '重新购买' : '续费'}

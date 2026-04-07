@@ -1,10 +1,10 @@
 import { useState, type FormEvent } from 'react';
-import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   Clock, Users as UsersIcon, ChevronRight, Activity, Box, CreditCard, Sparkles,
 } from 'lucide-react';
 import Header from '../components/layout/Header';
-import type { UserRole } from '../components/layout/Layout';
+
 import TabFilter from '../components/common/TabFilter';
 import SearchBar from '../components/common/SearchBar';
 import Modal from '../components/common/Modal';
@@ -26,7 +26,7 @@ const priceFilters: PriceFilter[] = ['全部', '免费', '付费'];
 
 export default function ModuleCenter() {
   const navigate = useNavigate();
-  const { role, setRole } = useOutletContext<{ role: UserRole; setRole: (r: UserRole) => void }>();
+
 
   const [catTab, setCatTab] = useState(0);
   const [priceTab, setPriceTab] = useState<PriceFilter>('全部');
@@ -82,7 +82,7 @@ export default function ModuleCenter() {
 
   return (
     <div className="min-h-screen">
-      <Header title="模块中心" subtitle="浏览所有可用模块，申请试用或购买商业版" role={role} onRoleChange={setRole} />
+      <Header title="模块中心" subtitle="浏览所有可用模块，申请试用或购买商业版" />
 
       <div className="p-6 flex flex-col gap-4">
         {/* Stats */}
@@ -141,12 +141,12 @@ export default function ModuleCenter() {
                 }`}
               >
 
-                <div className="px-5 pt-4 pb-3 flex-1 flex flex-col">
+                <div className="px-5 pt-4 pb-3 flex-1 flex flex-col cursor-pointer" onClick={() => navigate(`/module/${m.id}`)}>
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
                       <div>
                         <div className="flex items-center gap-2">
-                          <p className="text-[14px] font-bold text-[#1D2129] leading-snug">{m.name}</p>
+                          <p className="text-[14px] font-bold text-[#1D2129] leading-snug hover:text-[#1C71D8] transition-colors">{m.name}</p>
                           {isPaid ? (
                             <span className="px-1.5 py-[2px] text-[11px] font-normal rounded-sm leading-none"
                               style={{ background: 'linear-gradient(135deg, #FFF3E8 0%, #FFE8D4 100%)', color: '#E8601A' }}>
@@ -182,7 +182,7 @@ export default function ModuleCenter() {
                 <div className="px-5 pb-4">
                   {canAction ? (
                     <button
-                      onClick={() => handleModuleAction(m)}
+                      onClick={(e) => { e.stopPropagation(); handleModuleAction(m); }}
                       className="w-full h-[36px] rounded-sm text-[14px] font-semibold text-white flex items-center justify-center gap-1 cursor-pointer transition-all hover:brightness-110"
                       style={{ background: isPaid ? 'linear-gradient(135deg, #F77234 0%, #F99D1C 100%)' : 'linear-gradient(135deg, #1C71D8 0%, #3584E4 100%)' }}
                     >

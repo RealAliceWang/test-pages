@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useOutletContext, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
   Building2, Phone, Server, Clock, Calendar,
   Box, AlertTriangle, ChevronRight, Pencil, Check, X,
@@ -7,7 +7,7 @@ import {
   Shield, LogIn, Monitor, MapPin, KeyRound, Fingerprint,
 } from 'lucide-react';
 import Header from '../components/layout/Header';
-import type { UserRole } from '../components/layout/Layout';
+
 import { currentUser, myModuleUsages } from '../data/mock';
 
 const inputCls = "h-[32px] px-2.5 text-[14px] text-[#1D2129] bg-[#F7F8FA] border border-[#E5E6EB] rounded outline-none placeholder:text-[#C9CDD4] focus:border-[#1C71D8] focus:bg-white transition-all";
@@ -75,7 +75,7 @@ function ReadonlyField({ label, children, icon, iconBg }: ReadonlyFieldProps) {
 }
 
 export default function Profile() {
-  const { role, setRole } = useOutletContext<{ role: UserRole; setRole: (r: UserRole) => void }>();
+
   const u = currentUser;
   const activeCount = myModuleUsages.filter(m => m.status === '使用中').length;
   const expiringCount = myModuleUsages.filter(m => m.status === '即将到期').length;
@@ -113,7 +113,7 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen">
-      <Header title="个人信息" subtitle="查看您的账户信息与模块使用情况" role={role} onRoleChange={setRole} />
+      <Header title="个人信息" subtitle="查看您的账户信息与模块使用情况" />
 
       <div className="p-6 flex flex-col gap-4">
         {/* Profile card */}

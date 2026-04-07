@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
-import { useOutletContext } from 'react-router-dom';
+
 import { Users, UserCheck, UserCog, UserX, MoreVertical } from 'lucide-react';
 import Header from '../components/layout/Header';
-import type { UserRole } from '../components/layout/Layout';
+
 import TabFilter from '../components/common/TabFilter';
 import SearchBar from '../components/common/SearchBar';
 import StatusBadge from '../components/common/StatusBadge';
@@ -11,7 +11,7 @@ import { users, type UserStatus } from '../data/mock';
 const filters: (UserStatus | '全部用户')[] = ['全部用户', '使用中', '待审核', '停用'];
 
 export default function UserManagement() {
-  const { role, setRole } = useOutletContext<{ role: UserRole; setRole: (r: UserRole) => void }>();
+
   const [tab, setTab] = useState(0);
   const [search, setSearch] = useState('');
   const [menu, setMenu] = useState<string | null>(null);
@@ -34,7 +34,7 @@ export default function UserManagement() {
 
   return (
     <div className="min-h-screen">
-      <Header title="用户管理" subtitle="管理用户信息和角色分配" role={role} onRoleChange={setRole} />
+      <Header title="用户管理" subtitle="管理用户信息和角色分配" />
       <div className="p-6 flex flex-col gap-5">
         <div className="grid grid-cols-4 gap-5">
           {([

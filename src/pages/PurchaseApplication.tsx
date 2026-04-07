@@ -1,12 +1,12 @@
 import { useState, useEffect, type FormEvent } from 'react';
-import { useParams, useNavigate, Link, useOutletContext } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   ArrowLeft, Check, CreditCard, Building2, QrCode,
   Clock, Shield, FileText, Copy, CheckCircle2, ChevronRight,
   Download, AlertCircle, Wallet,
 } from 'lucide-react';
 import Header from '../components/layout/Header';
-import type { UserRole } from '../components/layout/Layout';
+
 import { modules, currentUser, type Module } from '../data/mock';
 import { moduleIconMap } from '../assets/moduleIcons';
 
@@ -26,7 +26,6 @@ function genOrderNo() {
 }
 
 export default function PurchaseApplication() {
-  const { role, setRole } = useOutletContext<{ role: UserRole; setRole: (r: UserRole) => void }>();
   const { moduleId } = useParams<{ moduleId: string }>();
   const navigate = useNavigate();
   const mod = modules.find((m) => m.id === moduleId) as Module | undefined;
@@ -115,22 +114,30 @@ export default function PurchaseApplication() {
 
   /* ─── Module Summary Card ─── */
   const ModuleSummary = ({ compact = false }: { compact?: boolean }) => (
-    <div className={`bg-[#F7F8FA] rounded-lg ${compact ? 'p-4' : 'p-5'}`}>
-      <div className="flex items-center gap-4">
-        <img src={icon} alt="" className="w-[48px] h-[48px] object-contain" />
+    <div
+      className={`relative rounded-xl overflow-hidden border border-[#b8d4f0] ${compact ? 'p-4' : 'p-5'}`}
+      style={{
+        background: 'linear-gradient(135deg, #e8f1fb 0%, #f0f6ff 50%, #e4eefb 100%)',
+      }}
+    >
+
+      <div className="relative flex items-center gap-4">
+        <div className="w-[52px] h-[52px] rounded-lg bg-[#1c71d8]/10 border border-[#1c71d8]/15 flex items-center justify-center">
+          <img src={icon} alt="" className="w-[36px] h-[36px] object-contain" />
+        </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <p className="text-[15px] font-bold text-[#1D2129]">{mod.name}（商业版）</p>
-            <span className="px-2 py-0.5 text-[12px] bg-[#FFF3E8] text-[#F77234] rounded font-medium">付费</span>
+            <span className="px-2 py-0.5 text-[12px] bg-[#1c71d8]/10 text-[#1c71d8] rounded font-medium">付费</span>
           </div>
           <p className="text-[13px] text-[#86909C] mt-0.5">{mod.description}</p>
         </div>
         <div className="text-right shrink-0">
-          <p className="text-[22px] font-bold text-[#F77234]">¥{price.toLocaleString()}<span className="text-[13px] font-normal text-[#86909C]">/年</span></p>
+          <p className="text-[24px] font-bold text-[#F77234]">¥{price.toLocaleString()}<span className="text-[13px] font-normal text-[#86909C]">/年</span></p>
         </div>
       </div>
       {!compact && (
-        <div className="grid grid-cols-4 gap-4 mt-4 pt-4 border-t border-[#E5E6EB]">
+        <div className="relative grid grid-cols-4 gap-4 mt-4 pt-4 border-t border-[#b8d4f0]/50">
           <div><p className="text-[12px] text-[#86909C]">模块编号</p><p className="text-[14px] font-semibold text-[#1D2129] mt-0.5">{mod.code}</p></div>
           <div><p className="text-[12px] text-[#86909C]">授权期限</p><p className="text-[14px] font-semibold text-[#1D2129] mt-0.5">{mod.duration} 天</p></div>
           <div><p className="text-[12px] text-[#86909C]">节点数量</p><p className="text-[14px] font-semibold text-[#1D2129] mt-0.5">{mod.nodes} 节点</p></div>
@@ -420,7 +427,7 @@ export default function PurchaseApplication() {
 
   return (
     <div className="min-h-screen">
-      <Header title="购买模块" subtitle={`${mod.name}（商业版） — ${mod.code}`} role={role} onRoleChange={setRole} />
+      <Header title="购买模块" subtitle={`${mod.name}（商业版） — ${mod.code}`} />
 
       <div className="p-6">
         {/* Back link */}

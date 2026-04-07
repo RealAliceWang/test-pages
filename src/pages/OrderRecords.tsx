@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { useOutletContext } from 'react-router-dom';
+
 import { FileText, FileCheck, FileClock, FileX, Eye, Download, Calendar, ShoppingCart, CreditCard, Inbox } from 'lucide-react';
 import Header from '../components/layout/Header';
-import type { UserRole } from '../components/layout/Layout';
+
 import TabFilter from '../components/common/TabFilter';
 import SearchBar from '../components/common/SearchBar';
 import StatusBadge from '../components/common/StatusBadge';
@@ -22,15 +22,15 @@ function EmptyTable({ message }: { message: string }) {
 }
 
 export default function OrderRecords() {
-  const { role, setRole } = useOutletContext<{ role: UserRole; setRole: (r: UserRole) => void }>();
+
   const [recordType, setRecordType] = useState<RecordType>('trial');
   const [tab, setTab] = useState(0);
   const [search, setSearch] = useState('');
   const [detail, setDetail] = useState<ApplicationRecord | null>(null);
   const [purchaseDetail, setPurchaseDetail] = useState<PurchaseOrder | null>(null);
 
-  const myTrialRecords = role === 'admin' ? applicationRecords : applicationRecords.filter(r => r.applicant === currentUser.name);
-  const myPurchaseOrders = role === 'admin' ? purchaseOrders : purchaseOrders.filter(r => r.buyer === currentUser.name);
+  const myTrialRecords = applicationRecords.filter(r => r.applicant === currentUser.name);
+  const myPurchaseOrders = purchaseOrders.filter(r => r.buyer === currentUser.name);
 
   const trialFilters: (ApplicationStatus | '全部')[] = ['全部', '待审核', '审核中', '已通过', '已拒绝'];
   const trialSel = trialFilters[tab];
@@ -58,7 +58,7 @@ export default function OrderRecords() {
 
   return (
     <div className="min-h-screen">
-      <Header title="订单记录" subtitle="查看试用申请和购买订单的全部记录" role={role} onRoleChange={setRole} />
+      <Header title="订单记录" subtitle="查看试用申请和购买订单的全部记录" />
       <div className="p-6 flex flex-col gap-4">
         {/* Type switch */}
         <div className="flex items-center gap-3">
