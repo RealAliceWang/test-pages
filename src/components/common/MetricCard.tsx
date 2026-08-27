@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { ArrowUpRight } from 'lucide-react';
+import { glassIconFor } from '../icons/glassMap';
 
 /** The four accent tones a metric may carry. Anything outside this set is a bug. */
 export type MetricTone = 'neutral' | 'accent' | 'positive' | 'attention';
@@ -49,12 +50,19 @@ interface MetricCardProps {
 export default function MetricCard({ metric, onGo }: MetricCardProps) {
   const tone = tones[metric.tone ?? 'neutral'];
   const style = { '--metric-tint': tone.tint } as CSSProperties;
+  /* Called, not mounted as <Glass/>: these are plain shape functions rather
+     than stateful components, and rendering one by identity would trip the
+     "component created during render" rule for no benefit. */
+  const glass = glassIconFor(metric.icon)?.({
+    className: 'w-[24px] h-[24px]',
+    style: { color: tone.on },
+  });
 
   const body = (
     <>
       <div className="flex items-center gap-2.5">
-        <span className="metric-icon w-[38px] h-[38px] rounded-[13px] flex items-center justify-center shrink-0">
-          <metric.icon size={18} strokeWidth={2.3} style={{ color: tone.on }} />
+        <span className="metric-icon w-[40px] h-[40px] rounded-[13px] flex items-center justify-center shrink-0">
+          {glass ?? <metric.icon size={18} strokeWidth={2.3} style={{ color: tone.on }} />}
         </span>
         <p className="eyebrow truncate">{metric.label}</p>
       </div>

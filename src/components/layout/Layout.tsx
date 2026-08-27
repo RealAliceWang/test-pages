@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import FlashToast from '../common/FlashToast';
 import { AsideSlotContext } from './asideSlot';
+import GlassDefs from '../icons/glassDefs';
 
 /**
  * The app fills the viewport edge to edge.
@@ -22,6 +23,8 @@ export default function Layout() {
 
   return (
     <div className="h-dvh">
+      {/* Gradient ramps the glass icons reference by url(); mounted once. */}
+      <GlassDefs />
       <div className="app-shell h-full flex overflow-hidden">
         <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
 
