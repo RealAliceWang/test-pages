@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, Inbox } from 'lucide-react';
+import { Inbox } from 'lucide-react';
 import TabFilter from '../../components/common/TabFilter';
+import { moduleIconMap } from '../../assets/moduleIcons';
 import {
   allocatedSeats, deptOf, kindLabels, memberOf, moduleOf, pendingStep, isStandIn, useApp,
 } from '../../store';
@@ -69,15 +70,15 @@ export default function WorkQueue({ items, pools, ownView }: WorkQueueProps) {
                 onClick={() => navigate(target)}
                 className="w-full text-left flex gap-3 rounded-md px-3 py-3 transition-colors hover:bg-surface-secondary cursor-pointer"
               >
-                {/* Filled tick for closed items, hollow ring for open ones —
-                    the checklist read the reference uses. */}
-                <span
-                  className={`mt-[2px] w-[18px] h-[18px] rounded-full shrink-0 flex items-center justify-center ${
-                    done ? 'bg-primary text-white' : 'border-[1.5px] border-text-muted'
+                {/* The module this request is about. A checkbox would promise
+                    a selection this row does not offer — it only navigates. */}
+                <img
+                  src={moduleIconMap[mod?.icon ?? 'building'] || moduleIconMap.building}
+                  alt=""
+                  className={`mt-[1px] w-[30px] h-[30px] object-contain shrink-0 ${
+                    done ? 'opacity-45' : ''
                   }`}
-                >
-                  {done && <Check size={11} strokeWidth={3} />}
-                </span>
+                />
 
                 <div className="min-w-0 flex-1">
                   <p
@@ -95,15 +96,19 @@ export default function WorkQueue({ items, pools, ownView }: WorkQueueProps) {
                     {ownView ? app.createdAt : `${applicant?.name} · ${dept?.name}`}
                   </p>
 
-                  {(standIn || !done) && (
-                    <span
-                      className={`inline-block mt-2 text-[11px] font-bold rounded-full px-2.5 py-[3px] ${
-                        standIn ? 'bg-warning-bg text-warning' : 'chip-signal'
-                      }`}
-                    >
-                      {standIn ? '代部门审批' : app.status}
-                    </span>
-                  )}
+                  {/* Settled rows keep a status chip too: with the tick gone,
+                      this is the only thing marking them as closed. */}
+                  <span
+                    className={`inline-block mt-2 text-[11px] font-bold rounded-full px-2.5 py-[3px] ${
+                      standIn
+                        ? 'bg-warning-bg text-warning'
+                        : done
+                          ? 'bg-surface-hover text-text-muted'
+                          : 'chip-signal'
+                    }`}
+                  >
+                    {standIn ? '代部门审批' : app.status}
+                  </span>
                 </div>
               </button>
             );
