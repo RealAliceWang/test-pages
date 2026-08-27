@@ -1,73 +1,85 @@
-# React + TypeScript + Vite
+# 3D3S 云授权系统（B 端多角色版）
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+面向设计院的模块授权管理系统。企业以**席位池**持有授权，成员按需申请，部门与企业分级审批，超出免费额度时走采购或向厂商申请扩容。
 
-Currently, two official plugins are available:
+原版本是面向个人用户的单角色授权页面，本次改版重做为多组织、多角色的 B 端产品。
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## 快速开始
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+打开 **http://localhost:5173/build-entry.html**
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+入口文件名是 `build-entry.html` 而非 `index.html`：根目录的 `index.html` 只是一个跳转壳，指向 `dist/build-entry.html`，供 `npm run build` 之后直接静态托管使用，开发时用上面的地址。
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+用右上角的身份切换器在四个角色之间切换，无需登录：
+
+| 身份 | 角色 | 看到什么 |
+| --- | --- | --- |
+| 王振华 | 企业管理员 | 全企业席位、成员、订单、审计 |
+| 李明 | 部门管理员（结构一所） | 仅本部门成员与用量，审批本部门申请 |
+| 张思远 | 普通成员 | 自己的授权与申请 |
+| 沈涛 | 厂商运营 | 跨企业的客户账号、模块目录、到账确认 |
+
+---
+
+## 三条主流程
+
+系统按「企业是否已有空闲席位」自动决定审批链，这是整个产品的核心判定：
+
+| 情形 | 分支 | 审批链 | 结果 |
+| --- | --- | --- | --- |
+| 池内有空闲席位 | 池内分配 | 部门 | 通过即分配，不花钱 |
+| 池已占满且模块收费 | 采购 | 部门 → 企业 | 转订单，支付到账后扩容 |
+| 池已占满且模块免费 | 免费额度 | 部门 → 企业 → 厂商 | 厂商赠予席位并自动分配 |
+
+想快速看到闭环，可以这样走（以张思远身份开始）：
+
+1. **池内分配** — 模块中心申请「钢构深化」免费版 → 切李明审批通过 → 回张思远看「我的授权」
+2. **采购** — 申请「建筑结构」商业版 → 李明通过 → 王振华通过 → 王振华下单并选对公转账 → 切沈涛确认到账
+3. **免费额度** — 申请「屋架桁架」→ 李明 → 王振华 → 沈涛，三级审批后新建席位池
+
+另外两个值得看的点：以王振华身份在成员管理里停用「郑凯」，他的 3 个席位会立即回池；在席位池页面能看到「多高层（商业版）」10 天后到期的续费提醒。
+
+> 状态存在内存里，刷新即回到初始种子数据，便于反复走查。
+
+---
+
+## 文档
+
+| 文档 | 内容 |
+| --- | --- |
+| [01-竞品分析](docs/01-竞品分析.md) | Autodesk / Bentley / Ansys 等的授权模型与企业管理能力，以及可借鉴结论 |
+| [02-需求分析](docs/02-需求分析.md) | 原系统问题诊断、客户画像、关键场景、角色边界、席位池模型选型与已知缺陷 |
+| [03-PRD](docs/03-PRD.md) | 角色权限矩阵、信息架构、核心对象、状态机、页面交互规格、验收脚本 |
+| [04-方案设计](docs/04-方案设计.md) | 分层结构、数据建模、权限落地、一致性保障、接后端映射建议 |
+| [05-设计规范](docs/05-design-system.md) | 色彩、字体、间距、组件、动效与落地检查清单，可复用于同类 B 端后台 |
+
+---
+
+## 校验
+
+闭环不靠人工点，两个脚本可重复跑：
+
+```bash
+npm run verify         # 直接驱动 reducer 走完全部分支，97 项断言
+npm run verify:pages   # 需先 npm run dev；4 角色 × 13 路由 = 52 个渲染与越权断言
 ```
+
+`npm run verify` 覆盖三条主分支、驳回与撤销、离职回收、超卖防护、续费缩容、审计完整性。
+`npm run verify:pages` 断言有权限的页面正常渲染无报错，无权限时直达 URL 被显式拒绝。
+
+---
+
+## 技术栈
+
+React 19 · TypeScript · Vite · Tailwind CSS 4 · React Router · Recharts
+
+状态层为 Context + reducer，纯逻辑集中在 `src/store/appState.ts`（不依赖 React，因此校验脚本可在 Node 中直接驱动）。领域模型与权限声明在 `src/domain/`。详见[方案设计](docs/04-方案设计.md)。
+
+视觉层的令牌集中在 `src/index.css` 的 `@theme`，图表色因 Recharts 读不到 CSS 变量而单独放在 `src/theme.ts`。两者的使用约定见[设计规范](docs/05-design-system.md)。

@@ -1,47 +1,518 @@
+/* Latin display face; Chinese falls back to PingFang SC / Microsoft YaHei below. */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #1C71D8;
-  --color-primary-light: #3584E4;
-  --color-primary-dark: #155BAB;
-  --color-primary-bg: #E8F3FF;
-  --color-success: #00B42A;
-  --color-success-bg: #E8FFEA;
-  --color-warning: #D4770B;
-  --color-warning-bg: #FFF7E8;
-  --color-danger: #F53F3F;
-  --color-danger-bg: #FFECE8;
-  --color-orange: #F77234;
-  --color-orange-bg: #FFF3E8;
+  /* ── Brand ────────────────────────────────────────────────────────────────
+     Ink is the primary action colour, not blue. Near-black CTAs read as
+     premium and let the single blue accent stay meaningful (selection, links,
+     data). Blue-on-everything is what made the old build look generic. */
+  --color-ink: #0A0C10;
+  --color-ink-soft: #1A1D24;
 
-  --color-text: #1D2129;
-  --color-text-secondary: #4E5969;
-  --color-text-muted: #86909C;
-  --color-text-placeholder: #C9CDD4;
+  --color-primary: #2F6BFF;
+  --color-primary-light: #5B8CFF;
+  --color-primary-dark: #1E4FD8;
+  --color-primary-bg: #EDF2FF;
+  --color-primary-ring: rgba(47, 107, 255, 0.18);
 
+  --color-accent: #4F46E5;
+  --color-accent-light: #6366F1;
+  --color-accent-bg: #EEF0FF;
+
+  /* Light-blue signal. This is the product's data highlight: rings, meters,
+     chart emphasis, on-target badges.
+     Never for text on white (fails contrast) and never for navigation or
+     buttons — its whole value is that it means "this is the number".
+     Pitched light on purpose: the ring it draws sits on the deep blue identity
+     card, and this tint clears 3:1 against that card as well as against the
+     grey meter track. */
+  --color-signal: #7DD3FC;
+  --color-signal-soft: #BAE6FD;
+  --color-signal-bg: #F0F9FF;
+  /* Readable stand-in when the signal has to carry text. */
+  --color-signal-deep: #0C4A6E;
+
+  /* ── Semantic states — text tones all clear 4.5:1 on their own tint ────── */
+  --color-success: #047857;
+  --color-success-light: #10B981;
+  --color-success-bg: #ECFDF5;
+  --color-warning: #B45309;
+  --color-warning-light: #F59E0B;
+  --color-warning-bg: #FFFAEB;
+  --color-danger: #DC2626;
+  --color-danger-light: #EF4444;
+  --color-danger-bg: #FEF2F2;
+  --color-orange: #EA580C;
+  --color-orange-light: #F97316;
+  --color-orange-bg: #FFF7ED;
+  --color-violet: #6D28D9;
+  --color-violet-light: #8B5CF6;
+  --color-violet-bg: #F5F3FF;
+
+  /* ── Ink scale ────────────────────────────────────────────────────────── */
+  --color-text: #0A0C10;
+  --color-text-secondary: #4A515E;
+  --color-text-muted: #6B7280;
+  --color-text-placeholder: #9CA3AF;
+
+  /* ── Surfaces ─────────────────────────────────────────────────────────────
+     Three planes. The reference runs a tinted working area with white cards on
+     top, and a separate white side panel pinned to the right:
+       shell    — the tinted working area holding the bento cards
+       aside    — the white side rail (task/goal tracker)
+       surface  — the white cards inside the shell */
+  --color-shell: #EFF1F4;
+  --color-aside: #FFFFFF;
   --color-surface: #FFFFFF;
-  --color-surface-secondary: #F7F8FA;
-  --color-surface-hover: #F2F3F5;
-  --color-page-bg: #F0F2F5;
-  --color-border: #E5E6EB;
-  --color-divider: #F2F3F5;
+  --color-surface-secondary: #F4F6F8;
+  --color-surface-hover: #EBEEF2;
+  --color-border: #E4E7EC;
+  --color-divider: #F0F1F4;
+  --color-hairline: rgba(10, 12, 16, 0.05);
 
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
+  /* Identity card. The reference's photo panel is the warmest thing on screen;
+     it is what stops an all-grey dashboard from feeling clinical.
+     Pitched deep enough that plain white body copy clears 4.5:1 on it — the
+     reference's lighter blue only reaches 3.3:1 even with pure white, so
+     matching its exact hue would have made every supporting line on the card
+     fail AA. */
+  --color-feature: #2A63F0;
+  --color-feature-deep: #1A46C4;
+  --color-feature-soft: #C5DDFF;
+
+  /* ── Radius: pill-first. Cards are generous, controls are fully rounded. ── */
+  --radius-xs: 10px;
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --radius-xl: 28px;
+  --radius-pill: 999px;
+
+  /* ── Elevation ────────────────────────────────────────────────────────────
+     Cards, buttons and controls are flat: separation comes from fill and a 1px
+     hairline, never from a drop shadow. Elevation is reserved for surfaces that
+     genuinely float over the page — menus, modals, toasts — where content
+     scrolling underneath has to be pushed back. */
+  --shadow-elevated: 0 2px 6px rgba(10, 12, 16, 0.05), 0 20px 44px -20px rgba(10, 12, 16, 0.22);
+  --shadow-float: 0 4px 12px rgba(10, 12, 16, 0.06), 0 36px 72px -28px rgba(10, 12, 16, 0.3);
+
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', 'Segoe UI', sans-serif;
+
+  /* Single easing token so every transition in the product shares one rhythm. */
+  --ease-fluid: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Segoe UI', sans-serif;
-  background: var(--color-page-bg);
-  color: var(--color-text);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@layer base {
+  /* Matches the shell so there is no flash of a different grey before the app
+     paints; the shell itself covers the viewport from then on. */
+  body {
+    margin: 0;
+    font-family: var(--font-sans);
+    background: var(--color-shell);
+    color: var(--color-text);
+    font-feature-settings: 'cv11', 'ss01';
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Digits in tables and KPIs must not jitter between values */
+  table,
+  .num {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Display figures: tight tracking is what makes big numbers read as
+     designed rather than merely large. */
+  .display-num {
+    font-variant-numeric: tabular-nums;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 0.92;
+  }
+
+  ::selection {
+    background: var(--color-primary-ring);
+    color: var(--color-primary-dark);
+  }
 }
 
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-thumb { background: var(--color-text-placeholder); border-radius: 3px; }
+@layer components {
+  /* ---- App shell ----
+     Full-bleed: the shell tint is the page background, and the white cards and
+     side rail sitting on it carry the structure.
+     Over that flat tint sits a wide blue wash. Three very low-opacity radials
+     rather than one, so the empty gutters read as ambient atmosphere instead of
+     a visible blob, and all three centres sit off-canvas so the page never
+     shows where a gradient starts. It is painted on the shell, not on the
+     scrolling content, so it stays still while a page scrolls under it. */
+  .app-shell {
+    background-color: var(--color-shell);
+    background-image:
+      radial-gradient(1500px 1000px at 0% -20%, rgba(125, 211, 252, 0.44), transparent 64%),
+      radial-gradient(1300px 900px at 104% 2%, rgba(96, 152, 255, 0.24), transparent 62%),
+      radial-gradient(1300px 950px at 34% 116%, rgba(125, 211, 252, 0.34), transparent 62%),
+      /* Keeps the middle of a sparse page from falling back to flat grey. */
+      linear-gradient(158deg, rgba(125, 211, 252, 0.15) 0%, rgba(125, 211, 252, 0) 46%, rgba(96, 152, 255, 0.13) 100%);
+  }
+
+  /* White rail pinned to the right of the shell, holding the work queue.
+     Kept out of the main scroll region so the queue stays put while the
+     dashboard scrolls — that persistence is the point of the pattern.
+     A little see-through so the shell wash continues under it; blur keeps
+     the type readable without going back to a solid slab. */
+  .app-aside {
+    background: rgba(255, 255, 255, 0.82);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+  }
+
+  /* ---- Surfaces ----
+     Fully flat: no elevation and no outline. A card is separated from the page
+     by its white fill against the shell tint alone, which is why that tint has
+     to stay a visible step away from white. */
+  .panel {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+  }
+
+  /* Inset panel: a surface that sits *inside* another panel (nested cards,
+     summary strips). Reads as a tinted block on white. */
+  .panel-inset {
+    background: var(--color-surface-secondary);
+    border-radius: var(--radius-md);
+  }
+
+  /* Dark feature surface. One per page at most: the hero. Its job is to give
+     the layout a focal point the way the reference's photo card does. */
+  .panel-ink {
+    position: relative;
+    overflow: hidden;
+    background-image: linear-gradient(150deg, #14171F 0%, #0A0C10 58%, #0D1526 100%);
+    border-radius: var(--radius-lg);
+    color: #fff;
+  }
+
+  .panel-ink::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(26rem 20rem at 100% 0%, rgba(47, 107, 255, 0.32), transparent 64%),
+      radial-gradient(20rem 16rem at 4% 108%, rgba(200, 241, 53, 0.12), transparent 62%);
+  }
+
+  /* Blue identity card — the warm anchor of the dashboard.
+     Text on this surface is plain white and takes its hierarchy from size and
+     weight rather than opacity: translucent white cannot clear 4.5:1 on any
+     blue bright enough to read as the reference's accent card. */
+  .panel-feature {
+    position: relative;
+    overflow: hidden;
+    background-image: linear-gradient(142deg, #2A63F0 0%, #1F52DE 52%, #1A46C4 100%);
+    border-radius: var(--radius-lg);
+    color: #fff;
+  }
+
+  /* Sheen only, kept weak so it cannot lift the surface into the range where
+     white body copy stops passing contrast. */
+  .panel-feature::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(18rem 14rem at 88% 6%, rgba(255, 255, 255, 0.14), transparent 62%),
+      radial-gradient(14rem 12rem at 0% 100%, rgba(10, 12, 16, 0.16), transparent 60%);
+  }
+
+  /* Floating surfaces (dropdowns, toasts, notices). Opaque on purpose: content
+     scrolling underneath must never read through a menu. */
+  .panel-floating {
+    background: var(--color-surface);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-elevated);
+  }
+
+  /* Clickable card. With no elevation or outline left to change, the lift is
+     the whole affordance, so it runs slightly further than it did when a
+     shadow was doing part of the work. */
+  .panel-hover {
+    transition: transform 240ms var(--ease-fluid);
+  }
+
+  .panel-hover:hover {
+    transform: translateY(-4px);
+  }
+
+  /* Page title row. Not sticky: a transparent bar that stays pinned would
+     let cards slide underneath the title, which is the overlap that showed
+     up once the fill was removed. It scrolls with the page instead. */
+  .app-bar {
+    background: transparent;
+  }
+
+  /* ---- Brand fills ----
+     Gradients are reserved for the ink hero and data bars. Buttons and chips
+     use flat fills: gradient buttons everywhere is the single strongest
+     "template" tell. */
+  .brand-gradient {
+    background-image: linear-gradient(140deg, var(--color-ink) 0%, #1B2436 100%);
+  }
+
+  .signal-gradient {
+    background-image: linear-gradient(90deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+  }
+
+  /* ---- Controls ----
+     Every button is a pill and shares one height scale (h-9 / h-10).
+     Primary = ink. Accent = blue, used only when a blue action must outrank
+     an ink one on the same surface.
+     Flat fills, no elevation: hover shifts the fill and press scales, which is
+     enough feedback without a drop shadow under every action. */
+  .btn-primary {
+    background: var(--color-ink);
+    color: #fff;
+    border-radius: var(--radius-pill);
+    transition: transform 180ms var(--ease-fluid), background 180ms var(--ease-fluid);
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: var(--color-ink-soft);
+  }
+
+  .btn-primary:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
+  .btn-primary:disabled {
+    background: var(--color-surface-hover);
+    color: var(--color-text-placeholder);
+  }
+
+  .btn-accent {
+    background: var(--color-primary);
+    color: #fff;
+    border-radius: var(--radius-pill);
+    transition: transform 180ms var(--ease-fluid), background 180ms var(--ease-fluid);
+  }
+
+  .btn-accent:hover:not(:disabled) {
+    background: var(--color-primary-dark);
+  }
+
+  .btn-accent:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
+  .btn-accent:disabled {
+    background: var(--color-surface-hover);
+    color: var(--color-text-placeholder);
+  }
+
+  .btn-soft {
+    background: var(--color-surface-hover);
+    color: var(--color-text);
+    border-radius: var(--radius-pill);
+    transition: background 180ms var(--ease-fluid), transform 180ms var(--ease-fluid),
+      color 180ms var(--ease-fluid);
+  }
+
+  .btn-soft:hover:not(:disabled) {
+    background: #E7EAEF;
+  }
+
+  .btn-soft:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
+  .btn-ghost {
+    background: var(--color-surface);
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    transition: background 180ms var(--ease-fluid), border-color 180ms var(--ease-fluid),
+      color 180ms var(--ease-fluid);
+  }
+
+  .btn-ghost:hover:not(:disabled) {
+    background: var(--color-surface-secondary);
+    border-color: #D3D7DE;
+    color: var(--color-text);
+  }
+
+  .btn-ghost:disabled {
+    color: var(--color-text-placeholder);
+    background: var(--color-surface);
+  }
+
+  /* Icon-only control. Fixed square, pill radius, same hover language. */
+  .btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-pill);
+    color: var(--color-text-muted);
+    transition: background 180ms var(--ease-fluid), color 180ms var(--ease-fluid);
+  }
+
+  .btn-icon:hover:not(:disabled) {
+    background: var(--color-surface-hover);
+    color: var(--color-text);
+  }
+
+  .field {
+    background: var(--color-surface-secondary);
+    border: 1px solid transparent;
+    border-radius: var(--radius-pill);
+    transition: border-color 180ms var(--ease-fluid), box-shadow 180ms var(--ease-fluid),
+      background 180ms var(--ease-fluid);
+  }
+
+  .field:hover:not(:focus):not(:focus-within) {
+    background: var(--color-surface-hover);
+  }
+
+  .field:focus,
+  .field:focus-within {
+    background: var(--color-surface);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-ring);
+    outline: none;
+  }
+
+  /* Multi-line and select fields keep a soft rectangle rather than a pill. */
+  .field-box {
+    border-radius: var(--radius-sm);
+  }
+
+  /* ---- Data table ----
+     Header is a flat tint with uppercase micro-labels; no gradient. */
+  .data-table thead tr {
+    background: var(--color-surface-secondary);
+  }
+
+  .data-table thead th {
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+
+  .data-table tbody tr {
+    transition: background 160ms var(--ease-fluid);
+  }
+
+  /* ---- Brand ----
+     The shipped wordmark is a white-on-transparent PNG drawn for the old dark
+     navy rail, where it read as the brand. On the light shell it disappeared
+     entirely. Recolouring keeps the official asset and its proportions rather
+     than substituting a redrawn mark; brightness(0) preserves the alpha and
+     paints the glyphs ink. */
+  .brand-mark {
+    filter: brightness(0);
+  }
+
+  /* ---- Typography helpers ---- */
+  /* Section eyebrow: the small tracked-out label above a card title.
+     At 11px these are real labels, not decoration, so they take the secondary
+     ink rather than placeholder grey — placeholder only reached 2.8:1 on white
+     and 2.4:1 on the shell tint, and washed out the sidebar group headings the
+     reference renders as firmly readable. */
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+  }
+
+  /* ---- Data ---- */
+  /* Track + fill for every progress affordance, so bars match across pages.
+     Default fill is the signal blue: in this product a meter always answers
+     "how far along", which is exactly what the signal colour marks. */
+  .meter {
+    height: 7px;
+    border-radius: var(--radius-pill);
+    background: var(--color-surface-hover);
+    overflow: hidden;
+  }
+
+  .meter > span {
+    display: block;
+    height: 100%;
+    border-radius: var(--radius-pill);
+    background: var(--color-signal);
+    transition: width 600ms var(--ease-fluid);
+  }
+
+  /* Signal chip for on-target / achieved states. Text uses the deep variant
+     so it still clears 4.5:1 against the tint. */
+  .chip-signal {
+    background: var(--color-signal);
+    color: var(--color-signal-deep);
+  }
+
+  /* ---- Motion ---- */
+  .rise {
+    animation: rise 460ms var(--ease-fluid) both;
+  }
+
+  /* Staggered entrance for card grids; capped so long lists don't crawl in. */
+  .stagger > * {
+    animation: rise 460ms var(--ease-fluid) both;
+  }
+  .stagger > *:nth-child(1) { animation-delay: 0ms; }
+  .stagger > *:nth-child(2) { animation-delay: 45ms; }
+  .stagger > *:nth-child(3) { animation-delay: 90ms; }
+  .stagger > *:nth-child(4) { animation-delay: 135ms; }
+  .stagger > *:nth-child(n + 5) { animation-delay: 170ms; }
+
+  .pulse-dot::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: inherit;
+    animation: haloPulse 2s ease-out infinite;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes haloPulse {
+  0% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(2.2);
+  }
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb {
+  background: rgba(10, 12, 16, 0.18);
+  border-radius: var(--radius-pill);
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(10, 12, 16, 0.3); background-clip: content-box; }
 ::-webkit-scrollbar-track { background: transparent; }
 
 /* Global focus-visible ring for keyboard navigation */

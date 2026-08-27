@@ -164,7 +164,7 @@ export interface User {
 }
 
 export const users: User[] = [
-  { id: '1', code: 'U001', name: '张三', department: '技术部', email: 'zhangsan@example.com', phone: '138****1234', moduleCount: 3, status: '使用中', registerTime: '2025-01-15', company: '公司A', avatarColor: '#1C71D8' },
+  { id: '1', code: 'U001', name: '张三', department: '技术部', email: 'zhangsan@example.com', phone: '138****1234', moduleCount: 3, status: '使用中', registerTime: '2025-01-15', company: '公司A', avatarColor: '#2563EB' },
   { id: '2', code: 'U002', name: '李四', department: '产品部', email: 'lisi@example.com', phone: '139****5678', moduleCount: 2, status: '使用中', registerTime: '2025-02-20', company: '公司B', avatarColor: '#22C55E' },
   { id: '3', code: 'U003', name: '王五', department: '设计部', email: 'wangwu@example.com', phone: '136****9012', moduleCount: 0, status: '待审核', registerTime: '2025-03-10', company: '公司C', avatarColor: '#F59E0B' },
   { id: '4', code: 'U004', name: '赵六', department: '运营部', email: 'zhaoliu@example.com', phone: '137****3456', moduleCount: 5, status: '使用中', registerTime: '2025-01-25', company: '公司D', avatarColor: '#EF4444' },
@@ -195,7 +195,7 @@ export const myUsageTrend = [
 ];
 
 export const moduleDistribution = [
-  { name: '基本分析', value: 35, color: '#1C71D8' },
+  { name: '基本分析', value: 35, color: '#2563EB' },
   { name: '高级建模', value: 26, color: '#22C55E' },
   { name: '协同设计', value: 20, color: '#F59E0B' },
   { name: '渲染输出', value: 11, color: '#EF4444' },
@@ -253,7 +253,7 @@ export interface UserProfile {
 
 export const currentUser: UserProfile = {
   name: '用户名',
-  role: '产品经理',
+  role: '结构工程师',
   userId: '123456789',
   avatar: '',
   company: '上海同磊土木工程技术有限公司',

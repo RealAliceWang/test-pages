@@ -4,3 +4,5 @@ dist
 *.local
 .DS_Store
 .cursor/
+# Design-review screenshots: regenerated on demand by scripts/shot.ts
+.review/

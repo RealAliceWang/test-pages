@@ -1,247 +1,220 @@
-import { useState, type FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
-import {
-  Clock, Users as UsersIcon, ChevronRight, Activity, Box, CreditCard, Sparkles,
-} from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Boxes, ChevronRight, KeyRound, PackageCheck, Wallet } from 'lucide-react';
 import Header from '../components/layout/Header';
-
+import MetricCard, { type Metric } from '../components/common/MetricCard';
 import TabFilter from '../components/common/TabFilter';
 import SearchBar from '../components/common/SearchBar';
-import Modal from '../components/common/Modal';
 import StatusBadge from '../components/common/StatusBadge';
-import { modules, moduleCategories, type Module } from '../data/mock';
 import { moduleIconMap } from '../assets/moduleIcons';
+import { categories } from '../domain/seed';
+import { can } from '../domain/permissions';
+import {
+  allocatedSeats, assignmentsOfMember, decideKind, isExpired, kindHint, kindLabels,
+  poolOf, spareSeats, useApp,
+} from '../store';
+import type { ModuleEdition } from '../domain/types';
 
-const getIcon = (key: string) => <img src={moduleIconMap[key] || moduleIconMap.building} alt="" className="w-[48px] h-[48px] object-contain" />;
-const icons: Record<string, { el: React.ReactNode; bg: string }> = Object.fromEntries(
-  Object.keys(moduleIconMap).map(k => [k, { el: getIcon(k), bg: 'bg-transparent' }])
-);
-
-const inputCls = "w-full h-[40px] px-3 text-[14px] text-[#1D2129] bg-[#F7F8FA] border border-[#E5E6EB] rounded-sm outline-none placeholder:text-[#C9CDD4] focus:border-[#1C71D8] focus:bg-white transition-all";
-const textareaCls = "w-full px-3 py-2.5 text-[14px] text-[#1D2129] bg-[#F7F8FA] border border-[#E5E6EB] rounded-sm outline-none placeholder:text-[#C9CDD4] focus:border-[#1C71D8] focus:bg-white transition-all resize-none";
-const labelCls = "block text-[14px] font-semibold text-[#1D2129] mb-1.5";
-
-type PriceFilter = '全部' | '免费' | '付费';
-const priceFilters: PriceFilter[] = ['全部', '免费', '付费'];
+const editionFilters: ('全部' | ModuleEdition)[] = ['全部', '免费版', '商业版'];
+const PAGE = 24;
 
 export default function ModuleCenter() {
   const navigate = useNavigate();
+  const { state, me, myOrg } = useApp();
 
+  const [cat, setCat] = useState(0);
+  const [edition, setEdition] = useState(0);
+  const [limit, setLimit] = useState(PAGE);
 
-  const [catTab, setCatTab] = useState(0);
-  const [priceTab, setPriceTab] = useState<PriceFilter>('全部');
-  const [search, setSearch] = useState('');
-  const [applyModule, setApplyModule] = useState<Module | null>(null);
-  const [applied, setApplied] = useState<Set<string>>(new Set());
+  /* Search lives in the URL so the header's global search can land here with a
+     term already applied, and so a filtered view stays shareable. */
+  const [params, setParams] = useSearchParams();
+  const search = params.get('q') ?? '';
+  const setSearch = (v: string) => {
+    setParams(v ? { q: v } : {}, { replace: true });
+    setLimit(PAGE);
+  };
 
-  const cat = moduleCategories[catTab];
-  const list = modules.filter((m) => {
-    if (cat !== '全部模块' && m.category !== cat) return false;
-    if (priceTab === '免费' && m.price) return false;
-    if (priceTab === '付费' && !m.price) return false;
+  const mySeatModuleIds = useMemo(
+    () => new Set(assignmentsOfMember(state, me.id).filter((a) => a.status === '生效中').map((a) => a.moduleId)),
+    [state, me.id],
+  );
+
+  const catTabs = ['全部模块', ...categories];
+  const selectedCat = catTabs[cat];
+  const selectedEdition = editionFilters[edition];
+
+  const list = state.catalog.filter((m) => {
+    if (!m.listed) return false;
+    if (selectedCat !== '全部模块' && m.category !== selectedCat) return false;
+    if (selectedEdition !== '全部' && m.edition !== selectedEdition) return false;
     if (search && !m.name.includes(search) && !m.code.includes(search)) return false;
     return true;
   });
 
-  const freeCount = modules.filter(m => !m.price).length;
-  const paidCount = modules.filter(m => m.price).length;
-  const activeCount = modules.filter(m => m.status === '已开通').length;
+  // Org-level snapshot: what we hold versus what is still idle.
+  const orgPools = state.seatPools.filter((p) => p.orgId === me.orgId);
+  const openedModules = orgPools.length;
+  const idleSeats = orgPools.reduce((s, p) => s + spareSeats(state, p), 0);
+  const commercialCount = state.catalog.filter((m) => m.edition === '商业版' && m.listed).length;
 
-  const displayStatus = (m: Module): string => {
-    if (applied.has(m.id)) return '审核中';
-    if (m.price) {
-      if (m.status === '可申请') return '可购买';
-      if (m.status === '已开通') return '已购买';
-    }
-    return m.status;
-  };
-
-  const handleApplySubmit = (e: FormEvent) => {
-    e.preventDefault();
-    if (!applyModule) return;
-    setApplied((p) => new Set(p).add(applyModule.id));
-    setApplyModule(null);
-  };
-
-  const handleModuleAction = (m: Module) => {
-    if (m.price) {
-      navigate(`/purchase/${m.id}`);
-    } else {
-      setApplyModule(m);
-    }
-  };
-
-  const ic = applyModule ? (icons[applyModule.icon] || icons.building) : icons.building;
-
-  const stats = [
-    { icon: <Box size={22} />, value: modules.length, label: '模块总数', accent: '#2563EB', bg: 'rgba(59,130,246,0.08)', border: 'rgba(59,130,246,0.18)', iconBg: 'rgba(59,130,246,0.12)', dot: 'rgba(59,130,246,0.10)' },
-    { icon: <Activity size={22} />, value: activeCount, label: '已开通', accent: '#16A34A', bg: 'rgba(34,197,94,0.08)', border: 'rgba(34,197,94,0.18)', iconBg: 'rgba(34,197,94,0.12)', dot: 'rgba(34,197,94,0.10)' },
-    { icon: <CreditCard size={22} />, value: paidCount, label: '付费模块', accent: '#EA580C', bg: 'rgba(251,146,60,0.08)', border: 'rgba(251,146,60,0.18)', iconBg: 'rgba(251,146,60,0.12)', dot: 'rgba(251,146,60,0.10)' },
-    { icon: <Sparkles size={22} />, value: freeCount, label: '免费模块', accent: '#7C3AED', bg: 'rgba(139,92,246,0.08)', border: 'rgba(139,92,246,0.18)', iconBg: 'rgba(139,92,246,0.12)', dot: 'rgba(139,92,246,0.10)' },
+  const stats: Metric[] = [
+    { icon: Boxes, value: state.catalog.filter((m) => m.listed).length, label: '在架模块', hint: '厂商已上架，可申请或购买', tone: 'accent' },
+    { icon: PackageCheck, value: openedModules, label: '本企业已开通', hint: '已建立席位池的模块', tone: 'positive' },
+    { icon: KeyRound, value: idleSeats, label: '可直接分配的空闲席位', hint: '申请后走部门审批即可到手', tone: idleSeats ? 'positive' : 'attention' },
+    { icon: Wallet, value: commercialCount, label: '商业版模块', hint: '池满后需走采购流程', tone: 'neutral' },
   ];
 
-  return (
-    <div className="min-h-screen">
-      <Header title="模块中心" subtitle="浏览所有可用模块，申请试用或购买商业版" />
+  const canApply = can(me.role, 'application:create');
 
-      <div className="p-6 flex flex-col gap-4">
-        {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+  return (
+    <div>
+      <Header
+        title="模块中心"
+        subtitle={`浏览全部可用模块 · ${myOrg.shortName} 已开通 ${openedModules} 个模块，${idleSeats} 个席位空闲`}
+      />
+
+      <div className="px-7 pb-7 flex flex-col gap-4">
+        <div className="grid grid-cols-4 gap-5 stagger">
           {stats.map((s, i) => (
-            <div key={i} className="relative rounded-lg px-5 py-5 overflow-hidden backdrop-blur-sm"
-              style={{ background: s.bg, border: `1px solid ${s.border}`, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
-              <div className="absolute -top-4 -right-4 w-[72px] h-[72px] rounded-full" style={{ background: s.dot }} />
-              <div className="absolute bottom-2 right-8 w-[32px] h-[32px] rounded-full" style={{ background: s.dot }} />
-              <div className="relative flex items-center gap-4">
-                <div className="w-[44px] h-[44px] rounded-lg flex items-center justify-center shrink-0" style={{ background: s.iconBg, color: s.accent }}>{s.icon}</div>
-                <div>
-                  <p className="text-[26px] font-bold leading-none" style={{ color: s.accent }}>{s.value}</p>
-                  <p className="text-[14px] mt-1.5 text-text-muted">{s.label}</p>
-                </div>
-              </div>
-            </div>
+            <MetricCard key={i} metric={s} />
           ))}
         </div>
 
-        {/* Filters */}
-        <div className="bg-white rounded-md px-5 py-3 flex items-center justify-between">
-          <TabFilter tabs={moduleCategories.map((c) => ({ label: c }))} activeIndex={catTab} onChange={setCatTab} />
+        <div className="panel px-5 py-3.5 flex items-center justify-between gap-4 flex-wrap">
+          <TabFilter tabs={catTabs.map((c) => ({ label: c }))} activeIndex={cat} onChange={(i) => { setCat(i); setLimit(PAGE); }} />
           <div className="flex items-center gap-3">
-            <div className="flex items-center bg-[#F2F3F5] rounded-sm p-[3px]">
-              {priceFilters.map((f) => (
-                <button key={f} onClick={() => setPriceTab(f)}
-                  className={`h-[28px] px-3.5 rounded-sm text-[13px] font-medium transition-all ${
-                    priceTab === f ? 'bg-white text-[#1D2129] shadow-sm' : 'text-[#86909C] hover:text-[#4E5969]'
+            <div className="flex items-center gap-1 border-l border-border pl-3">
+              {editionFilters.map((e, i) => (
+                <button key={e} onClick={() => { setEdition(i); setLimit(PAGE); }}
+                  className={`h-[30px] px-[14px] rounded-full text-[13px] font-semibold cursor-pointer transition-colors ${
+                    i === edition ? 'bg-primary-bg text-primary' : 'text-text-secondary hover:bg-surface-hover'
                   }`}>
-                  {f}
+                  {e}
                 </button>
               ))}
             </div>
-            <div className="w-[200px]"><SearchBar placeholder="搜索模块..." value={search} onChange={setSearch} /></div>
+            <div className="w-[220px]">
+              <SearchBar placeholder="搜索模块名称或编号..." value={search} onChange={(v) => { setSearch(v); setLimit(PAGE); }} />
+            </div>
           </div>
         </div>
 
-        {/* Cards */}
-        {list.length === 0 && (
-          <div className="bg-white rounded-md py-16 text-center">
-            <Box size={48} className="mx-auto mb-4 text-text-placeholder" />
-            <p className="text-[16px] text-text-muted mb-2">没有找到匹配的模块</p>
-            <p className="text-[14px] text-text-placeholder">试试调整筛选条件或搜索关键词</p>
-          </div>
-        )}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-          {list.map((m) => {
-            const s = displayStatus(m);
-            const canAction = s === '可申请' || s === '可购买';
-            const isPaid = !!m.price;
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+          {list.slice(0, limit).map((m) => {
+            const pool = poolOf(state, me.orgId, m.id);
+            const held = mySeatModuleIds.has(m.id);
+            const spare = pool ? spareSeats(state, pool) : 0;
+            const expired = pool ? isExpired(state, pool) : false;
+
+            const availability = held
+              ? '已开通'
+              : !pool || expired
+                ? '未开通'
+                : spare > 0
+                  ? '席位充足'
+                  : '席位已满';
+
+            const kind = decideKind(state, me.orgId, m.id, 1);
+            const hint = held
+              ? '已持有席位，可在「我的授权」查看'
+              : kindHint(state, me.orgId, m.id);
+
             return (
               <div key={m.id}
-                className={`bg-white rounded-md flex flex-col transition-all duration-200 hover:shadow-[0_4px_20px_rgba(0,0,0,0.08)] hover:-translate-y-[2px] ${
-                  isPaid ? 'border border-[#FFF3E8]' : 'border border-transparent hover:border-[#E5E6EB]'
-                }`}
-              >
-
-                <div className="px-5 pt-4 pb-3 flex-1 flex flex-col cursor-pointer" onClick={() => navigate(`/module/${m.id}`)}>
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="text-[14px] font-bold text-[#1D2129] leading-snug hover:text-[#1C71D8] transition-colors">{m.name}</p>
-                          {isPaid ? (
-                            <span className="px-1.5 py-[2px] text-[11px] font-normal rounded-sm leading-none"
-                              style={{ background: 'linear-gradient(135deg, #FFF3E8 0%, #FFE8D4 100%)', color: '#E8601A' }}>
-                              商业版
-                            </span>
-                          ) : (
-                            <span className="px-1.5 py-[2px] text-[11px] font-normal bg-[#E8FFEA] text-[#00994D] rounded-sm leading-none">
-                              免费
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-[14px] text-text-muted mt-[3px]">{m.code}</p>
-                      </div>
-                    </div>
-                    <StatusBadge status={s} />
-                  </div>
-
-                  <p className="text-[14px] text-text-secondary leading-[22px] flex-1 line-clamp-2">{m.description}</p>
-
-                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-[#F2F3F5]">
-                    <div className="flex items-center gap-4 text-[14px] text-text-muted">
-                      <span className="inline-flex items-center gap-1"><Clock size={13} /> {m.duration}天</span>
-                      <span className="inline-flex items-center gap-1"><UsersIcon size={13} /> {m.nodes}节点</span>
-                    </div>
-                    {isPaid && (
-                      <span className="text-[16px] font-bold text-[#F77234]">
-                        ¥{m.price!.toLocaleString()}<span className="text-[12px] font-normal text-[#C9CDD4]">/年</span>
+                onClick={() => navigate(`/module/${m.id}`)}
+                className="panel panel-hover p-5 flex flex-col cursor-pointer">
+                <div className="flex items-start gap-3">
+                  <span className="w-[46px] h-[46px] rounded-full bg-surface-secondary flex items-center justify-center shrink-0">
+                    <img src={moduleIconMap[m.icon] || moduleIconMap.building} alt=""
+                      className="w-[28px] h-[28px] object-contain" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-[6px]">
+                      <p className="text-[15px] font-bold text-text truncate tracking-[-0.01em]">{m.name}</p>
+                      <span className={`shrink-0 text-[11.5px] font-semibold px-2 py-[2px] rounded-full ${
+                        m.edition === '商业版' ? 'bg-orange-bg text-orange' : 'bg-surface-hover text-text-muted'
+                      }`}>
+                        {m.edition}
                       </span>
-                    )}
+                    </div>
+                    <p className="text-[13px] text-text-muted mt-[3px]">{m.code}</p>
                   </div>
+                  <StatusBadge status={availability} />
                 </div>
 
-                <div className="px-5 pb-4">
-                  {canAction ? (
+                <p className="text-[13px] text-text-secondary mt-3 leading-relaxed line-clamp-2 min-h-[38px]">
+                  {m.description}
+                </p>
+
+                <div className="flex items-center gap-4 mt-3.5 text-[13px] text-text-muted">
+                  <span className="num">{m.duration} 天</span>
+                  <span className="num">{m.nodes} 节点</span>
+                  {m.unitPrice > 0 && (
+                    <span className="num ml-auto text-[14px] font-bold text-text">
+                      ¥{m.unitPrice.toLocaleString()}
+                      <span className="text-[12px] text-text-muted font-medium">/席位/年</span>
+                    </span>
+                  )}
+                </div>
+
+                {pool && !expired && (
+                  <div className="mt-3.5">
+                    <div className="meter">
+                      <span
+                        style={{
+                          width: `${pool.total ? Math.round((allocatedSeats(state, pool.id) / pool.total) * 100) : 0}%`,
+                          background: spare > 0 ? 'var(--color-signal)' : 'var(--color-warning-light)',
+                        }}
+                      />
+                    </div>
+                    <p className="num text-[12px] text-text-muted mt-[6px]">
+                      企业席位 {allocatedSeats(state, pool.id)}/{pool.total} 已分配
+                    </p>
+                  </div>
+                )}
+
+                <div className="mt-auto pt-4">
+                  {canApply ? (
                     <button
-                      onClick={(e) => { e.stopPropagation(); handleModuleAction(m); }}
-                      className="w-full h-[36px] rounded-sm text-[14px] font-semibold text-white flex items-center justify-center gap-1 cursor-pointer transition-all hover:brightness-110"
-                      style={{ background: isPaid ? 'linear-gradient(135deg, #F77234 0%, #F99D1C 100%)' : 'linear-gradient(135deg, #1C71D8 0%, #3584E4 100%)' }}
-                    >
-                      {isPaid ? '立即购买' : '申请试用'} <ChevronRight size={15} strokeWidth={2.5} />
+                      disabled={held}
+                      onClick={(e) => { e.stopPropagation(); navigate(`/apply/${m.id}`); }}
+                      className={`w-full h-[38px] text-[13.5px] font-semibold inline-flex items-center justify-center gap-1 ${
+                        held ? 'btn-soft text-text-placeholder cursor-not-allowed' : 'btn-primary cursor-pointer'
+                      }`}>
+                      {held ? '已持有席位' : <>申请授权 <ChevronRight size={14} /></>}
                     </button>
                   ) : (
-                    <div className="w-full h-[36px] rounded-sm bg-surface-secondary text-[14px] text-text-muted font-medium flex items-center justify-center">
-                      {s === '已开通' || s === '已购买' ? s : '审核中'}
-                    </div>
+                    <button onClick={(e) => { e.stopPropagation(); navigate(`/module/${m.id}`); }}
+                      className="btn-soft w-full h-[38px] text-[13.5px] font-semibold cursor-pointer">
+                      查看详情
+                    </button>
                   )}
+                  <p className="text-[12px] text-text-placeholder mt-2 leading-snug">
+                    {canApply ? hint : `${kindLabels[kind]} · 厂商侧不参与企业内申请`}
+                  </p>
                 </div>
               </div>
             );
           })}
         </div>
-      </div>
 
-      {/* Trial application modal */}
-      <Modal
-        open={!!applyModule}
-        onClose={() => setApplyModule(null)}
-        width={560}
-        header={
-          applyModule ? (
-            <div className="flex items-center gap-3">
-              <div className={`w-[40px] h-[40px] rounded-md ${ic.bg} flex items-center justify-center shrink-0`}>{ic.el}</div>
-              <div>
-                <h3 className="text-[16px] font-bold text-[#1D2129]">申请试用</h3>
-                <p className="text-[14px] text-[#86909C]">{applyModule.name}</p>
-              </div>
-            </div>
-          ) : undefined
-        }
-      >
-        {applyModule && (
-          <form onSubmit={handleApplySubmit} className="flex flex-col gap-5">
-            <div className="grid grid-cols-3 gap-4 bg-[#F7F8FA] rounded-md p-4">
-              <div><p className="text-[14px] text-[#86909C] mb-1">模块编号</p><p className="text-[14px] font-bold text-[#1D2129]">{applyModule.code}</p></div>
-              <div><p className="text-[14px] text-[#86909C] mb-1">试用期限</p><p className="text-[14px] font-bold text-[#1D2129]">{applyModule.duration} 天</p></div>
-              <div><p className="text-[14px] text-[#86909C] mb-1">节点数量</p><p className="text-[14px] font-bold text-[#1D2129]">{applyModule.nodes}</p></div>
-            </div>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-4">
-              <div><label className={labelCls}>申请人姓名 <span className="text-[#F53F3F]">*</span></label><input required className={inputCls} placeholder="请输入姓名" /></div>
-              <div><label className={labelCls}>所属部门 <span className="text-[#F53F3F]">*</span></label><input required className={inputCls} placeholder="请输入部门" /></div>
-              <div><label className={labelCls}>联系电话 <span className="text-[#F53F3F]">*</span></label><input required className={inputCls} placeholder="请输入手机号" /></div>
-              <div><label className={labelCls}>电子邮箱 <span className="text-[#F53F3F]">*</span></label><input required type="email" className={inputCls} placeholder="请输入邮箱" /></div>
-            </div>
-            <div><label className={labelCls}>使用场景 <span className="text-[#F53F3F]">*</span></label><textarea required className={textareaCls} rows={3} placeholder="请描述您的具体使用场景和需求..." /></div>
-            <div><label className={labelCls}>申请理由 <span className="text-[#F53F3F]">*</span></label><textarea required className={textareaCls} rows={3} placeholder="请说明申请该模块试用的原因..." /></div>
-            <div className="bg-[#FFF7E8] border border-[#FFDCA1] rounded-md px-4 py-3 text-[14px] text-[#D4770B] leading-[20px]">
-              <strong>温馨提示：</strong>提交申请后，我们将在1-2个工作日内完成审核，审核结果将通过邮件和短信通知您。
-            </div>
-            <div className="grid grid-cols-2 gap-3 pt-3 pb-4">
-              <button type="button" onClick={() => setApplyModule(null)} className="h-[42px] rounded-sm text-[14px] font-medium text-[#4E5969] border border-[#C9CDD4] bg-white hover:border-[#86909C] transition-colors">取消</button>
-              <button type="submit" className="h-[42px] rounded-sm text-[14px] font-semibold text-white transition-all hover:brightness-110 active:scale-[0.99]" style={{ background: '#1C71D8' }}>提交申请</button>
-            </div>
-          </form>
+        {list.length > limit && (
+          <button onClick={() => setLimit(limit + PAGE)}
+            className="btn-ghost mx-auto h-[40px] px-7 text-[13.5px] font-semibold cursor-pointer">
+            加载更多（还有 {list.length - limit} 个）
+          </button>
         )}
-      </Modal>
+
+        {list.length === 0 && (
+          <div className="panel py-16 text-center">
+            <span className="w-[56px] h-[56px] rounded-full bg-surface-secondary flex items-center justify-center mx-auto mb-4">
+              <Boxes size={26} className="text-text-placeholder" />
+            </span>
+            <p className="text-[15px] text-text-muted">没有符合条件的模块</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

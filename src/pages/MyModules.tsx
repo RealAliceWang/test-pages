@@ -1,157 +1,268 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Box, AlertTriangle, Clock, ChevronRight, RefreshCw,
-} from 'lucide-react';
+import { AlertTriangle, Box, ChevronRight, Clock, RefreshCw, UserCheck } from 'lucide-react';
 import Header from '../components/layout/Header';
-
+import MetricCard, { type Metric } from '../components/common/MetricCard';
+import StatusBadge from '../components/common/StatusBadge';
 import TabFilter from '../components/common/TabFilter';
-import { myModuleUsages, type MyModuleUsage } from '../data/mock';
 import { moduleIconMap } from '../assets/moduleIcons';
+import {
+  assignmentsOfMember,
+  daysBetween,
+  memberOf,
+  moduleOf,
+  poolOf,
+  seatStatusOf,
+  useApp,
+  type SeatStatus,
+} from '../store';
+import type { Assignment, CatalogModule, SeatPool } from '../domain/types';
 
-const getModuleIcon = (key: string) => <img src={moduleIconMap[key] || moduleIconMap.building} alt="" className="w-[48px] h-[48px] object-contain" />;
-
-function statusStyle(s: MyModuleUsage['status']) {
-  if (s === '使用中')  return { bg: 'bg-[#E8FFEA]', text: 'text-[#00B42A]' };
-  if (s === '即将到期') return { bg: 'bg-[#FFF7E8]', text: 'text-[#D4770B]' };
-  return { bg: 'bg-[#F2F3F5]', text: 'text-[#86909C]' };
+interface SeatRow {
+  assignment: Assignment;
+  module: CatalogModule;
+  pool: SeatPool;
+  status: SeatStatus;
+  /** Whole licence term of the pool the seat comes from. */
+  totalDays: number;
+  remainDays: number;
+  /** Share of the licence term already consumed. */
+  pct: number;
+  assignedByName: string;
 }
 
-function progressColor(m: MyModuleUsage) {
-  if (m.status === '已过期') return '#C9CDD4';
-  if (m.status === '即将到期') return '#F59E0B';
-  return '#1C71D8';
-}
+const tones: Record<SeatStatus, { ring: string; value: string; icon: string; wrap: string; dot: string }> = {
+  生效中: {
+    ring: 'var(--color-primary)',
+    value: 'text-primary',
+    icon: 'bg-primary/10 text-primary',
+    wrap: 'bg-primary-bg border-primary/15',
+    dot: 'bg-primary/10',
+  },
+  即将到期: {
+    ring: 'var(--color-warning)',
+    value: 'text-warning',
+    icon: 'bg-warning/10 text-warning',
+    wrap: 'bg-warning-bg border-warning/15',
+    dot: 'bg-warning/10',
+  },
+  已过期: {
+    ring: 'var(--color-text-placeholder)',
+    value: 'text-text-muted',
+    icon: 'bg-surface-hover text-text-muted',
+    wrap: 'bg-surface-secondary border-border',
+    dot: 'bg-text-muted/10',
+  },
+  已暂停: {
+    ring: 'var(--color-danger)',
+    value: 'text-danger',
+    icon: 'bg-danger/10 text-danger',
+    wrap: 'bg-danger-bg border-danger/15',
+    dot: 'bg-danger/10',
+  },
+};
 
-type StatusFilter = '全部' | '使用中' | '即将到期' | '已过期';
-const statusFilters: StatusFilter[] = ['全部', '使用中', '即将到期', '已过期'];
+const filters: ('全部' | SeatStatus)[] = ['全部', '生效中', '即将到期', '已过期'];
 
 export default function MyModules() {
   const navigate = useNavigate();
-
+  const { state, me } = useApp();
   const [tab, setTab] = useState(0);
 
-  const sel = statusFilters[tab];
-  const list = myModuleUsages.filter((m) => sel === '全部' || m.status === sel);
+  const rows = useMemo<SeatRow[]>(
+    () =>
+      assignmentsOfMember(state, me.id).flatMap((assignment) => {
+        const module = moduleOf(state, assignment.moduleId);
+        const pool = poolOf(state, assignment.orgId, assignment.moduleId);
+        if (!module || !pool) return [];
 
-  const activeCount = myModuleUsages.filter(m => m.status === '使用中').length;
-  const expiringCount = myModuleUsages.filter(m => m.status === '即将到期').length;
-  const expiredCount = myModuleUsages.filter(m => m.status === '已过期').length;
+        const totalDays = Math.max(1, daysBetween(pool.startDate, pool.expireDate));
+        const remain = daysBetween(state.now, pool.expireDate);
+        const status = seatStatusOf(state, assignment);
+        const expired = status === '已过期';
 
-  const tabs = statusFilters.map((f) => ({
-    label: f === '全部' ? '全部模块' : f,
-    count: f === '全部' ? myModuleUsages.length : myModuleUsages.filter(m => m.status === f).length,
-  }));
+        const elapsed = expired ? totalDays : totalDays - Math.max(0, remain);
+        return [
+          {
+            assignment,
+            module,
+            pool,
+            status,
+            totalDays,
+            remainDays: Math.max(0, remain),
+            pct: Math.min(100, Math.max(0, Math.round((elapsed / totalDays) * 100))),
+            assignedByName: memberOf(state, assignment.assignedById)?.name ?? '企业管理员',
+          },
+        ];
+      }),
+    [state, me.id],
+  );
+
+  const countOf = (s: SeatStatus) => rows.filter((r) => r.status === s).length;
+  const sel = filters[tab];
+  const list = sel === '全部' ? rows : rows.filter((r) => r.status === sel);
+
+  const stats: Metric[] = [
+    { icon: Box, label: '生效中', value: countOf('生效中'), hint: '可直接在客户端登录使用', tone: 'accent' },
+    { icon: AlertTriangle, label: '即将到期', value: countOf('即将到期'), hint: '到期前需申请续期', tone: countOf('即将到期') ? 'attention' : 'neutral' },
+    { icon: Clock, label: '已过期', value: countOf('已过期'), hint: '席位已回池，可重新申请', tone: 'neutral' },
+  ];
 
   return (
-    <div className="min-h-screen">
-      <Header title="我的模块" subtitle="管理已开通的模块，查看使用情况与到期时间" />
+    <div>
+      <Header title="我的授权" subtitle="企业分配给我的模块席位，查看有效期与使用情况" />
 
-      <div className="p-6 flex flex-col gap-4">
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-4">
-          {([
-            { icon: <Box size={22} />, value: activeCount, label: '使用中', accent: '#2563EB', bg: 'rgba(59,130,246,0.08)', border: 'rgba(59,130,246,0.18)', iconBg: 'rgba(59,130,246,0.12)', dot: 'rgba(59,130,246,0.10)' },
-            { icon: <AlertTriangle size={22} />, value: expiringCount, label: '即将到期', accent: '#D97706', bg: 'rgba(251,191,36,0.08)', border: 'rgba(251,191,36,0.18)', iconBg: 'rgba(251,191,36,0.12)', dot: 'rgba(251,191,36,0.10)' },
-            { icon: <Clock size={22} />, value: expiredCount, label: '已过期', accent: '#6B7280', bg: 'rgba(107,114,128,0.08)', border: 'rgba(107,114,128,0.18)', iconBg: 'rgba(107,114,128,0.12)', dot: 'rgba(107,114,128,0.10)' },
-          ]).map((s, i) => (
-            <div key={i} className="relative rounded-lg px-5 py-5 overflow-hidden backdrop-blur-sm"
-              style={{ background: s.bg, border: `1px solid ${s.border}`, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
-              <div className="absolute -top-4 -right-4 w-[72px] h-[72px] rounded-full" style={{ background: s.dot }} />
-              <div className="absolute bottom-2 right-8 w-[32px] h-[32px] rounded-full" style={{ background: s.dot }} />
-              <div className="relative flex items-center gap-4">
-                <div className="w-[44px] h-[44px] rounded-lg flex items-center justify-center shrink-0" style={{ background: s.iconBg, color: s.accent }}>{s.icon}</div>
-                <div>
-                  <p className="text-[26px] font-bold leading-none" style={{ color: s.accent }}>{s.value}</p>
-                  <p className="text-[13px] mt-1.5 text-[#86909C]">{s.label}</p>
-                </div>
-              </div>
-            </div>
+      <div className="px-7 pb-7 flex flex-col gap-4">
+        {/* Seat status overview */}
+        <div className="grid grid-cols-3 gap-5 stagger">
+          {stats.map((s) => (
+            <MetricCard key={s.label} metric={s} />
           ))}
         </div>
 
-        {/* Filter tabs */}
-        <div className="bg-white rounded-md px-5 py-3 flex items-center justify-between">
-          <TabFilter tabs={tabs} activeIndex={tab} onChange={setTab} />
-          <button onClick={() => navigate('/modules')}
-            className="h-[32px] px-3 text-[14px] font-medium text-[#1C71D8] bg-[#E8F3FF] rounded-sm inline-flex items-center gap-[6px] hover:bg-[#D6E8FF] transition-colors">
-            浏览更多模块 <ChevronRight size={14} />
+        {countOf('已暂停') > 0 && (
+          <div className="rounded-md bg-danger-bg px-5 py-3.5 text-[14px] text-danger">
+            企业账号已停用，{countOf('已暂停')} 个席位已暂停。记录保留，企业重新启用后即可继续使用。
+          </div>
+        )}
+
+        {/* Filters */}
+        <div className="panel px-5 py-3.5 flex items-center justify-between">
+          <TabFilter
+            tabs={filters.map((f) => ({
+              label: f === '全部' ? `全部席位（${rows.length}）` : `${f}（${countOf(f)}）`,
+            }))}
+            activeIndex={tab}
+            onChange={setTab}
+          />
+          <button
+            onClick={() => navigate('/modules')}
+            className="h-[34px] px-4 text-[14px] font-semibold text-primary bg-primary-bg rounded-full inline-flex items-center gap-[6px] hover:brightness-95 transition-all cursor-pointer"
+          >
+            浏览模块中心 <ChevronRight size={14} />
           </button>
         </div>
 
-        {/* Module cards */}
+        {/* Seat cards */}
         <div className="grid grid-cols-2 xl:grid-cols-3 gap-4">
-          {list.map((m) => {
-            const sc = statusStyle(m.status);
-            const pct = Math.min(100, Math.round((m.usedDays / m.totalDays) * 100));
-            const remainDays = m.totalDays - m.usedDays;
-            const ringColor = progressColor(m);
-            const r = 40;
-            const stroke = 8;
-            const circumference = 2 * Math.PI * r;
-            const dashOffset = circumference * (1 - pct / 100);
+          {list.map((r) => {
+            const t = tones[r.status];
+            const radius = 40;
+            const circumference = 2 * Math.PI * radius;
 
             return (
-              <div key={m.moduleId} className="bg-white rounded-md px-5 py-5 flex items-center gap-4 cursor-pointer hover:shadow-[0_4px_20px_rgba(0,0,0,0.08)] hover:-translate-y-[1px] transition-all duration-200" onClick={() => navigate(`/module/${m.moduleId}`)}>
-                {/* Ring chart */}
-                <div className="relative shrink-0" style={{ width: 96, height: 96 }}>
-                  <svg width="96" height="96" viewBox="0 0 96 96">
-                    <circle cx="48" cy="48" r={r} fill="none" stroke="#F2F3F5" strokeWidth={stroke} />
-                    <circle cx="48" cy="48" r={r} fill="none" stroke={ringColor} strokeWidth={stroke}
-                      strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={dashOffset}
-                      transform="rotate(-90 48 48)" className="transition-all duration-700" />
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-[16px] font-bold text-[#1D2129] leading-none">{pct}%</span>
+              <div
+                key={r.assignment.id}
+                onClick={() => navigate(`/module/${r.module.id}`)}
+                className="panel px-5 py-5 flex flex-col gap-3 cursor-pointer panel-hover"
+              >
+                <div className="flex items-center gap-4">
+                  {/* Licence term progress */}
+                  <div className="relative shrink-0" style={{ width: 96, height: 96 }}>
+                    <svg width="96" height="96" viewBox="0 0 96 96">
+                      <circle cx="48" cy="48" r={radius} fill="none" stroke="var(--color-divider)" strokeWidth={8} />
+                      <circle
+                        cx="48"
+                        cy="48"
+                        r={radius}
+                        fill="none"
+                        stroke={t.ring}
+                        strokeWidth={8}
+                        strokeLinecap="round"
+                        strokeDasharray={circumference}
+                        strokeDashoffset={circumference * (1 - r.pct / 100)}
+                        transform="rotate(-90 48 48)"
+                        className="transition-all duration-700"
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-[16px] font-bold text-text leading-none">{r.pct}%</span>
+                      <span className="text-[12px] text-text-muted mt-1">期限进度</span>
+                    </div>
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-[48px] h-[48px] rounded-md flex items-center justify-center shrink-0">
+                        <img
+                          src={moduleIconMap[r.module.icon] || moduleIconMap.building}
+                          alt=""
+                          className="w-[48px] h-[48px] object-contain"
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[15px] font-semibold text-text truncate">{r.module.name}</p>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className="text-[13px] text-text-muted">{r.module.code}</span>
+                          <StatusBadge
+                            status={r.module.edition}
+                            tone={r.module.edition === '商业版' ? 'warning' : 'info'}
+                          />
+                        </div>
+                      </div>
+                      <span className="ml-auto shrink-0">
+                        <StatusBadge status={r.status} />
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-y-1 text-[13px]">
+                      <span className="text-text-muted">已用/总天数</span>
+                      <span className="text-text font-medium text-right">
+                        {r.assignment.usedDays} / {r.totalDays} 天
+                      </span>
+                      <span className="text-text-muted">{r.status === '已过期' ? '状态' : '剩余天数'}</span>
+                      <span className={`font-medium text-right ${t.value}`}>
+                        {r.status === '已过期' ? '已过期' : `${r.remainDays} 天`}
+                      </span>
+                      <span className="text-text-muted">到期日期</span>
+                      <span className="text-text font-medium text-right">{r.pool.expireDate}</span>
+                      <span className="text-text-muted">席位来源</span>
+                      <span className="text-text font-medium text-right">
+                        {r.pool.source} · 共 {r.pool.total} 席
+                      </span>
+                      <span className="text-text-muted">最后使用</span>
+                      <span className="text-text font-medium text-right">{r.assignment.lastUsed}</span>
+                    </div>
                   </div>
                 </div>
 
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-[48px] h-[48px] rounded-md flex items-center justify-center shrink-0">
-                      {getModuleIcon(m.icon)}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-[14px] font-bold text-[#1D2129] truncate">{m.moduleName}</p>
-                      <p className="text-[14px] text-[#86909C]">{m.moduleCode}</p>
-                    </div>
-                    <span className={`ml-auto inline-block px-2 py-[2px] rounded-sm text-[14px] font-normal shrink-0 ${sc.bg} ${sc.text}`}>
-                      {m.status}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-y-1 text-[14px]">
-                    <span className="text-[#86909C]">已用/总天数</span>
-                    <span className="text-[#1D2129] font-medium text-right">{m.usedDays} / {m.totalDays} 天</span>
-                    <span className="text-[#86909C]">{m.status === '已过期' ? '状态' : '剩余天数'}</span>
-                    <span className="font-medium text-right" style={{ color: ringColor }}>
-                      {m.status === '已过期' ? '已过期' : `${remainDays} 天`}
-                    </span>
-                    <span className="text-[#86909C]">到期日期</span>
-                    <span className="text-[#1D2129] font-medium text-right">{m.expireDate}</span>
-                    <span className="text-[#86909C]">最后使用</span>
-                    <span className="text-[#1D2129] font-medium text-right">{m.lastUsed}</span>
-                  </div>
-                  {/* Renewal button for expiring/expired */}
-                  {(m.status === '即将到期' || m.status === '已过期') && (
-                    <button onClick={(e) => { e.stopPropagation(); navigate('/modules'); }}
-                      className="mt-3 w-full h-[32px] rounded-sm text-[13px] font-semibold text-white flex items-center justify-center gap-1 transition-all hover:brightness-110"
-                      style={{ background: m.status === '已过期' ? 'linear-gradient(135deg, #F77234 0%, #F99D1C 100%)' : 'linear-gradient(135deg, #1C71D8 0%, #3584E4 100%)' }}>
-                      <RefreshCw size={13} /> {m.status === '已过期' ? '重新购买' : '续费'}
-                    </button>
-                  )}
+                {/* Seats belong to the company, so provenance matters more than a receipt */}
+                <div className="pt-3 border-t border-divider flex items-center gap-2 text-[12px] text-text-muted">
+                  <UserCheck size={13} className="shrink-0" />
+                  <span className="truncate">
+                    席位由 {r.assignedByName} 于 {r.assignment.assignedAt} 分配
+                  </span>
                 </div>
+
+                {r.status !== '生效中' && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/apply/${r.module.id}`);
+                    }}
+                    className="w-full h-[34px] rounded-full text-[13px] font-semibold text-primary bg-primary-bg inline-flex items-center justify-center gap-1.5 hover:brightness-95 transition-all cursor-pointer"
+                  >
+                    <RefreshCw size={13} /> 申请续期
+                  </button>
+                )}
               </div>
             );
           })}
         </div>
 
         {list.length === 0 && (
-          <div className="bg-white rounded-md py-16 text-center">
-            <Box size={48} className="mx-auto mb-4 text-[#C9CDD4]" />
-            <p className="text-[16px] text-[#86909C] mb-3">暂无{sel === '全部' ? '' : sel}模块</p>
-            <button onClick={() => navigate('/modules')}
-              className="h-[36px] px-4 rounded-sm text-[14px] font-medium text-[#1C71D8] bg-[#E8F3FF] hover:bg-[#D6E8FF] transition-colors inline-flex items-center gap-1">
+          <div className="panel py-16 text-center">
+            <Box size={48} className="mx-auto mb-4 text-text-placeholder" />
+            <p className="text-[16px] text-text-muted mb-2">
+              {rows.length === 0 ? '当前还没有分配给你的席位' : `暂无${sel}的席位`}
+            </p>
+            <p className="text-[14px] text-text-placeholder mb-6">
+              席位由企业统一采购与分配，可在模块中心选择需要的模块后提交申请
+            </p>
+            <button
+              onClick={() => navigate('/modules')}
+              className="h-[38px] px-4 rounded-full text-[14px] font-semibold text-primary bg-primary-bg hover:brightness-95 transition-all inline-flex items-center gap-1 cursor-pointer"
+            >
               去模块中心看看 <ChevronRight size={14} />
             </button>
           </div>

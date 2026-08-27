@@ -1,35 +1,182 @@
-import { Bell } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Bell, Check, ChevronDown, Repeat2, Search } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { deptOf, orgOf, todoCountOf, useApp } from '../../store';
+import { DEMO_ORG_ID, VENDOR_ORG_ID } from '../../domain/seed';
+import { can } from '../../domain/permissions';
+import { roleLabels, type Role } from '../../domain/types';
 
 interface HeaderProps {
   title: string;
   subtitle: string;
-  userName?: string;
-  userRole?: string;
+  actions?: ReactNode;
+  /** Show the centred global search. Dashboard-style pages opt in. */
+  search?: boolean;
 }
 
-export default function Header({ title, subtitle, userName = '用户名', userRole = '产品经理' }: HeaderProps) {
+/** Identities offered by the switcher, one per role for walkthroughs. */
+const switchableRoles: Role[] = ['MEMBER', 'DEPT_ADMIN', 'ORG_ADMIN', 'VENDOR_OPS'];
+
+export default function Header({ title, subtitle, actions, search }: HeaderProps) {
+  const { state, me, myOrg, myDept, dispatch } = useApp();
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const ref = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const onDown = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, []);
+
+  const todo = todoCountOf(state, me);
+
+  // One representative account per role so every perspective is reachable.
+  // Pinned to the demo customer and the vendor, so seat holders seeded for the
+  // other customer organizations never show up here.
+  const identities = switchableRoles
+    .map((role) =>
+      state.members.find(
+        (m) =>
+          m.role === role &&
+          m.status === '在职' &&
+          (m.orgId === DEMO_ORG_ID || m.orgId === VENDOR_ORG_ID),
+      ),
+    )
+    .filter((m): m is NonNullable<typeof m> => Boolean(m));
+
+  /* Search jumps to the module catalogue with the term applied — the only
+     place in this product where free-text search has meaning. */
+  const submitSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = query.trim();
+    if (q) navigate(`/modules?q=${encodeURIComponent(q)}`);
+  };
+
   return (
-    <header className="bg-surface border-b border-border shrink-0 sticky top-0 z-30 px-6 py-3 flex items-center justify-between">
-      <div>
-        <h1 className="text-[20px] font-bold text-text leading-tight">{title}</h1>
-        <p className="text-[14px] text-text-muted leading-tight mt-1">{subtitle}</p>
+    <header className="app-bar shrink-0 px-7 pt-6 pb-4 flex items-center justify-between gap-5">
+      <div className="min-w-0">
+        <h1 className="text-[26px] font-extrabold text-text leading-[1.12] tracking-[-0.035em]">{title}</h1>
+        <p className="text-[13px] text-text-muted leading-tight mt-[5px] truncate">{subtitle}</p>
       </div>
-      <div className="flex items-center gap-4">
-        <button
-          aria-label="通知"
-          className="relative w-8 h-8 flex items-center justify-center rounded-sm cursor-pointer hover:bg-surface-hover transition-colors"
-        >
-          <Bell size={18} className="text-text-secondary" />
-          <span className="absolute top-[5px] right-[6px] w-[6px] h-[6px] bg-danger rounded-full ring-[1.5px] ring-white" />
+
+      {search && can(me.role, 'module:browse') && (
+        <form onSubmit={submitSearch} className="hidden lg:block flex-1 max-w-[420px]" role="search">
+          <div className="relative group">
+            <Search
+              size={15}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-text-placeholder group-focus-within:text-primary transition-colors pointer-events-none"
+            />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="搜索模块…"
+              aria-label="搜索模块"
+              className="w-full h-11 pl-11 pr-4 rounded-full bg-surface text-[13.5px] placeholder:text-text-placeholder border border-border focus:border-primary focus:shadow-[0_0_0_3px_var(--color-primary-ring)] focus:outline-none transition-all"
+            />
+          </div>
+        </form>
+      )}
+
+      <div className="flex items-center gap-2.5 shrink-0">
+        {actions}
+
+        {/* Controls sit on the shell tint, so they carry a white fill and a
+            hairline to read as controls rather than dissolving into it. */}
+        <button aria-label={`待办 ${todo} 项`} title={`待办 ${todo} 项`}
+          className="relative w-11 h-11 rounded-full bg-surface border border-border text-text-secondary flex items-center justify-center cursor-pointer transition-colors hover:text-text">
+          <Bell size={18} />
+          {todo > 0 && (
+            <span className="absolute top-[6px] right-[6px] min-w-[17px] h-[17px] px-[4px] rounded-full bg-danger text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">
+              {todo}
+            </span>
+          )}
         </button>
-        <div className="flex items-center gap-4">
-          <div className="text-right">
-            <p className="text-[15px] font-medium text-text leading-tight">{userName}</p>
-            <p className="text-[14px] text-text-muted leading-tight mt-0.5">{userRole}</p>
-          </div>
-          <div className="w-[40px] h-[40px] rounded-full overflow-hidden">
-            <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=face&facepad=2.5" alt="用户头像" className="w-full h-full object-cover" />
-          </div>
+
+        <div className="relative" ref={ref}>
+          {/* The whole identity control is one pill, matching button language. */}
+          <button onClick={() => setOpen(!open)}
+            aria-label="账号与身份"
+            aria-haspopup="menu"
+            aria-expanded={open}
+            className={`flex items-center gap-2.5 h-[44px] pl-4 pr-2 rounded-full cursor-pointer transition-colors border border-border ${
+              open ? 'bg-surface-hover' : 'bg-surface hover:bg-surface-secondary'
+            }`}>
+            <div className="text-right hidden sm:block">
+              <p className="text-[13.5px] font-bold text-text leading-tight">{me.name}</p>
+              <p className="text-[11.5px] text-text-muted leading-tight mt-[2px]">
+                {roleLabels[me.role]}
+                {myDept ? ` · ${myDept.name}` : ''}
+              </p>
+            </div>
+            <div className="w-[34px] h-[34px] rounded-full flex items-center justify-center text-white text-[13.5px] font-bold shrink-0"
+              style={{ background: me.avatarColor }}>
+              {me.name.charAt(0)}
+            </div>
+            <ChevronDown size={14} className={`text-text-placeholder transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+          </button>
+
+          {open && (
+            <div className="panel-floating absolute right-0 top-full mt-2 w-[308px] z-50 overflow-hidden rise">
+              <div className="px-4 py-[13px] border-b border-hairline">
+                <p className="text-[14px] font-bold text-text">{me.name} · {me.title}</p>
+                <p className="text-[12.5px] text-text-muted mt-[3px] truncate">{myOrg.name}</p>
+              </div>
+
+              {/* Walkthrough aid, not a product feature: no real deployment lets a
+                  member assume another role. Tinted and fenced off by a dashed
+                  rule so it never reads as part of the account menu above. */}
+              <div className="bg-surface-secondary border-t border-dashed border-border" role="group" aria-label="演示用身份切换">
+                <div className="px-4 pt-3 pb-1.5 flex items-center gap-[6px]">
+                  <Repeat2 size={13} className="text-text-placeholder" />
+                  <span className="eyebrow">切换身份</span>
+                  <span className="ml-auto text-[10.5px] font-bold text-warning bg-warning-bg rounded-full px-[7px] py-[2px]">
+                    仅演示用
+                  </span>
+                </div>
+
+                <div className="px-2 pb-2 flex flex-col gap-0.5">
+                  {identities.map((m) => {
+                    const active = m.id === me.id;
+                    const org = orgOf(state, m.orgId);
+                    const dept = deptOf(state, m.deptId);
+                    return (
+                      <button key={m.id}
+                        onClick={() => { dispatch({ type: 'SWITCH_IDENTITY', memberId: m.id }); setOpen(false); }}
+                        className={`w-full flex items-center gap-3 px-2.5 py-2 rounded-lg text-left transition-colors cursor-pointer ${
+                          active ? 'bg-primary-bg' : 'hover:bg-surface'
+                        }`}>
+                        <div className="w-[30px] h-[30px] rounded-full flex items-center justify-center text-white text-[12.5px] font-semibold shrink-0"
+                          style={{ background: m.avatarColor }}>
+                          {m.name.charAt(0)}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className={`text-[13.5px] leading-tight font-semibold ${active ? 'text-primary-dark' : 'text-text'}`}>
+                            {roleLabels[m.role]}
+                          </p>
+                          <p className="text-[12px] text-text-muted leading-tight mt-[2px] truncate">
+                            {m.name} · {dept ? dept.name : org?.shortName}
+                          </p>
+                        </div>
+                        {active && <Check size={15} className="text-primary shrink-0" strokeWidth={2.6} />}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="px-4 py-[11px] border-t border-hairline">
+                  <p className="text-[12px] text-text-muted leading-relaxed">
+                    仅用于演示各角色视角，正式环境不提供该入口。切换后侧边栏菜单、数据范围与可执行操作会随权限变化。
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </header>

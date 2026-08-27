@@ -6,7 +6,8 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  // `.cursor` holds vendored tooling that is not part of this application.
+  globalIgnores(['dist', '.cursor']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [

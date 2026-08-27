@@ -7,14 +7,17 @@ export default function Toggle({ enabled, onChange }: ToggleProps) {
   return (
     <button
       onClick={() => onChange(!enabled)}
-      className={`relative w-[40px] h-[22px] rounded-full transition-colors duration-200 ${
-        enabled ? 'bg-[#1C71D8]' : 'bg-[#C9CDD4]'
+      role="switch"
+      aria-checked={enabled}
+      className={`relative w-[44px] h-[26px] rounded-full cursor-pointer transition-colors duration-300 shrink-0 ${
+        enabled ? 'bg-ink' : 'bg-[#D3D7DE]'
       }`}
     >
       <span
-        className={`absolute top-[2px] left-[2px] w-[18px] h-[18px] bg-white rounded-full shadow transition-transform duration-200 ${
+        className={`absolute top-[3px] left-[3px] w-[20px] h-[20px] bg-white rounded-full transition-transform duration-300 ${
           enabled ? 'translate-x-[18px]' : ''
         }`}
+        style={{ transitionTimingFunction: 'var(--ease-fluid)' }}
       />
     </button>
   );
