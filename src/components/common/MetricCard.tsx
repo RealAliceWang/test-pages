@@ -15,14 +15,16 @@ export type MetricTone = 'neutral' | 'accent' | 'positive' | 'attention';
  * so a row is not a fixed four-colour rotation. Neutral takes violet rather
  * than grey purely so the fourth hue holds its own next to the other three.
  *
- * `on` is the glyph colour: each is picked to clear 4.5:1 against the middle
- * of its own plinth, which rules out the lighter mid-tones for amber.
+ * Three roles per tone:
+ *   tint  — the card's pale wash, and the plinth behind a fallback glyph
+ *   solid — the drawn icon's body, dark enough to hold its shape on that wash
+ *   on    — a bare lucide stroke sitting on the plinth, needing 4.5:1 there
  */
-const tones: Record<MetricTone, { tint: string; on: string }> = {
-  neutral: { tint: '#A78BFA', on: '#2E1065' },
-  accent: { tint: '#38BDF8', on: '#052E45' },
-  positive: { tint: '#34D399', on: '#04372A' },
-  attention: { tint: '#FBBF24', on: '#432B04' },
+const tones: Record<MetricTone, { tint: string; solid: string; on: string }> = {
+  neutral: { tint: '#A78BFA', solid: '#7C3AED', on: '#2E1065' },
+  accent: { tint: '#38BDF8', solid: '#0284C7', on: '#052E45' },
+  positive: { tint: '#34D399', solid: '#059669', on: '#04372A' },
+  attention: { tint: '#FBBF24', solid: '#D97706', on: '#432B04' },
 };
 
 export interface Metric {
@@ -52,18 +54,22 @@ export default function MetricCard({ metric, onGo }: MetricCardProps) {
   const style = { '--metric-tint': tone.tint } as CSSProperties;
   /* Called, not mounted as <Glass/>: these are plain shape functions rather
      than stateful components, and rendering one by identity would trip the
-     "component created during render" rule for no benefit. */
+     "component created during render" rule for no benefit.
+     They carry their own frosted plate, so they need the saturated hue rather
+     than the dark glyph colour a bare lucide stroke takes. */
   const glass = glassIconFor(metric.icon)?.({
-    className: 'w-[24px] h-[24px]',
-    style: { color: tone.on },
+    className: 'w-[40px] h-[40px] shrink-0',
+    style: { color: tone.solid },
   });
 
   const body = (
     <>
       <div className="flex items-center gap-2.5">
-        <span className="metric-icon w-[40px] h-[40px] rounded-[13px] flex items-center justify-center shrink-0">
-          {glass ?? <metric.icon size={18} strokeWidth={2.3} style={{ color: tone.on }} />}
-        </span>
+        {glass ?? (
+          <span className="metric-icon w-[40px] h-[40px] rounded-[13px] flex items-center justify-center shrink-0">
+            <metric.icon size={18} strokeWidth={2.3} style={{ color: tone.on }} />
+          </span>
+        )}
         <p className="eyebrow truncate">{metric.label}</p>
       </div>
 
