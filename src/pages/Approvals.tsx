@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { CheckSquare, Inbox, KeyRound, ShoppingCart, TriangleAlert } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Check, CheckSquare, Inbox, KeyRound, ShoppingCart, TriangleAlert, X } from 'lucide-react';
 import Header from '../components/layout/Header';
 import TabFilter from '../components/common/TabFilter';
 import SearchBar from '../components/common/SearchBar';
@@ -13,6 +13,7 @@ import {
   visibleApplications,
 } from '../store';
 import { roleLabels, type Application } from '../domain/types';
+import { moduleLabel } from '../domain/format';
 
 export default function Approvals() {
   const navigate = useNavigate();
@@ -23,10 +24,38 @@ export default function Approvals() {
   const [acting, setActing] = useState<{ app: Application; approve: boolean } | null>(null);
   const [comment, setComment] = useState('');
 
+  // A row arrived here via the workbench's "待我处理" queue, carrying which
+  // application to land on — /approvals is otherwise just an undifferentiated
+  // list, and re-finding one item in it by eye does not scale.
+  const [searchParams] = useSearchParams();
+  const focusId = searchParams.get('focus');
+  const [highlightId, setHighlightId] = useState<string | null>(null);
+  const rowRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
   const inbox = inboxOf(state, me);
   const inboxIds = new Set(inbox.map((a) => a.id));
   const all = visibleApplications(state, me);
   const handled = all.filter((a) => !inboxIds.has(a.id));
+
+  useEffect(() => {
+    if (!focusId) return;
+    // The target may sit in either tab depending on whether it is still
+    // awaiting this identity's decision — switch to whichever one holds it.
+    if (!inboxIds.has(focusId)) setTab(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusId]);
+
+  useEffect(() => {
+    if (!focusId) return;
+    const el = rowRefs.current[focusId];
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setHighlightId(focusId);
+    const timer = setTimeout(() => setHighlightId(null), 2000);
+    return () => clearTimeout(timer);
+    // Re-runs once the tab switch above (if any) has committed and the
+    // target row actually exists in the DOM.
+  }, [focusId, tab]);
 
   const scopeLabel =
     me.role === 'VENDOR_OPS' ? '全平台的免费额度申请'
@@ -94,7 +123,7 @@ export default function Approvals() {
               席位需在支付到账后才能发放。
             </p>
             <button onClick={() => navigate('/orders')}
-              className="h-[32px] px-4  text-[13px] font-medium btn-primary text-white cursor-pointer shrink-0">
+              className="btn-primary h-[32px] px-4 text-[13px] font-semibold cursor-pointer shrink-0">
               去下单
             </button>
           </div>
@@ -120,7 +149,13 @@ export default function Approvals() {
             const amount = mod && mod.unitPrice > 0 ? mod.unitPrice * app.seats : 0;
 
             return (
-              <div key={app.id} className="panel p-5">
+              <div
+                key={app.id}
+                ref={(el) => { rowRefs.current[app.id] = el; }}
+                id={`approval-${app.id}`}
+                className="panel p-5 transition-colors duration-700"
+                style={highlightId === app.id ? { backgroundColor: 'var(--color-primary-bg)' } : undefined}
+              >
                 <div className="flex items-start gap-4">
                   <img src={moduleIconMap[mod?.icon ?? 'building'] || moduleIconMap.building} alt=""
                     className="w-[44px] h-[44px] object-contain shrink-0" />
@@ -136,9 +171,7 @@ export default function Approvals() {
                       </span>
                       <StatusBadge status={app.status} />
                       {step && isStandIn(me, step) && (
-                        <span className="text-[12px] px-[6px] py-[1px] rounded-sm bg-warning-bg text-warning font-medium">
-                          代部门审批
-                        </span>
+                        <span className="text-[12px] font-medium text-warning bg-warning-bg rounded-full px-2 py-0.5">代部门审批</span>
                       )}
                       {amount > 0 && (
                         <span className="text-[13px] text-orange">预估 ¥{amount.toLocaleString()}</span>
@@ -193,9 +226,18 @@ export default function Approvals() {
                         {app.steps
                           .filter((s) => s.action !== '待审批')
                           .map((s, i) => (
-                            <p key={i} className="text-[12px] text-text-muted">
-                              {s.label}：{s.action} · {s.approverName} · {s.actedAt}
-                              {s.comment && ` · ${s.comment}`}
+                            <p key={i} className="text-[12px] text-text-muted flex items-center gap-[6px]">
+                              {s.action === '通过'
+                                ? <Check size={14} className="text-success shrink-0" />
+                                : <X size={14} className="text-danger shrink-0" />}
+                              <span>
+                                {s.label}：
+                                <span className={`font-medium ${s.action === '通过' ? 'text-success' : 'text-danger'}`}>
+                                  {s.action}
+                                </span>
+                                {` · ${s.approverName} · ${s.actedAt}`}
+                                {s.comment && ` · ${s.comment}`}
+                              </span>
                             </p>
                           ))}
                       </div>
@@ -205,11 +247,11 @@ export default function Approvals() {
                   {isMine && step && (
                     <div className="flex flex-col gap-2 shrink-0">
                       <button onClick={() => { setActing({ app, approve: true }); setComment(''); }}
-                        className="h-[34px] px-5  text-[14px] font-medium btn-primary text-white cursor-pointer">
+                        className="btn-outline h-[34px] px-5 text-[13px] font-semibold cursor-pointer">
                         通过
                       </button>
                       <button onClick={() => { setActing({ app, approve: false }); setComment(''); }}
-                        className="h-[36px] px-5 rounded-full text-[14px] font-semibold text-danger bg-danger-bg hover:brightness-95 transition-all cursor-pointer">
+                        className="h-[34px] px-5 rounded-full text-[13px] font-semibold text-danger bg-danger-bg hover:brightness-95 transition-all cursor-pointer">
                         驳回
                       </button>
                     </div>
@@ -224,16 +266,20 @@ export default function Approvals() {
           <div className="panel py-16 text-center">
             {tab === 0 ? (
               <>
-                <CheckSquare size={44} className="mx-auto mb-4 text-text-placeholder" />
-                <p className="text-[15px] text-text-muted">当前没有待你处理的申请</p>
+                <span className="w-[44px] h-[44px] rounded-full bg-surface-hover flex items-center justify-center mx-auto mb-4">
+                  <CheckSquare size={20} className="text-text-muted" />
+                </span>
+                <p className="text-[13px] text-text-muted">当前没有待你处理的申请</p>
                 <p className="text-[13px] text-text-placeholder mt-2">
                   可切换身份为「普通成员」提交一条申请，再切回来处理
                 </p>
               </>
             ) : (
               <>
-                <Inbox size={44} className="mx-auto mb-4 text-text-placeholder" />
-                <p className="text-[15px] text-text-muted">暂无已处理记录</p>
+                <span className="w-[44px] h-[44px] rounded-full bg-surface-hover flex items-center justify-center mx-auto mb-4">
+                  <Inbox size={20} className="text-text-muted" />
+                </span>
+                <p className="text-[13px] text-text-muted">暂无已处理记录</p>
               </>
             )}
           </div>
@@ -251,7 +297,7 @@ export default function Approvals() {
             <div className="border border-border rounded-sm divide-y divide-divider">
               {[
                 { label: '申请单号', value: acting.app.code },
-                { label: '申请模块', value: `${moduleOf(state, acting.app.moduleId)?.name} · ${moduleOf(state, acting.app.moduleId)?.edition}` },
+                { label: '申请模块', value: (() => { const m = moduleOf(state, acting.app.moduleId); return m ? moduleLabel(m) : '—'; })() },
                 { label: '申请人', value: memberOf(state, acting.app.applicantId)?.name ?? '—' },
                 { label: '席位数量', value: `${acting.app.seats} 个` },
                 { label: '申请类型', value: kindLabels[acting.app.kind] },
@@ -281,7 +327,7 @@ export default function Approvals() {
                         : '通过后立即为该企业增加免费席位额度，并自动分配给申请人。'}
               </p>
               {actingStandIn && (
-                <p className="text-[12.5px] text-text-secondary mt-2 leading-relaxed">
+                <p className="text-[12px] text-text-secondary mt-2 leading-relaxed">
                   {deptAdminOnDuty
                     ? `这是部门层级的审批，${deptAdminOnDuty.name}也可处理；你的通过将记为代部门审批。`
                     : '该部门暂无可用的部门管理员，你正代为审批。'}
@@ -291,7 +337,7 @@ export default function Approvals() {
             </div>
 
             <div>
-              <label className="block text-[14px] text-text-secondary mb-2">
+              <label className="block text-[13px] font-medium text-text-secondary mb-2">
                 审批意见 {!acting.approve && <span className="text-danger">*</span>}
               </label>
               <textarea value={comment} rows={3}
@@ -300,21 +346,21 @@ export default function Approvals() {
                 className="w-full px-3 py-[10px] text-[14px] field placeholder:text-text-placeholder focus:border-primary focus:ring-2 focus:ring-primary/10 focus:outline-none transition-all resize-none leading-relaxed" />
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center justify-end gap-3">
+              <button onClick={() => setActing(null)}
+                className="btn-soft h-[38px] px-5 text-[13.5px] font-semibold cursor-pointer">
+                取消
+              </button>
               <button onClick={submit}
                 disabled={!acting.approve && comment.trim().length === 0}
-                className={`h-[36px] px-5 rounded-full text-[14px] font-semibold transition-colors ${
+                className={`h-[38px] px-5 rounded-full text-[13.5px] font-semibold transition-colors ${
                   !acting.approve && comment.trim().length === 0
                     ? 'bg-surface-hover text-text-placeholder cursor-not-allowed'
                     : acting.approve
-                      ? 'btn-primary text-white cursor-pointer'
+                      ? 'btn-primary cursor-pointer'
                       : 'bg-danger text-white hover:brightness-95 cursor-pointer'
                 }`}>
                 确认{acting.approve ? '通过' : '驳回'}
-              </button>
-              <button onClick={() => setActing(null)}
-                className="btn-soft h-[38px] px-5 text-[14px] font-semibold cursor-pointer">
-                取消
               </button>
             </div>
           </div>

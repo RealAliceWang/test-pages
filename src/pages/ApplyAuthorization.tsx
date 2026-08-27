@@ -9,9 +9,25 @@ import {
   allocatedSeats, decideKind, isExpired, kindLabels, poolOf, spareSeats,
   stepsFor, useApp,
 } from '../store';
-import { roleLabels } from '../domain/types';
+import { roleLabels, type Role } from '../domain/types';
+import { moduleLabel } from '../domain/format';
 
 const steps = ['填写申请', '确认提交', '提交成功'];
+
+/** Ceiling for a single request, whether self-service or a manager's batch. */
+const MAX_SEATS = 20;
+
+/**
+ * Single source of truth for how a chain step's role reads in prose, used
+ * both for "what happens next" copy and for "switch to this identity" copy
+ * so the two never drift apart.
+ */
+const roleChainCopy: Record<Role, { approval: string; identity: string }> = {
+  DEPT_ADMIN: { approval: '部门管理员审批', identity: '部门管理员' },
+  ORG_ADMIN: { approval: '企业管理员审批', identity: '企业管理员' },
+  VENDOR_OPS: { approval: '厂商额度审批', identity: '厂商运营' },
+  MEMBER: { approval: '待处理', identity: '普通成员' },
+};
 
 export default function ApplyAuthorization() {
   const { moduleId = '' } = useParams();
@@ -35,7 +51,7 @@ export default function ApplyAuthorization() {
           <div className="panel py-16 text-center">
             <p className="text-[15px] text-text-muted">未找到该模块</p>
             <button onClick={() => navigate('/modules')}
-              className="mt-4 h-[34px] px-4 rounded-full text-[14px] font-semibold text-primary bg-primary-bg cursor-pointer">
+              className="mt-4 h-[38px] px-5 rounded-full text-[13.5px] font-semibold text-primary bg-primary-bg cursor-pointer">
               返回模块中心
             </button>
           </div>
@@ -84,24 +100,24 @@ export default function ApplyAuthorization() {
       : { label: '前往订单与账单下单', to: '/orders', hint: '该模块需付费扩容，你可以直接创建采购订单。' };
     return (
       <div>
-        <Header title="申请授权" subtitle={`${mod.name}（${mod.edition}） · ${mod.code}`} />
+        <Header title="申请授权" subtitle={`${moduleLabel(mod)} · ${mod.code}`} />
         <div className="p-6">
           <div className="panel px-10 py-12 max-w-[560px] mx-auto text-center">
             <div className="w-[46px] h-[46px] rounded-full bg-primary-bg text-primary flex items-center justify-center mx-auto">
               <KeyRound size={22} />
             </div>
-            <p className="text-[17px] font-bold text-text mt-4">你无需提交申请</p>
+            <p className="text-[16px] font-bold text-text mt-4">你无需提交申请</p>
             <p className="text-[13.5px] text-text-secondary mt-2 leading-relaxed">
               作为{roleLabels[me.role]}，你本身就是企业内的最终审批人。审批自己提交的申请等于没有审批，
               因此这类需求请直接执行。{direct.hint}
             </p>
             <div className="flex items-center justify-center gap-3 mt-7">
               <button onClick={() => navigate(direct.to)}
-                className="h-[38px] px-6  text-[14px] font-medium btn-primary text-white cursor-pointer">
+                className="btn-primary h-[38px] px-6 text-[13.5px] font-semibold cursor-pointer">
                 {direct.label}
               </button>
               <button onClick={() => navigate(`/module/${moduleId}`)}
-                className="btn-soft h-[40px] px-5 text-[14px] font-semibold cursor-pointer">
+                className="btn-soft h-[38px] px-5 text-[13.5px] font-semibold cursor-pointer">
                 返回模块详情
               </button>
             </div>
@@ -124,7 +140,7 @@ export default function ApplyAuthorization() {
 
   return (
     <div>
-      <Header title="申请授权" subtitle={`${mod.name}（${mod.edition}） · ${mod.code}`} />
+      <Header title="申请授权" subtitle={`${moduleLabel(mod)} · ${mod.code}`} />
 
       <div className="px-7 pb-7 flex flex-col gap-4">
         {step < 2 && (
@@ -176,14 +192,16 @@ export default function ApplyAuthorization() {
 
                 <div className="flex flex-col gap-[18px]">
                   <div>
-                    <label className="block text-[14px] text-text-secondary mb-2">
-                      申请席位数 {!canRequestBatch && <span className="text-text-placeholder">（普通成员仅可为本人申请 1 个）</span>}
+                    <label className="block text-[13px] font-medium text-text-secondary mb-2">
+                      申请席位数 {canRequestBatch
+                        ? <span className="text-text-placeholder">（可为团队批量申请，最多 {MAX_SEATS} 个）</span>
+                        : <span className="text-text-placeholder">（普通成员仅可为本人申请 1 个）</span>}
                     </label>
                     <div className="flex items-center gap-3">
-                      <input type="number" min={1} max={20} value={seats}
+                      <input type="number" min={1} max={MAX_SEATS} value={seats}
                         disabled={!canRequestBatch}
-                        onChange={(e) => setSeats(Math.max(1, Math.min(20, Number(e.target.value) || 1)))}
-                        className="w-[120px] h-[36px] px-3 text-[14px] field focus:border-primary focus:ring-2 focus:ring-primary/10 focus:outline-none transition-all disabled:bg-surface-hover disabled:text-text-muted" />
+                        onChange={(e) => setSeats(Math.max(1, Math.min(MAX_SEATS, Number(e.target.value) || 1)))}
+                        className="w-[120px] h-[36px] px-3 text-[14px] field disabled:bg-surface-hover disabled:text-text-muted" />
                       {amount > 0 && (
                         <span className="text-[14px] text-text-secondary">
                           预估金额 <span className="text-[16px] font-bold text-orange">¥{amount.toLocaleString()}</span>
@@ -194,26 +212,28 @@ export default function ApplyAuthorization() {
                   </div>
 
                   <div>
-                    <label className="block text-[14px] text-text-secondary mb-2">关联项目</label>
+                    <label className="block text-[13px] font-medium text-text-secondary mb-2">关联项目</label>
                     <input type="text" value={projectName} placeholder="例如：苏州园区研发楼"
                       onChange={(e) => setProjectName(e.target.value)}
-                      className="w-full h-[36px] px-3 text-[14px] field placeholder:text-text-placeholder focus:border-primary focus:ring-2 focus:ring-primary/10 focus:outline-none transition-all" />
+                      className="w-full h-[36px] px-3 text-[14px] field placeholder:text-text-placeholder" />
                     <p className="text-[12px] text-text-placeholder mt-[6px]">填写项目名便于管理员按项目归集成本，非必填</p>
                   </div>
 
                   <div>
-                    <label className="block text-[14px] text-text-secondary mb-2">
+                    <label className="block text-[13px] font-medium text-text-secondary mb-2">
                       申请理由 <span className="text-danger">*</span>
                     </label>
                     <textarea value={reason} rows={4} placeholder="说明业务场景与必要性，便于管理员判断，至少 5 个字"
                       onChange={(e) => setReason(e.target.value)}
-                      className="w-full px-3 py-[10px] text-[14px] field placeholder:text-text-placeholder focus:border-primary focus:ring-2 focus:ring-primary/10 focus:outline-none transition-all resize-none leading-relaxed" />
-                    <p className="text-[12px] text-text-placeholder mt-[6px]">{reason.trim().length} / 建议 20 字以上</p>
+                      className="w-full px-3 py-[10px] text-[14px] field placeholder:text-text-placeholder resize-none leading-relaxed" />
+                    <p className={`text-[12px] mt-[6px] ${
+                      reason.trim().length > 0 && reason.trim().length < 5 ? 'text-warning' : 'text-text-muted'
+                    }`}>{reason.trim().length} / 至少 5 个字（建议 20 字以上）</p>
                   </div>
                 </div>
 
                 <button disabled={!canSubmit} onClick={() => setStep(1)}
-                  className={`mt-6 h-[38px] px-6 rounded-full text-[14px] font-semibold inline-flex items-center gap-1 transition-colors ${
+                  className={`mt-6 h-[38px] px-6 rounded-full text-[13.5px] font-semibold inline-flex items-center gap-1 transition-colors ${
                     canSubmit ? 'btn-primary text-white cursor-pointer' : 'bg-surface-hover text-text-placeholder cursor-not-allowed'
                   }`}>
                   下一步 <ChevronRight size={14} />
@@ -266,7 +286,7 @@ export default function ApplyAuthorization() {
 
               <div className="border border-border rounded-sm divide-y divide-divider">
                 {[
-                  { label: '申请模块', value: `${mod.name}（${mod.edition}） · ${mod.code}` },
+                  { label: '申请模块', value: `${moduleLabel(mod)} · ${mod.code}` },
                   { label: '申请类型', value: `${kindLabels[kind]}${amount > 0 ? ` · 预估 ¥${amount.toLocaleString()}` : ' · 无费用'}` },
                   { label: '席位数量', value: `${seats} 个` },
                   { label: '关联项目', value: projectName.trim() || '—' },
@@ -293,11 +313,11 @@ export default function ApplyAuthorization() {
 
               <div className="flex items-center gap-3 mt-6">
                 <button onClick={submit}
-                  className="h-[38px] px-6  text-[14px] font-medium btn-primary text-white cursor-pointer">
+                  className="btn-primary h-[38px] px-6 text-[13.5px] font-semibold cursor-pointer">
                   确认提交
                 </button>
                 <button onClick={() => setStep(0)}
-                  className="btn-soft h-[40px] px-5 text-[14px] font-semibold cursor-pointer">
+                  className="btn-soft h-[38px] px-5 text-[13.5px] font-semibold cursor-pointer">
                   返回修改
                 </button>
               </div>
@@ -306,7 +326,7 @@ export default function ApplyAuthorization() {
             <div className="panel p-5">
               <p className="text-[14px] font-bold text-text mb-4">审批链预览</p>
               {me.role === 'DEPT_ADMIN' && (
-                <p className="text-[12.5px] text-text-secondary bg-surface-secondary rounded-sm px-3 py-2 mb-4 leading-relaxed">
+                <p className="text-[13px] text-text-secondary bg-surface-secondary rounded-sm px-3 py-2 mb-4 leading-relaxed">
                   你是本部门管理员，本人提交的申请不由自己审批，已跳过部门审批直接上报企业管理员。
                 </p>
               )}
@@ -317,7 +337,12 @@ export default function ApplyAuthorization() {
                       <div className="w-[24px] h-[24px] rounded-full bg-surface-hover text-text-muted flex items-center justify-center text-[12px] shrink-0">
                         {i + 1}
                       </div>
-                      {i < chain.length - 1 && <div className="w-[2px] flex-1 min-h-[26px] bg-border my-1" />}
+                      {/* The connector must also bridge into the spliced purchase
+                          node below, or the line visually breaks at the last
+                          approval step of a PURCHASE chain. */}
+                      {(i < chain.length - 1 || kind === 'PURCHASE') && (
+                        <div className="w-[2px] flex-1 min-h-[26px] bg-border my-1" />
+                      )}
                     </div>
                     <div className="pb-4">
                       <p className="text-[14px] text-text">{s.label}</p>
@@ -329,8 +354,10 @@ export default function ApplyAuthorization() {
                 ))}
                 {kind === 'PURCHASE' && (
                   <div className="flex gap-3">
-                    <div className="w-[24px] h-[24px] rounded-full bg-orange-bg text-orange flex items-center justify-center text-[12px] shrink-0">
-                      {chain.length + 1}
+                    <div className="flex flex-col items-center">
+                      <div className="w-[24px] h-[24px] rounded-full bg-orange-bg text-orange flex items-center justify-center text-[12px] shrink-0">
+                        {chain.length + 1}
+                      </div>
                     </div>
                     <div>
                       <p className="text-[14px] text-text">采购与支付</p>
@@ -349,7 +376,7 @@ export default function ApplyAuthorization() {
               <div className="w-[64px] h-[64px] rounded-full bg-success-bg flex items-center justify-center mx-auto mb-5">
                 <CheckCircle2 size={30} className="text-success" />
               </div>
-              <p className="text-[19px] font-bold text-text">申请已提交</p>
+              <p className="text-[20px] font-bold text-text">申请已提交</p>
               <p className="text-[14px] text-text-muted mt-3 leading-relaxed">
                 单号 <span className="text-text font-medium">{newest?.code ?? submittedCode}</span>，
                 当前状态「{newest?.status ?? '待部门审批'}」。审批结果会通知到你。
@@ -357,9 +384,9 @@ export default function ApplyAuthorization() {
 
               <div className="mt-7 border border-border rounded-sm divide-y divide-divider text-left">
                 {[
-                  { icon: FileText, label: '申请模块', value: `${mod.name}（${mod.edition}）` },
+                  { icon: FileText, label: '申请模块', value: moduleLabel(mod) },
                   { icon: KeyRound, label: '申请类型', value: `${kindLabels[kind]} · ${seats} 个席位` },
-                  { icon: Users, label: '下一环节', value: myDept ? `${myDept.name}管理员审批` : '部门管理员审批' },
+                  { icon: Users, label: '下一环节', value: roleChainCopy[chain[0].role].approval },
                   { icon: Building2, label: '所属企业', value: myOrg.name },
                 ].map((r) => (
                   <div key={r.label} className="flex items-center gap-3 px-4 py-[12px]">
@@ -372,17 +399,17 @@ export default function ApplyAuthorization() {
 
               <div className="flex items-center justify-center gap-3 mt-7">
                 <button onClick={() => navigate('/applications')}
-                  className="h-[38px] px-6  text-[14px] font-medium btn-primary text-white cursor-pointer">
+                  className="btn-primary h-[38px] px-6 text-[13.5px] font-semibold cursor-pointer">
                   查看申请进度
                 </button>
                 <button onClick={() => navigate('/modules')}
-                  className="btn-soft h-[40px] px-5 text-[14px] font-semibold cursor-pointer">
+                  className="btn-soft h-[38px] px-5 text-[13.5px] font-semibold cursor-pointer">
                   返回模块中心
                 </button>
               </div>
 
               <p className="text-[12px] text-text-placeholder mt-6 leading-relaxed">
-                提示：切换到「{chain[0].role === 'DEPT_ADMIN' ? '部门管理员' : '企业管理员'}」身份可在审批中心处理这条申请，完整走通闭环。
+                提示：切换到「{roleChainCopy[chain[0].role].identity}」身份可在审批中心处理这条申请，完整走通闭环。
               </p>
             </div>
           </div>

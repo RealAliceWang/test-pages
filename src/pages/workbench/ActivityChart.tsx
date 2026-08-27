@@ -34,7 +34,7 @@ export default function ActivityChart({ data, focusIndex, focusLabel }: Activity
           <div key={d.label} className="flex-1 flex flex-col items-center gap-2.5 h-full justify-end">
             <div className="relative w-full flex-1 flex items-end justify-center">
               {active && focusLabel && (
-                <span className="chip-signal absolute -top-1 left-1/2 -translate-x-1/2 num text-[11.5px] font-bold rounded-full px-2.5 py-[3px] whitespace-nowrap">
+                <span className="chip-signal absolute -top-1 left-1/2 -translate-x-1/2 num text-[12px] font-bold rounded-full px-2.5 py-[3px] whitespace-nowrap">
                   {focusLabel}
                 </span>
               )}
@@ -47,7 +47,7 @@ export default function ActivityChart({ data, focusIndex, focusLabel }: Activity
               />
             </div>
             <span
-              className={`text-[11.5px] ${active ? 'font-bold text-text' : 'font-medium text-text-placeholder'}`}
+              className={`text-[12px] ${active ? 'font-bold text-text' : 'font-medium text-text-placeholder'}`}
             >
               {d.label}
             </span>

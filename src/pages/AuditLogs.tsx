@@ -1,10 +1,9 @@
 import { useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import { CalendarDays, ChevronDown, Globe, History, Inbox, RotateCcw, Users } from 'lucide-react';
+import { CalendarDays, ChevronDown, Download, Globe, History, Inbox, RotateCcw, Search, Users } from 'lucide-react';
 import Header from '../components/layout/Header';
 import MetricCard, { type Metric } from '../components/common/MetricCard';
 import TabFilter from '../components/common/TabFilter';
-import SearchBar from '../components/common/SearchBar';
 import StatusBadge from '../components/common/StatusBadge';
 import { daysBetween, memberOf, orgOf, useApp, visibleAudit } from '../store';
 import { scopeOf } from '../domain/permissions';
@@ -34,6 +33,7 @@ const groupOf: Record<AuditAction, ActionGroup> = {
   '确认到账': '订单类',
   '取消订单': '订单类',
   '邀请成员': '成员类',
+  '注册申请': '成员类',
   '停用成员': '成员类',
   '启用成员': '成员类',
   '变更角色': '成员类',
@@ -50,14 +50,11 @@ const groups: ActionGroup[] = ['审批类', '席位类', '订单类', '成员类
 
 const allActions = Object.keys(groupOf) as AuditAction[];
 
-/** Category chips reuse the semantic token pairs so they stay on-palette. */
-const groupStyles: Record<ActionGroup, string> = {
-  '审批类': 'bg-primary-bg text-primary-dark',
-  '席位类': 'bg-success-bg text-success',
-  '订单类': 'bg-orange-bg text-orange',
-  '成员类': 'bg-warning-bg text-warning',
-  '厂商类': 'bg-violet-bg text-violet',
-};
+/* Action chips are categorical, not stateful — semantic status colors would
+   read as five different alert levels. A single neutral pill lets the text
+   carry the classification. */
+const actionChipClass =
+  'text-[12px] font-medium bg-surface-hover text-text-secondary rounded-full px-2.5 py-[3px] leading-[16px] whitespace-nowrap';
 
 const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
@@ -80,7 +77,7 @@ function FilterSelect({ label, value, onChange, children }: FilterSelectProps) {
         aria-label={label}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="h-[32px] pl-3 pr-[30px] text-[14px] text-text field appearance-none cursor-pointer focus:border-primary focus:ring-2 focus:ring-primary/10 focus:outline-none transition-all"
+        className="h-[32px] pl-3 pr-[30px] text-[14px] text-text field appearance-none cursor-pointer"
       >
         {children}
       </select>
@@ -102,6 +99,8 @@ export default function AuditLogs() {
   const [action, setAction] = useState('');
   const [actorId, setActorId] = useState('');
   const [query, setQuery] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [expanded, setExpanded] = useState<string[]>([]);
 
   const activeGroup = groupIndex === 0 ? null : groups[groupIndex - 1];
@@ -143,6 +142,9 @@ export default function AuditLogs() {
       if (activeGroup && groupOf[l.action] !== activeGroup) return false;
       if (action && l.action !== action) return false;
       if (actorId && l.actorId !== actorId) return false;
+      const date = l.createdAt.slice(0, 10);
+      if (dateFrom && date < dateFrom) return false;
+      if (dateTo && date > dateTo) return false;
       if (keyword) {
         const hit =
           l.target.toLowerCase().includes(keyword) || l.detail.toLowerCase().includes(keyword);
@@ -150,7 +152,7 @@ export default function AuditLogs() {
       }
       return true;
     });
-  }, [logs, activeGroup, action, actorId, query]);
+  }, [logs, activeGroup, action, actorId, dateFrom, dateTo, query]);
 
   // visibleAudit is already newest-first, so insertion order keeps days sorted.
   const days = useMemo(() => {
@@ -169,15 +171,16 @@ export default function AuditLogs() {
     ...groups.map((g) => ({ label: `${g} ${logs.filter((l) => groupOf[l.action] === g).length}` })),
   ];
 
-  const filterActive = groupIndex !== 0 || action !== '' || actorId !== '' || query !== '';
+  const filterActive =
+    groupIndex !== 0 || action !== '' || actorId !== '' || query !== '' || dateFrom !== '' || dateTo !== '';
 
   const stats: Metric[] = [
     { icon: History, value: todayCount, label: '今日操作', hint: '当天产生的审计记录', tone: 'accent' },
     { icon: CalendarDays, value: weekCount, label: '近 7 天操作', hint: '滚动 7 日窗口', tone: 'neutral' },
-    { icon: Users, value: actors.length, label: '涉及操作人', hint: `数据范围：${scopeLabel}`, tone: 'neutral' },
+    { icon: Users, value: actors.length, label: '涉及操作人', hint: `数据范围：${scopeLabel}`, tone: 'positive' },
     scope === 'platform'
-      ? { icon: Globe, value: platformCount, label: '厂商侧平台操作', hint: '跨企业的运营动作', tone: 'neutral' }
-      : { icon: Globe, value: filtered.length, label: '当前筛选结果', hint: filterActive ? '已应用筛选条件' : '未筛选，展示全部', tone: 'neutral' },
+      ? { icon: Globe, value: platformCount, label: '厂商侧平台操作', hint: '跨企业的运营动作', tone: 'attention' }
+      : { icon: Globe, value: filtered.length, label: '当前筛选结果', hint: filterActive ? '已应用筛选条件' : '未筛选，展示全部', tone: 'attention' },
   ];
 
   const reset = () => {
@@ -185,10 +188,29 @@ export default function AuditLogs() {
     setAction('');
     setActorId('');
     setQuery('');
+    setDateFrom('');
+    setDateTo('');
   };
 
   const toggle = (id: string) =>
     setExpanded((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+
+  // Exports exactly what's on screen (post-filter), never the full log set —
+  // an export button that silently ignores active filters would be a trap.
+  const exportCsv = () => {
+    const escape = (v: string) => (/[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
+    const header = ['操作人', '角色', '对象', '详情', '时间', 'IP'];
+    const rows = filtered.map((l) => [l.actorName, roleLabels[l.actorRole], l.target, l.detail, l.createdAt, l.ip]);
+    const csv = [header, ...rows].map((row) => row.map(escape).join(',')).join('\n');
+    // Leading BOM so Excel opens the UTF-8 Chinese text correctly.
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `审计日志_${state.now.slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const lastId = filtered.length > 0 ? filtered[filtered.length - 1].id : '';
 
@@ -198,9 +220,18 @@ export default function AuditLogs() {
         title="审计日志"
         subtitle={`数据范围：${scopeLabel} · 共 ${logs.length} 条记录`}
         actions={
-          <span className="text-[13px] text-text-secondary bg-surface-secondary rounded-sm px-2.5 py-1">
-            {scope === 'platform' ? '厂商运营视角' : scope === 'org' ? '企业管理员视角' : '部门管理员视角'}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-[13px] text-text-secondary bg-surface-secondary rounded-sm px-2.5 py-1">
+              {scope === 'platform' ? '厂商运营视角' : scope === 'org' ? '企业管理员视角' : '部门管理员视角'}
+            </span>
+            <button
+              onClick={exportCsv}
+              disabled={filtered.length === 0}
+              className="btn-soft h-[32px] px-3.5 text-[13px] font-semibold cursor-pointer inline-flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Download size={14} /> 导出 CSV
+            </button>
+          </div>
         }
       />
 
@@ -241,8 +272,43 @@ export default function AuditLogs() {
               ))}
             </FilterSelect>
 
-            <div className="w-[280px]">
-              <SearchBar placeholder="搜索操作对象或详情" value={query} onChange={setQuery} />
+            <div className="flex items-center gap-1.5">
+              <input
+                type="date"
+                aria-label="起始日期"
+                value={dateFrom}
+                max={dateTo || undefined}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className={`h-[32px] px-3 text-[14px] field [&::-webkit-calendar-picker-indicator]:opacity-50 ${
+                  dateFrom ? 'text-text' : 'text-text-placeholder'
+                }`}
+              />
+              <span className="text-[13px] text-text-muted shrink-0">至</span>
+              <input
+                type="date"
+                aria-label="结束日期"
+                value={dateTo}
+                min={dateFrom || undefined}
+                onChange={(e) => setDateTo(e.target.value)}
+                className={`h-[32px] px-3 text-[14px] field [&::-webkit-calendar-picker-indicator]:opacity-50 ${
+                  dateTo ? 'text-text' : 'text-text-placeholder'
+                }`}
+              />
+            </div>
+
+            <div className="relative w-[280px] group">
+              <Search
+                size={15}
+                className="absolute left-[13px] top-1/2 -translate-y-1/2 text-text-placeholder group-focus-within:text-primary transition-colors pointer-events-none"
+              />
+              <input
+                type="text"
+                aria-label="搜索操作对象或详情"
+                placeholder="搜索操作对象或详情"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="field w-full h-[32px] pl-[35px] pr-4 text-[14px] text-text placeholder:text-text-placeholder"
+              />
             </div>
 
             <span className="text-[13px] text-text-muted">
@@ -252,9 +318,9 @@ export default function AuditLogs() {
             {filterActive && (
               <button
                 onClick={reset}
-                className="h-[32px] px-3 text-[13px] text-text-secondary bg-surface-hover rounded-sm cursor-pointer inline-flex items-center gap-1.5 hover:bg-border transition-colors"
+                className="btn-soft h-[32px] px-3.5 text-[13px] font-semibold cursor-pointer inline-flex items-center gap-1.5"
               >
-                <RotateCcw size={13} /> 重置筛选
+                <RotateCcw size={14} /> 重置筛选
               </button>
             )}
           </div>
@@ -263,19 +329,18 @@ export default function AuditLogs() {
         {/* Timeline */}
         {filtered.length === 0 ? (
           <div className="panel py-20 flex flex-col items-center gap-2">
-            <Inbox size={40} className="text-text-placeholder" />
-            <p className="text-[15px] text-text mt-1">
-              {logs.length === 0 ? '当前范围内还没有审计记录' : '没有符合筛选条件的记录'}
-            </p>
-            <p className="text-[13px] text-text-muted">
+            <div className="w-[44px] h-[44px] rounded-full bg-surface-hover flex items-center justify-center">
+              <Inbox size={20} className="text-text-placeholder" />
+            </div>
+            <p className="text-[13px] text-text-muted mt-1 text-center">
               {logs.length === 0
-                ? `${scopeLabel}的成员尚未产生可审计的操作，后续操作会自动留痕`
-                : '可以换一个操作类型分组，或清空搜索关键词'}
+                ? `当前范围内还没有审计记录，${scopeLabel}的操作会自动留痕`
+                : '没有符合筛选条件的记录，可以换一个操作类型分组，或清空搜索关键词'}
             </p>
             {logs.length > 0 && (
               <button
                 onClick={reset}
-                className="mt-2 h-[32px] px-4 text-[14px] text-primary bg-primary-bg rounded-sm cursor-pointer hover:bg-border transition-colors"
+                className="btn-soft mt-2 h-[32px] px-4 text-[13px] font-semibold cursor-pointer"
               >
                 清空筛选条件
               </button>
@@ -298,7 +363,6 @@ export default function AuditLogs() {
 
                   {items.map((log) => {
                     const group = groupOf[log.action];
-                    const style = groupStyles[group];
                     const actor = memberOf(state, log.actorId);
                     const isPlatform = log.orgId === null;
                     const open = expanded.includes(log.id);
@@ -311,7 +375,7 @@ export default function AuditLogs() {
 
                         <div className="flex flex-col items-center shrink-0">
                           <div
-                            className="w-[28px] h-[28px] mt-[6px] rounded-full flex items-center justify-center text-white text-[12.5px] font-semibold shrink-0"
+                            className="w-[28px] h-[28px] mt-[6px] rounded-full flex items-center justify-center text-white text-[13px] font-semibold shrink-0"
                             style={{ background: actor?.avatarColor ?? 'var(--color-text-placeholder)' }}
                           >
                             {log.actorName.charAt(0)}
@@ -328,11 +392,7 @@ export default function AuditLogs() {
                             <div className="flex items-center gap-2 flex-wrap min-w-0">
                               <span className="text-[14px] text-text">{log.actorName}</span>
                               <StatusBadge status={roleLabels[log.actorRole]} tone="neutral" />
-                              <span
-                                className={`text-[12.5px] font-semibold rounded-full px-2.5 py-[3px] leading-[16px] whitespace-nowrap ${style}`}
-                              >
-                                {log.action}
-                              </span>
+                              <span className={actionChipClass}>{log.action}</span>
                               {isPlatform && (
                                 <span className="text-[12px] text-primary bg-primary-bg rounded-sm px-1.5 py-[1px] inline-flex items-center gap-1 whitespace-nowrap">
                                   <Globe size={11} /> 平台操作
@@ -371,19 +431,27 @@ export default function AuditLogs() {
                           </div>
 
                           {open && (
-                            <div className="mt-3 pt-3 border-t border-hairline grid grid-cols-2 lg:grid-cols-4 gap-3">
+                            <div
+                              className={`mt-3 pt-3 border-t border-hairline grid grid-cols-2 gap-3 ${
+                                scope === 'platform' ? 'lg:grid-cols-4' : 'lg:grid-cols-3'
+                              }`}
+                            >
                               <div>
                                 <p className="text-[12px] text-text-muted">完整时间</p>
                                 <p className="text-[13px] text-text-secondary mt-[3px] tabular-nums">
                                   {log.createdAt}
                                 </p>
                               </div>
-                              <div>
-                                <p className="text-[12px] text-text-muted">操作来源</p>
-                                <p className="text-[13px] text-text-secondary mt-[3px]">
-                                  {isPlatform ? '厂商平台侧' : (orgOf(state, log.orgId ?? '')?.shortName ?? '—')}
-                                </p>
-                              </div>
+                              {/* Only the vendor's cross-org view benefits from naming the
+                                  originating org — org/dept admins already know it's their own. */}
+                              {scope === 'platform' && (
+                                <div>
+                                  <p className="text-[12px] text-text-muted">操作来源</p>
+                                  <p className="text-[13px] text-text-secondary mt-[3px]">
+                                    {isPlatform ? '厂商平台侧' : (orgOf(state, log.orgId ?? '')?.shortName ?? '—')}
+                                  </p>
+                                </div>
+                              )}
                               <div>
                                 <p className="text-[12px] text-text-muted">操作人账号</p>
                                 <p className="text-[13px] text-text-secondary mt-[3px]">

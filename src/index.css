@@ -7,8 +7,8 @@
      Ink is the primary action colour, not blue. Near-black CTAs read as
      premium and let the single blue accent stay meaningful (selection, links,
      data). Blue-on-everything is what made the old build look generic. */
-  --color-ink: #0A0C10;
-  --color-ink-soft: #1A1D24;
+  --color-ink: #1C1F28;
+  --color-ink-soft: #2B303C;
 
   --color-primary: #2F6BFF;
   --color-primary-light: #5B8CFF;
@@ -40,10 +40,26 @@
   --color-warning: #B45309;
   --color-warning-light: #F59E0B;
   --color-warning-bg: #FFFAEB;
-  --color-danger: #DC2626;
+  /* Warm yellow reserved for "under-utilised" signals (e.g. a seat pool
+     running well below capacity). Deliberately a different hue from
+     --color-warning-light/--color-orange, which mark "at capacity" —
+     the two meanings are opposite and must not share a colour. */
+  --color-caution-light: #FACC15;
+  /* Meter fills. Which bucket a utilisation percentage lands in is decided by
+     src/domain/poolHealth.ts (poolHealth / METER_FILL) — pages never pick a
+     meter colour themselves. Blue = healthy, golden yellow = under-used,
+     vivid orange = at capacity: three clean, clearly separated hues. Only the
+     blue clears 3:1 against the track on its own; the yellow/orange rely on
+     the mandated relief channel — every meter sits next to its number and the
+     1px inner stroke keeps the fill edge legible — so vividness wins over
+     self-contrast here by design. */
+  --color-meter-ok: #0284C7;
+  --color-meter-low: #EAB308;
+  --color-meter-full: #F97316;
+  --color-danger: #D31F1F;
   --color-danger-light: #EF4444;
   --color-danger-bg: #FEF2F2;
-  --color-orange: #EA580C;
+  --color-orange: #C2410C;
   --color-orange-light: #F97316;
   --color-orange-bg: #FFF7ED;
   --color-violet: #6D28D9;
@@ -201,7 +217,7 @@
     pointer-events: none;
     background:
       radial-gradient(26rem 20rem at 100% 0%, rgba(47, 107, 255, 0.32), transparent 64%),
-      radial-gradient(20rem 16rem at 4% 108%, rgba(200, 241, 53, 0.12), transparent 62%);
+      radial-gradient(20rem 16rem at 4% 108%, rgba(125, 211, 252, 0.10), transparent 62%);
   }
 
   /* Blue identity card — the warm anchor of the dashboard.
@@ -269,8 +285,10 @@
 
   /* ---- Controls ----
      Every button is a pill and shares one height scale (h-9 / h-10).
-     Primary = ink. Accent = blue, used only when a blue action must outrank
-     an ink one on the same surface.
+     The solid button is ink (#1C1F28) and appears once per screen as the
+     anchor. Actions repeated across list rows or cards use .btn-outline — a
+     1px ink stroke with ink text on a transparent ground — so a grid reads
+     light while staying in the same ink family as the anchor.
      Flat fills, no elevation: hover shifts the fill and press scales, which is
      enough feedback without a drop shadow under every action. */
   .btn-primary {
@@ -293,24 +311,26 @@
     color: var(--color-text-placeholder);
   }
 
-  .btn-accent {
-    background: var(--color-primary);
-    color: #fff;
+  .btn-outline {
+    background: transparent;
+    color: var(--color-ink);
+    border: 1px solid var(--color-ink);
     border-radius: var(--radius-pill);
     transition: transform 180ms var(--ease-fluid), background 180ms var(--ease-fluid);
   }
 
-  .btn-accent:hover:not(:disabled) {
-    background: var(--color-primary-dark);
+  .btn-outline:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--color-ink) 6%, transparent);
   }
 
-  .btn-accent:active:not(:disabled) {
+  .btn-outline:active:not(:disabled) {
     transform: scale(0.97);
   }
 
-  .btn-accent:disabled {
-    background: var(--color-surface-hover);
+  .btn-outline:disabled {
+    border-color: var(--color-border);
     color: var(--color-text-placeholder);
+    background: transparent;
   }
 
   .btn-soft {
@@ -384,7 +404,15 @@
     outline: none;
   }
 
-  /* Multi-line and select fields keep a soft rectangle rather than a pill. */
+  /* Multi-line and select fields keep a soft rectangle rather than a pill —
+     a four-line textarea with the pill radius renders as a stadium. Scoped to
+     the element so pages only ever need the one .field class. */
+  textarea.field,
+  select.field {
+    border-radius: var(--radius-sm);
+  }
+
+  /* Same soft rectangle as an opt-in for non-textarea/select containers. */
   .field-box {
     border-radius: var(--radius-sm);
   }
@@ -396,7 +424,7 @@
   }
 
   .data-table thead th {
-    font-size: 11.5px;
+    font-size: 12px;
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -433,8 +461,10 @@
 
   /* ---- Data ---- */
   /* Track + fill for every progress affordance, so bars match across pages.
-     Default fill is the signal blue: in this product a meter always answers
-     "how far along", which is exactly what the signal colour marks. */
+     Fill colours come from METER_FILL in src/domain/poolHealth.ts
+     (--color-meter-ok/-low/-full); the default here is the healthy blue.
+     Fills are flat — no stroke — so a meter must always sit next to the
+     number it draws; the bar alone is never the only representation. */
   .meter {
     height: 7px;
     border-radius: var(--radius-pill);
@@ -446,7 +476,7 @@
     display: block;
     height: 100%;
     border-radius: var(--radius-pill);
-    background: var(--color-signal);
+    background: var(--color-meter-ok);
     transition: width 600ms var(--ease-fluid);
   }
 
@@ -548,11 +578,19 @@
 ::-webkit-scrollbar-thumb:hover { background: rgba(10, 12, 16, 0.3); background-clip: content-box; }
 ::-webkit-scrollbar-track { background: transparent; }
 
-/* Global focus-visible ring for keyboard navigation */
+/* Global focus-visible ring for keyboard navigation. No border-radius here:
+   the outline follows each element's own corner shape, so circles and pills
+   keep their silhouette when focused. */
 *:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
-  border-radius: var(--radius-sm);
+}
+
+/* A focused .field already draws its own blue border + halo; the global
+   outline on top of that reads as a double ring. Kept unlayered, after the
+   global rule, so it actually wins the cascade. */
+.field:focus-visible {
+  outline: none;
 }
 
 /* Respect reduced-motion preference */

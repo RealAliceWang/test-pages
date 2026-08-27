@@ -60,6 +60,10 @@ export interface AppState {
   now: string;
   seq: number;
   currentMemberId: string;
+  /** False after 退出登录 — the router then only serves /login and /register.
+      Boots true so the seeded demo session (and every verify script) still
+      lands straight on the workbench. */
+  authed: boolean;
   organizations: Organization[];
   departments: Department[];
   members: Member[];
@@ -76,6 +80,7 @@ export const initialState: AppState = {
   now: seed.NOW,
   seq: 0,
   currentMemberId: seed.DEFAULT_MEMBER_ID,
+  authed: true,
   organizations: seed.organizations,
   departments: seed.departments,
   members: seed.members,
@@ -404,6 +409,23 @@ export const kindLabels: Record<ApplicationKind, string> = {
   QUOTA: '免费额度扩容',
 };
 
+/**
+ * Next application code for today, continuing on from whichever number is
+ * already highest — including codes that shipped in the seed data — instead
+ * of restarting from 001 every session. Two submissions on the same day in
+ * the same session also cannot collide, since each one is generated after
+ * the previous is already in `state.applications`.
+ */
+function nextApplicationCode(state: AppState, now: string): string {
+  const prefix = `AP${now.slice(0, 10).replace(/-/g, '')}`;
+  const used = state.applications
+    .filter((a) => a.code.startsWith(prefix))
+    .map((a) => Number(a.code.slice(prefix.length)))
+    .filter((n) => Number.isFinite(n));
+  const next = (used.length ? Math.max(...used) : 0) + 1;
+  return `${prefix}${String(next).padStart(3, '0')}`;
+}
+
 /** One-line preview of the approval chain, used by catalog and detail pages. */
 export function kindHint(state: AppState, orgId: string, moduleId: string, seats = 1): string {
   const kind = decideKind(state, orgId, moduleId, seats);
@@ -420,19 +442,22 @@ export function kindHint(state: AppState, orgId: string, moduleId: string, seats
 
 type Action =
   | { type: 'SWITCH_IDENTITY'; memberId: string }
+  | { type: 'LOGIN'; memberId: string }
+  | { type: 'LOGOUT' }
+  | { type: 'REGISTER_MEMBER'; orgId: string; deptId: string; name: string; title: string; email: string; phone: string }
   | { type: 'DISMISS_FLASH' }
   | { type: 'SUBMIT_APPLICATION'; moduleId: string; seats: number; reason: string; projectName: string }
   | { type: 'WITHDRAW_APPLICATION'; applicationId: string }
   | { type: 'DECIDE_APPLICATION'; applicationId: string; approve: boolean; comment: string }
   | { type: 'ASSIGN_SEAT'; poolId: string; memberId: string }
-  | { type: 'REVOKE_SEAT'; assignmentId: string }
+  | { type: 'REVOKE_SEAT'; assignmentId: string; reason?: string }
   | { type: 'CREATE_ORDER'; moduleId: string; seats: number; payMethod: PayMethod; applicationId?: string; renewPoolId?: string }
   | { type: 'PAY_ORDER'; orderId: string }
   | { type: 'CONFIRM_ORDER'; orderId: string }
   | { type: 'CANCEL_ORDER'; orderId: string }
   | { type: 'CONFIRM_REFUND'; orderId: string }
   | { type: 'INVITE_MEMBER'; name: string; employeeNo: string; title: string; deptId: string; role: Role; email: string; phone: string }
-  | { type: 'SET_MEMBER_STATUS'; memberId: string; status: Member['status'] }
+  | { type: 'SET_MEMBER_STATUS'; memberId: string; status: Member['status']; reason?: string }
   | { type: 'SET_MEMBER_ROLE'; memberId: string; role: Role }
   | { type: 'SET_MEMBER_DEPT'; memberId: string; deptId: string }
   | { type: 'SET_MODULE_LISTED'; moduleId: string; listed: boolean }
@@ -457,6 +482,23 @@ function makeCtx(state: AppState): Ctx {
   return { state, actor, now: formatDateTime(d), logs: [], seq: state.seq };
 }
 
+/**
+ * Simulated source IP for a new record. Real forensics would come from the
+ * request, but this prototype has no server — so each actor is pinned to
+ * whichever IP their own history already used (seed data included), which
+ * keeps every person's trail internally consistent instead of every actor
+ * sharing one address. Actors with no prior record yet (e.g. a member
+ * invited this session) fall back to a value derived from their own id, so
+ * they still get something distinct from everyone else's default.
+ */
+function ipFor(state: AppState, actor: Member): string {
+  const prior = state.auditLogs.find((l) => l.actorId === actor.id);
+  if (prior) return prior.ip;
+  if (actor.role === 'VENDOR_OPS') return '58.246.***.12';
+  const n = Number(actor.id.replace(/\D/g, '')) || 0;
+  return `192.168.100.${100 + (n % 150)}`;
+}
+
 function log(ctx: Ctx, action: AuditAction, target: string, detail: string) {
   ctx.seq += 1;
   ctx.logs.push({
@@ -469,7 +511,7 @@ function log(ctx: Ctx, action: AuditAction, target: string, detail: string) {
     target,
     detail,
     createdAt: ctx.now,
-    ip: ctx.actor.role === 'VENDOR_OPS' ? '58.246.***.12' : '192.168.100.42',
+    ip: ipFor(ctx.state, ctx.actor),
   });
 }
 
@@ -671,7 +713,90 @@ export function reducer(state: AppState, action: Action): AppState {
     case 'SWITCH_IDENTITY': {
       const m = memberOf(state, action.memberId);
       if (!m) return state;
-      return { ...state, currentMemberId: action.memberId, flash: null };
+      return { ...state, currentMemberId: action.memberId, authed: true, flash: null };
+    }
+
+    /* ---- Session. LOGIN / LOGOUT / REGISTER_MEMBER run pre-auth, so none of
+       them appears in actionPermission and none may use makeCtx (whose actor
+       is whoever was signed in last). */
+
+    case 'LOGIN': {
+      const m = memberOf(state, action.memberId);
+      if (!m) {
+        return { ...state, flash: { kind: 'error', text: '账号不存在，请检查后重试' } };
+      }
+      if (m.status === '待激活') {
+        return { ...state, flash: { kind: 'error', text: '账号尚未激活，请联系企业管理员开通后再登录' } };
+      }
+      if (m.status === '已停用') {
+        return { ...state, flash: { kind: 'error', text: '账号已停用，如需恢复请联系企业管理员' } };
+      }
+      const d = parse(state.now);
+      d.setMinutes(d.getMinutes() + 1);
+      const now = formatDateTime(d);
+      return {
+        ...state,
+        now,
+        currentMemberId: m.id,
+        authed: true,
+        members: state.members.map((x) => (x.id === m.id ? { ...x, lastLogin: now } : x)),
+        flash: { kind: 'success', text: `欢迎回来，${m.name}` },
+      };
+    }
+
+    case 'LOGOUT':
+      return { ...state, authed: false, flash: null };
+
+    case 'REGISTER_MEMBER': {
+      const org = state.organizations.find((o) => o.id === action.orgId);
+      const dept = state.departments.find((d) => d.id === action.deptId && d.orgId === action.orgId);
+      const vendorOrgIds = new Set(state.members.filter((m) => m.role === 'VENDOR_OPS').map((m) => m.orgId));
+      if (!org || vendorOrgIds.has(action.orgId)) {
+        return { ...state, flash: { kind: 'error', text: '请选择要加入的企业' } };
+      }
+      if (!dept) {
+        return { ...state, flash: { kind: 'error', text: '请选择该企业下的部门' } };
+      }
+      const email = action.email.trim().toLowerCase();
+      const peers = membersOfOrg(state, action.orgId);
+      if (peers.some((m) => m.email.toLowerCase() === email)) {
+        return { ...state, flash: { kind: 'error', text: `邮箱 ${action.email} 已被使用，可直接登录` } };
+      }
+
+      /* Employee numbers follow whatever pattern this company already uses
+         (e.g. YG0007): reuse the letter prefix and continue the sequence. */
+      const prefix = peers[0]?.employeeNo.match(/^[A-Za-z]+/)?.[0] ?? 'YG';
+      const maxNo = peers.reduce((mx, m) => Math.max(mx, Number(m.employeeNo.replace(/^\D+/, '')) || 0), 0);
+      const employeeNo = `${prefix}${String(maxNo + 1).padStart(4, '0')}`;
+
+      const d = parse(state.now);
+      d.setMinutes(d.getMinutes() + 1);
+      const now = formatDateTime(d);
+      const seq = state.seq + 1;
+      const member: Member = {
+        id: `m-n${seq}`,
+        orgId: action.orgId,
+        deptId: action.deptId,
+        name: action.name.trim(),
+        employeeNo,
+        title: action.title.trim() || '工程师',
+        role: 'MEMBER',
+        email: action.email.trim(),
+        phone: action.phone.trim(),
+        status: '待激活',
+        joinedAt: now.slice(0, 10),
+        lastLogin: '—',
+        avatarColor: ['#2563EB', '#16A34A', '#F97316', '#8B5CF6', '#14B8A6'][seq % 5],
+      };
+      /* Self-service registration is its own audit trail entry, authored by
+         the applicant — the org admin reads it before deciding to activate. */
+      const ctx: Ctx = { state, actor: member, now, logs: [], seq };
+      log(ctx, '注册申请', member.name,
+        `自助注册申请加入${org.shortName} · ${dept.name}（${member.title}），账号待企业管理员激活`);
+      return commit(state, ctx, { members: [...state.members, member] }, {
+        kind: 'success',
+        text: `注册申请已提交，工号 ${employeeNo}，等待企业管理员激活`,
+      });
     }
 
     case 'DISMISS_FLASH':
@@ -703,7 +828,7 @@ export function reducer(state: AppState, action: Action): AppState {
       }
 
       ctx.seq += 1;
-      const code = `AP${ctx.now.slice(0, 10).replace(/-/g, '')}${String(ctx.seq).padStart(3, '0')}`;
+      const code = nextApplicationCode(state, ctx.now);
       const app: Application = {
         id: `a-n${ctx.seq}`,
         code,
@@ -788,6 +913,10 @@ export function reducer(state: AppState, action: Action): AppState {
             ? action.approve ? '企业审批通过' : '企业审批驳回'
             : action.approve ? '厂商审批通过' : '厂商审批驳回';
 
+      // An approver's comment is evidence too, not just a rejecter's — keep
+      // it in the trail on the approve path the same way it already is here.
+      const withComment = (text: string) => (action.comment ? `${text}；意见：${action.comment}` : text);
+
       if (!action.approve) {
         log(ctx, auditAction, app.code, `驳回「${mod.name}」申请：${action.comment || '未填写理由'}`);
         return commit(
@@ -807,7 +936,7 @@ export function reducer(state: AppState, action: Action): AppState {
       const nextStep = steps.find((s) => s.action === '待审批');
       if (nextStep) {
         const status = statusForStep(nextStep);
-        log(ctx, auditAction, app.code, `${standIn}同意并上报下一级：${mod.name}`);
+        log(ctx, auditAction, app.code, withComment(`${standIn}同意并上报下一级：${mod.name}`));
         return commit(
           state,
           ctx,
@@ -847,7 +976,7 @@ export function reducer(state: AppState, action: Action): AppState {
           usedDays: 0,
           lastUsed: '—',
         };
-        log(ctx, auditAction, app.code, `${standIn}同意并从池内分配「${mod.name}」1 个席位`);
+        log(ctx, auditAction, app.code, withComment(`${standIn}同意并从池内分配「${mod.name}」1 个席位`));
         log(ctx, '分配席位', applicant?.name ?? app.applicantId, `「${mod.name}」席位已分配给${applicant?.name ?? ''}`);
         return commit(
           state,
@@ -863,7 +992,7 @@ export function reducer(state: AppState, action: Action): AppState {
       }
 
       if (app.kind === 'PURCHASE') {
-        log(ctx, auditAction, app.code, `${standIn}同意采购「${mod.name}」${app.seats} 个席位，转入采购流程`);
+        log(ctx, auditAction, app.code, withComment(`${standIn}同意采购「${mod.name}」${app.seats} 个席位，转入采购流程`));
         return commit(
           state,
           ctx,
@@ -884,7 +1013,7 @@ export function reducer(state: AppState, action: Action): AppState {
         source: '厂商赠予',
         assignTo: app.applicantId,
       });
-      log(ctx, auditAction, app.code, `批准「${mod.name}」免费额度 ${app.seats} 个席位`);
+      log(ctx, auditAction, app.code, withComment(`批准「${mod.name}」免费额度 ${app.seats} 个席位`));
       log(ctx, '分配席位', applicant?.name ?? app.applicantId, `额度到账后自动分配「${mod.name}」席位`);
       return commit(
         state,
@@ -953,7 +1082,8 @@ export function reducer(state: AppState, action: Action): AppState {
       const ctx = makeCtx(state);
       const mod = moduleOf(state, assign.moduleId)!;
       const target = memberOf(state, assign.memberId);
-      log(ctx, '回收席位', target?.name ?? assign.memberId, `回收${target?.name ?? ''}的「${mod.name}」席位，已释放回池`);
+      const reasonSuffix = action.reason ? `；原因：${action.reason}` : '';
+      log(ctx, '回收席位', target?.name ?? assign.memberId, `回收${target?.name ?? ''}的「${mod.name}」席位，已释放回池${reasonSuffix}`);
       return commit(
         state,
         ctx,
@@ -1245,11 +1375,12 @@ export function reducer(state: AppState, action: Action): AppState {
       const freed = disabling
         ? state.assignments.filter((a) => a.memberId === target.id && a.status === '生效中')
         : [];
+      const reasonSuffix = action.reason ? `；原因：${action.reason}` : '';
 
       log(ctx, disabling ? '停用成员' : '启用成员', target.name,
         disabling
-          ? `停用${target.name}，同时回收其 ${freed.length} 个席位`
-          : `启用${target.name}`);
+          ? `停用${target.name}，同时回收其 ${freed.length} 个席位${reasonSuffix}`
+          : `启用${target.name}${reasonSuffix}`);
 
       return commit(
         state,

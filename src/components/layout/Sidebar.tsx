@@ -50,13 +50,17 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
               <p className="text-[13.5px] text-text font-bold truncate tracking-[-0.01em]">
                 {myOrg.shortName}
               </p>
-              <p className="text-[11.5px] text-text-muted mt-[3px] font-medium">{roleLabels[me.role]}</p>
+              <p className="text-[12px] text-text-muted mt-[3px] font-medium">{roleLabels[me.role]}</p>
             </div>
           </>
         )}
       </div>
 
-      <nav className={`flex-1 overflow-y-auto overflow-x-visible pb-5 ${collapsed ? 'px-0' : 'px-3'}`}>
+      {/* overflow-x-clip: with overflow-y:auto the x-axis can never be truly
+          `visible` (it computes to auto), which used to surface a stray
+          horizontal scrollbar at the rail's foot. `clip` kills the scrollbar
+          without creating a scroll container. */}
+      <nav className={`flex-1 overflow-y-auto overflow-x-clip pb-5 ${collapsed ? 'px-0' : 'px-3'}`}>
         {groups.map((g, gi) => (
           <div key={g.group} className={gi ? 'mt-6' : ''}>
             {!collapsed && g.items.length > 0 && (
@@ -93,7 +97,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
                         {badge > 0 && (
                           <span
-                            className={`shrink-0 min-w-[19px] h-[19px] px-1.5 rounded-full bg-danger text-white text-[11px] font-bold flex items-center justify-center ${
+                            className={`shrink-0 min-w-[19px] h-[19px] px-1.5 rounded-full bg-danger text-white text-[12px] font-bold flex items-center justify-center ${
                               collapsed ? 'absolute top-0 right-0 ring-2 ring-shell' : ''
                             }`}
                           >
@@ -101,15 +105,11 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                           </span>
                         )}
 
-                        {/* Collapsed rail would otherwise be icon-only guesswork */}
-                        {collapsed && (
-                          <span
-                            role="tooltip"
-                            className="pointer-events-none absolute left-full ml-2 z-50 whitespace-nowrap rounded-full bg-ink px-3 py-1.5 text-[12.5px] font-semibold text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100"
-                          >
-                            {item.label}
-                          </span>
-                        )}
+                        {/* Collapsed items rely on the native `title` for their
+                            label: a custom flyout positioned past the rail edge
+                            would be clipped by the scrolling nav (overflow-y:auto
+                            forces overflow-x to compute to auto) and its overflow
+                            put a phantom horizontal scrollbar under the rail. */}
                       </>
                     )}
                   </NavLink>
@@ -144,7 +144,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
           {collapsed && (
             <span
               role="tooltip"
-              className="pointer-events-none absolute left-full ml-2 z-50 whitespace-nowrap rounded-full bg-ink px-3 py-1.5 text-[12.5px] font-semibold text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100"
+              className="pointer-events-none absolute left-full ml-2 z-50 whitespace-nowrap rounded-full bg-ink px-3 py-1.5 text-[13px] font-semibold text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100"
             >
               个人信息
             </span>
@@ -152,7 +152,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         </NavLink>
 
         {!collapsed && (
-          <p className="px-3.5 mt-3 text-[11px] text-text-placeholder font-medium tracking-[0.06em] select-none">
+          <p className="px-3.5 mt-3 text-[12px] text-text-placeholder font-medium tracking-[0.06em] select-none">
             VERSION 4.0.0
           </p>
         )}

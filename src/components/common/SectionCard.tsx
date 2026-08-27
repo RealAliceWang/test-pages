@@ -38,11 +38,14 @@ export default function SectionCard({
     <section className={`panel flex flex-col ${bare ? '' : 'p-5'} ${className}`}>
       <header className={`flex items-center justify-between gap-3 ${bare ? 'px-5 pt-5 pb-3' : 'mb-4'}`}>
         <h2 className="text-[13.5px] font-bold text-text tracking-[-0.01em]">{title}</h2>
+        {/* Muted, not placeholder: the link must clear text contrast on its
+            own. Negative margins keep the ≥32px hit area from inflating the
+            header's visual height. */}
         {actionLabel && act && (
           <button
             type="button"
             onClick={act}
-            className="text-[12px] font-semibold text-text-placeholder hover:text-text transition-colors cursor-pointer shrink-0"
+            className="text-[12px] font-semibold text-text-muted hover:text-text transition-colors cursor-pointer shrink-0 px-2 py-2 -mx-2 -my-2 rounded-full"
           >
             {actionLabel}
           </button>

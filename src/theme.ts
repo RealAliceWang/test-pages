@@ -12,7 +12,7 @@ export const chart = {
   /** The measure being emphasised. Matches --color-signal (light blue). */
   signal: '#7DD3FC',
   /** Primary data series. Matches --color-ink. */
-  primary: '#0A0C10',
+  primary: '#1C1F28',
   /** Secondary/comparison series. Matches --color-primary. */
   secondary: '#2F6BFF',
   positive: '#10B981',
@@ -33,7 +33,7 @@ export const chart = {
  * rather than extend this list.
  */
 export const chartSeries = [
-  '#0A0C10',
+  '#1C1F28',
   '#7DD3FC',
   '#F59E0B',
   '#2F6BFF',

@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { AlertTriangle, Box, ChevronRight, Clock, RefreshCw, UserCheck } from 'lucide-react';
 import Header from '../components/layout/Header';
 import MetricCard, { type Metric } from '../components/common/MetricCard';
+import RingProgress from '../components/common/RingProgress';
 import StatusBadge from '../components/common/StatusBadge';
 import TabFilter from '../components/common/TabFilter';
 import { moduleIconMap } from '../assets/moduleIcons';
+import { daysLeftLabel, moduleLabel } from '../domain/format';
 import {
   assignmentsOfMember,
   daysBetween,
@@ -16,7 +18,8 @@ import {
   useApp,
   type SeatStatus,
 } from '../store';
-import type { Assignment, CatalogModule, SeatPool } from '../domain/types';
+import type { Assignment, CatalogModule, Order, SeatPool } from '../domain/types';
+import type { AppState } from '../store';
 
 interface SeatRow {
   assignment: Assignment;
@@ -28,38 +31,32 @@ interface SeatRow {
   remainDays: number;
   /** Share of the licence term already consumed. */
   pct: number;
-  assignedByName: string;
+  /** How this seat came to be assigned, phrased for the member reading it. */
+  provenance: string;
 }
 
-const tones: Record<SeatStatus, { ring: string; value: string; icon: string; wrap: string; dot: string }> = {
-  生效中: {
-    ring: 'var(--color-primary)',
-    value: 'text-primary',
-    icon: 'bg-primary/10 text-primary',
-    wrap: 'bg-primary-bg border-primary/15',
-    dot: 'bg-primary/10',
-  },
-  即将到期: {
-    ring: 'var(--color-warning)',
-    value: 'text-warning',
-    icon: 'bg-warning/10 text-warning',
-    wrap: 'bg-warning-bg border-warning/15',
-    dot: 'bg-warning/10',
-  },
-  已过期: {
-    ring: 'var(--color-text-placeholder)',
-    value: 'text-text-muted',
-    icon: 'bg-surface-hover text-text-muted',
-    wrap: 'bg-surface-secondary border-border',
-    dot: 'bg-text-muted/10',
-  },
-  已暂停: {
-    ring: 'var(--color-danger)',
-    value: 'text-danger',
-    icon: 'bg-danger/10 text-danger',
-    wrap: 'bg-danger-bg border-danger/15',
-    dot: 'bg-danger/10',
-  },
+/**
+ * A vendor-ops confirmation is what technically creates the assignment when a
+ * purchase order lands, but the person who actually drove the seat into
+ * existence is whoever ordered it — so trace the order behind the assignment
+ * instead of naming the vendor rep who happened to click "confirm".
+ */
+function orderBehindAssignment(state: AppState, assignment: Assignment): Order | undefined {
+  return state.orders.find((o) => {
+    if (o.status !== '已完成' || o.orgId !== assignment.orgId || o.moduleId !== assignment.moduleId) return false;
+    if (!o.confirmedAt || o.confirmedAt.slice(0, 10) !== assignment.assignedAt) return false;
+    if (!o.applicationId) return false;
+    const app = state.applications.find((a) => a.id === o.applicationId);
+    return app?.applicantId === assignment.memberId;
+  });
+}
+
+/** Colour of the remaining-days figure per seat status. */
+const valueTone: Record<SeatStatus, string> = {
+  生效中: 'text-primary',
+  即将到期: 'text-warning',
+  已过期: 'text-text-muted',
+  已暂停: 'text-danger',
 };
 
 const filters: ('全部' | SeatStatus)[] = ['全部', '生效中', '即将到期', '已过期'];
@@ -82,6 +79,13 @@ export default function MyModules() {
         const expired = status === '已过期';
 
         const elapsed = expired ? totalDays : totalDays - Math.max(0, remain);
+        const assignedBy = memberOf(state, assignment.assignedById);
+        const order = assignedBy?.role === 'VENDOR_OPS' ? orderBehindAssignment(state, assignment) : undefined;
+        const provenance = order
+          ? `席位随订单 ${order.orderNo} 于 ${assignment.assignedAt} 到账自动分配`
+          : assignedBy?.role === 'VENDOR_OPS'
+            ? `席位于 ${assignment.assignedAt} 经厂商审批后自动分配`
+            : `席位由 ${assignedBy?.name ?? '企业管理员'} 于 ${assignment.assignedAt} 分配`;
         return [
           {
             assignment,
@@ -91,7 +95,7 @@ export default function MyModules() {
             totalDays,
             remainDays: Math.max(0, remain),
             pct: Math.min(100, Math.max(0, Math.round((elapsed / totalDays) * 100))),
-            assignedByName: memberOf(state, assignment.assignedById)?.name ?? '企业管理员',
+            provenance,
           },
         ];
       }),
@@ -104,7 +108,7 @@ export default function MyModules() {
 
   const stats: Metric[] = [
     { icon: Box, label: '生效中', value: countOf('生效中'), hint: '可直接在客户端登录使用', tone: 'accent' },
-    { icon: AlertTriangle, label: '即将到期', value: countOf('即将到期'), hint: '到期前需申请续期', tone: countOf('即将到期') ? 'attention' : 'neutral' },
+    { icon: AlertTriangle, label: '即将到期', value: countOf('即将到期'), hint: '到期前需申请续期', tone: 'attention' },
     { icon: Clock, label: '已过期', value: countOf('已过期'), hint: '席位已回池，可重新申请', tone: 'neutral' },
   ];
 
@@ -137,7 +141,7 @@ export default function MyModules() {
           />
           <button
             onClick={() => navigate('/modules')}
-            className="h-[34px] px-4 text-[14px] font-semibold text-primary bg-primary-bg rounded-full inline-flex items-center gap-[6px] hover:brightness-95 transition-all cursor-pointer"
+            className="h-[32px] px-4 text-[13px] font-semibold text-primary bg-primary-bg rounded-full inline-flex items-center gap-[6px] hover:brightness-95 transition-all cursor-pointer"
           >
             浏览模块中心 <ChevronRight size={14} />
           </button>
@@ -146,10 +150,6 @@ export default function MyModules() {
         {/* Seat cards */}
         <div className="grid grid-cols-2 xl:grid-cols-3 gap-4">
           {list.map((r) => {
-            const t = tones[r.status];
-            const radius = 40;
-            const circumference = 2 * Math.PI * radius;
-
             return (
               <div
                 key={r.assignment.id}
@@ -157,29 +157,20 @@ export default function MyModules() {
                 className="panel px-5 py-5 flex flex-col gap-3 cursor-pointer panel-hover"
               >
                 <div className="flex items-center gap-4">
-                  {/* Licence term progress */}
-                  <div className="relative shrink-0" style={{ width: 96, height: 96 }}>
-                    <svg width="96" height="96" viewBox="0 0 96 96">
-                      <circle cx="48" cy="48" r={radius} fill="none" stroke="var(--color-divider)" strokeWidth={8} />
-                      <circle
-                        cx="48"
-                        cy="48"
-                        r={radius}
-                        fill="none"
-                        stroke={t.ring}
-                        strokeWidth={8}
-                        strokeLinecap="round"
-                        strokeDasharray={circumference}
-                        strokeDashoffset={circumference * (1 - r.pct / 100)}
-                        transform="rotate(-90 48 48)"
-                        className="transition-all duration-700"
-                      />
-                    </svg>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span className="text-[16px] font-bold text-text leading-none">{r.pct}%</span>
-                      <span className="text-[12px] text-text-muted mt-1">期限进度</span>
-                    </div>
-                  </div>
+                  {/* Licence term progress — the shared ring, signal fill on a divider track */}
+                  <RingProgress
+                    value={r.pct}
+                    size={96}
+                    thickness={8}
+                    track="var(--color-divider)"
+                    caption="期限进度"
+                    label={
+                      <span className="flex flex-col items-center">
+                        <span className="text-[16px] font-bold text-text leading-none">{r.pct}%</span>
+                        <span className="text-[12px] text-text-muted mt-1">期限进度</span>
+                      </span>
+                    }
+                  />
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2">
@@ -191,13 +182,10 @@ export default function MyModules() {
                         />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-[15px] font-semibold text-text truncate">{r.module.name}</p>
+                        <p className="text-[15px] font-semibold text-text truncate">{moduleLabel(r.module)}</p>
                         <div className="flex items-center gap-1.5 mt-0.5">
                           <span className="text-[13px] text-text-muted">{r.module.code}</span>
-                          <StatusBadge
-                            status={r.module.edition}
-                            tone={r.module.edition === '商业版' ? 'warning' : 'info'}
-                          />
+                          <StatusBadge status={r.module.edition} />
                         </div>
                       </div>
                       <span className="ml-auto shrink-0">
@@ -210,9 +198,9 @@ export default function MyModules() {
                       <span className="text-text font-medium text-right">
                         {r.assignment.usedDays} / {r.totalDays} 天
                       </span>
-                      <span className="text-text-muted">{r.status === '已过期' ? '状态' : '剩余天数'}</span>
-                      <span className={`font-medium text-right ${t.value}`}>
-                        {r.status === '已过期' ? '已过期' : `${r.remainDays} 天`}
+                      <span className="text-text-muted">{r.status === '已过期' ? '状态' : '距到期'}</span>
+                      <span className={`font-medium text-right ${valueTone[r.status]}`}>
+                        {r.status === '已过期' ? '已过期' : daysLeftLabel(r.remainDays)}
                       </span>
                       <span className="text-text-muted">到期日期</span>
                       <span className="text-text font-medium text-right">{r.pool.expireDate}</span>
@@ -229,9 +217,7 @@ export default function MyModules() {
                 {/* Seats belong to the company, so provenance matters more than a receipt */}
                 <div className="pt-3 border-t border-divider flex items-center gap-2 text-[12px] text-text-muted">
                   <UserCheck size={13} className="shrink-0" />
-                  <span className="truncate">
-                    席位由 {r.assignedByName} 于 {r.assignment.assignedAt} 分配
-                  </span>
+                  <span className="truncate">{r.provenance}</span>
                 </div>
 
                 {r.status !== '生效中' && (
@@ -240,9 +226,9 @@ export default function MyModules() {
                       e.stopPropagation();
                       navigate(`/apply/${r.module.id}`);
                     }}
-                    className="w-full h-[34px] rounded-full text-[13px] font-semibold text-primary bg-primary-bg inline-flex items-center justify-center gap-1.5 hover:brightness-95 transition-all cursor-pointer"
+                    className="w-full h-[32px] rounded-full text-[13px] font-semibold text-primary bg-primary-bg inline-flex items-center justify-center gap-1.5 hover:brightness-95 transition-all cursor-pointer"
                   >
-                    <RefreshCw size={13} /> 申请续期
+                    <RefreshCw size={14} /> 申请续期
                   </button>
                 )}
               </div>
@@ -251,17 +237,19 @@ export default function MyModules() {
         </div>
 
         {list.length === 0 && (
-          <div className="panel py-16 text-center">
-            <Box size={48} className="mx-auto mb-4 text-text-placeholder" />
-            <p className="text-[16px] text-text-muted mb-2">
+          <div className="panel py-16 flex flex-col items-center">
+            <div className="w-[44px] h-[44px] rounded-full bg-surface-hover flex items-center justify-center mb-3">
+              <Box size={20} className="text-text-placeholder" />
+            </div>
+            <p className="text-[13px] text-text-muted">
               {rows.length === 0 ? '当前还没有分配给你的席位' : `暂无${sel}的席位`}
             </p>
-            <p className="text-[14px] text-text-placeholder mb-6">
+            <p className="text-[13px] text-text-muted mt-1 mb-5">
               席位由企业统一采购与分配，可在模块中心选择需要的模块后提交申请
             </p>
             <button
               onClick={() => navigate('/modules')}
-              className="h-[38px] px-4 rounded-full text-[14px] font-semibold text-primary bg-primary-bg hover:brightness-95 transition-all inline-flex items-center gap-1 cursor-pointer"
+              className="h-[38px] px-5 rounded-full text-[13.5px] font-semibold text-primary bg-primary-bg hover:brightness-95 transition-all inline-flex items-center gap-1 cursor-pointer"
             >
               去模块中心看看 <ChevronRight size={14} />
             </button>

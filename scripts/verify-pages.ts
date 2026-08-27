@@ -38,12 +38,14 @@ const WAIT = 'load' as const;
 
 async function switchTo(page: Page, name: string): Promise<void> {
   await page.goto(`${BASE}#/`, { waitUntil: WAIT });
-  // Open the identity dropdown, then pick the member by displayed name.
-  const buttons = await page.$$('header button');
-  await buttons[buttons.length - 1].click();
-  await new Promise((r) => setTimeout(r, 120));
+  /* Target the switcher by aria-label rather than button position: cards also
+     use semantic <header> elements, so "last header button" is not stable. */
+  await page.waitForSelector('[aria-label="账号与身份"]');
+  await page.click('[aria-label="账号与身份"]');
+  await page.waitForSelector('[aria-label="演示用身份切换"]');
   const picked = await page.evaluate((target) => {
-    const btn = Array.from(document.querySelectorAll('button')).find((b) =>
+    const group = document.querySelector('[aria-label="演示用身份切换"]');
+    const btn = Array.from(group?.querySelectorAll('button') ?? []).find((b) =>
       b.textContent?.includes(target),
     );
     if (!btn) return false;
@@ -51,6 +53,11 @@ async function switchTo(page: Page, name: string): Promise<void> {
     return true;
   }, name);
   if (!picked) problems.push(`无法切换到身份「${name}」`);
+  await page.waitForFunction(
+    (target) => document.querySelector('header')?.textContent?.includes(target) ?? false,
+    {},
+    name,
+  );
   await new Promise((r) => setTimeout(r, 150));
 }
 

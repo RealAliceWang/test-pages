@@ -14,6 +14,7 @@ import {
   poolOf, spareSeats, useApp,
 } from '../store';
 import type { ModuleEdition } from '../domain/types';
+import { METER_FILL, poolHealth } from '../domain/poolHealth';
 
 const editionFilters: ('全部' | ModuleEdition)[] = ['全部', '免费版', '商业版'];
 const PAGE = 24;
@@ -61,8 +62,8 @@ export default function ModuleCenter() {
   const stats: Metric[] = [
     { icon: Boxes, value: state.catalog.filter((m) => m.listed).length, label: '在架模块', hint: '厂商已上架，可申请或购买', tone: 'accent' },
     { icon: PackageCheck, value: openedModules, label: '本企业已开通', hint: '已建立席位池的模块', tone: 'positive' },
-    { icon: KeyRound, value: idleSeats, label: '可直接分配的空闲席位', hint: '申请后走部门审批即可到手', tone: idleSeats ? 'positive' : 'attention' },
-    { icon: Wallet, value: commercialCount, label: '商业版模块', hint: '池满后需走采购流程', tone: 'neutral' },
+    { icon: KeyRound, value: idleSeats, label: '可直接分配的空闲席位', hint: '申请后走部门审批即可到手', tone: 'neutral' },
+    { icon: Wallet, value: commercialCount, label: '商业版模块', hint: '池满后需走采购流程', tone: 'attention' },
   ];
 
   const canApply = can(me.role, 'application:create');
@@ -116,9 +117,14 @@ export default function ModuleCenter() {
                   : '席位已满';
 
             const kind = decideKind(state, me.orgId, m.id, 1);
+            // A pool that exists but is fully allocated is a different story
+            // from a module that was never opened at all — say so, instead of
+            // reusing the "never opened" copy for both.
             const hint = held
               ? '已持有席位，可在「我的授权」查看'
-              : kindHint(state, me.orgId, m.id);
+              : availability === '席位已满'
+                ? `企业席位已满（${allocatedSeats(state, pool!.id)}/${pool!.total}），需${kind === 'PURCHASE' ? '下单采购扩容' : '厂商审批扩容免费额度'}`
+                : kindHint(state, me.orgId, m.id);
 
             return (
               <div key={m.id}
@@ -132,7 +138,7 @@ export default function ModuleCenter() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-[6px]">
                       <p className="text-[15px] font-bold text-text truncate tracking-[-0.01em]">{m.name}</p>
-                      <span className={`shrink-0 text-[11.5px] font-semibold px-2 py-[2px] rounded-full ${
+                      <span className={`shrink-0 text-[12px] font-semibold px-2 py-[2px] rounded-full ${
                         m.edition === '商业版' ? 'bg-orange-bg text-orange' : 'bg-surface-hover text-text-muted'
                       }`}>
                         {m.edition}
@@ -161,12 +167,10 @@ export default function ModuleCenter() {
                 {pool && !expired && (
                   <div className="mt-3.5">
                     <div className="meter">
-                      <span
-                        style={{
-                          width: `${pool.total ? Math.round((allocatedSeats(state, pool.id) / pool.total) * 100) : 0}%`,
-                          background: spare > 0 ? 'var(--color-signal)' : 'var(--color-warning-light)',
-                        }}
-                      />
+                      {(() => {
+                        const pct = pool.total ? Math.round((allocatedSeats(state, pool.id) / pool.total) * 100) : 0;
+                        return <span style={{ width: `${pct}%`, background: METER_FILL[poolHealth(pct)] }} />;
+                      })()}
                     </div>
                     <p className="num text-[12px] text-text-muted mt-[6px]">
                       企业席位 {allocatedSeats(state, pool.id)}/{pool.total} 已分配
@@ -180,7 +184,7 @@ export default function ModuleCenter() {
                       disabled={held}
                       onClick={(e) => { e.stopPropagation(); navigate(`/apply/${m.id}`); }}
                       className={`w-full h-[38px] text-[13.5px] font-semibold inline-flex items-center justify-center gap-1 ${
-                        held ? 'btn-soft text-text-placeholder cursor-not-allowed' : 'btn-primary cursor-pointer'
+                        held ? 'btn-soft text-text-placeholder cursor-not-allowed' : 'btn-outline cursor-pointer'
                       }`}>
                       {held ? '已持有席位' : <>申请授权 <ChevronRight size={14} /></>}
                     </button>
@@ -208,10 +212,10 @@ export default function ModuleCenter() {
 
         {list.length === 0 && (
           <div className="panel py-16 text-center">
-            <span className="w-[56px] h-[56px] rounded-full bg-surface-secondary flex items-center justify-center mx-auto mb-4">
-              <Boxes size={26} className="text-text-placeholder" />
+            <span className="w-[44px] h-[44px] rounded-full bg-surface-hover flex items-center justify-center mx-auto mb-4">
+              <Boxes size={20} className="text-text-muted" />
             </span>
-            <p className="text-[15px] text-text-muted">没有符合条件的模块</p>
+            <p className="text-[13px] text-text-muted">没有符合条件的模块</p>
           </div>
         )}
       </div>

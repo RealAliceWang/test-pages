@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   ChevronDown, KeyRound, RefreshCw, TrendingDown, UserMinus, UserPlus,
 } from 'lucide-react';
@@ -10,6 +11,8 @@ import StatusBadge from '../components/common/StatusBadge';
 import Modal from '../components/common/Modal';
 import { moduleIconMap } from '../assets/moduleIcons';
 import { can } from '../domain/permissions';
+import { METER_FILL, POOL_EXPIRING_DAYS, poolHealth } from '../domain/poolHealth';
+import { daysLeftLabel, moduleLabel } from '../domain/format';
 import {
   allocatedSeats, daysBetween, deptOf, isExpired, isPoolExpiring, memberOf,
   moduleOf, spareSeats, useApp,
@@ -20,6 +23,7 @@ const filters = ['全部', '有空闲', '已占满', '即将到期'] as const;
 
 export default function SeatPools() {
   const { state, me, myOrg, dispatch } = useApp();
+  const navigate = useNavigate();
 
   const manage = can(me.role, 'seat:manage');
   const [tab, setTab] = useState(0);
@@ -28,9 +32,11 @@ export default function SeatPools() {
   const [assigning, setAssigning] = useState<SeatPool | null>(null);
   const [pickedMember, setPickedMember] = useState('');
   const [revoking, setRevoking] = useState<string | null>(null);
+  const [revokeReason, setRevokeReason] = useState('');
   const [renewing, setRenewing] = useState<SeatPool | null>(null);
   const [renewSeats, setRenewSeats] = useState(0);
   const [payMethod, setPayMethod] = useState<PayMethod>('在线支付');
+  const [orderPlaced, setOrderPlaced] = useState(false);
 
   const pools = state.seatPools.filter((p) => p.orgId === me.orgId);
 
@@ -76,13 +82,13 @@ export default function SeatPools() {
   const stats: Metric[] = [
     { icon: KeyRound, value: totalSeats, label: '持有席位总数', hint: `分布在 ${pools.length} 个席位池`, tone: 'accent' },
     { icon: UserPlus, value: usedSeats, label: '已分配', hint: '已发放给在职成员', tone: 'positive' },
-    { icon: UserMinus, value: idleSeats, label: '空闲可分配', hint: '可直接分配，无需采购', tone: idleSeats ? 'attention' : 'neutral' },
+    { icon: UserMinus, value: idleSeats, label: '空闲可分配', hint: '可直接分配，无需采购', tone: 'attention' },
     {
       icon: TrendingDown,
       value: `${utilisation}%`,
       label: '席位利用率',
       hint: `已分配 ${usedSeats} / 共 ${totalSeats} 席位`,
-      tone: utilisation < 60 ? 'attention' : 'positive',
+      tone: 'neutral',
     },
   ];
 
@@ -126,8 +132,10 @@ export default function SeatPools() {
             const used = allocatedSeats(state, pool.id);
             const spare = spareSeats(state, pool);
             const pct = pool.total ? Math.round((used / pool.total) * 100) : 0;
+            const health = poolHealth(pct);
             const left = daysBetween(state.now, pool.expireDate);
             const expired = isExpired(state, pool);
+            const expiring = !expired && left >= 0 && left <= POOL_EXPIRING_DAYS;
             const expanded = open === pool.id;
             const holders = state.assignments.filter((a) => a.poolId === pool.id && a.status === '生效中');
             const visibleHolders = me.role === 'ORG_ADMIN'
@@ -136,19 +144,30 @@ export default function SeatPools() {
 
             return (
               <div key={pool.id} className="panel overflow-hidden">
-                <div className="px-5 py-4 flex items-center gap-4 cursor-pointer hover:bg-surface-secondary transition-colors"
-                  onClick={() => setOpen(expanded ? null : pool.id)}>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  aria-expanded={expanded}
+                  aria-label={expanded ? `收起「${mod?.name ?? ''}」席位明细` : `展开「${mod?.name ?? ''}」席位明细`}
+                  className="px-5 py-4 flex items-center gap-4 cursor-pointer hover:bg-surface-secondary transition-colors"
+                  onClick={() => setOpen(expanded ? null : pool.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setOpen(expanded ? null : pool.id);
+                    }
+                  }}>
                   <img src={moduleIconMap[mod?.icon ?? 'building'] || moduleIconMap.building} alt=""
                     className="w-[40px] h-[40px] object-contain shrink-0" />
 
                   <div className="w-[220px] shrink-0">
                     <div className="flex items-center gap-2">
                       <p className="text-[15px] font-medium text-text truncate">{mod?.name}</p>
-                      <span className={`shrink-0 text-[12px] px-[6px] py-[1px] rounded-sm ${
-                        mod?.edition === '商业版' ? 'bg-orange-bg text-orange' : 'bg-surface-hover text-text-muted'
-                      }`}>
-                        {mod?.edition}
-                      </span>
+                      {mod && (
+                        <span className="shrink-0">
+                          <StatusBadge status={mod.edition} />
+                        </span>
+                      )}
                     </div>
                     <p className="text-[13px] text-text-muted mt-[3px]">{mod?.code} · {pool.source}</p>
                   </div>
@@ -159,11 +178,7 @@ export default function SeatPools() {
                         <span
                           style={{
                             width: `${pct}%`,
-                            background: expired
-                              ? 'var(--color-text-placeholder)'
-                              : pct >= 100 || pct < 50
-                                ? 'var(--color-warning-light)'
-                                : 'var(--color-signal)',
+                            background: expired ? 'var(--color-text-placeholder)' : METER_FILL[health],
                           }}
                         />
                       </div>
@@ -171,19 +186,19 @@ export default function SeatPools() {
                     </div>
                     <p className="text-[12px] text-text-muted mt-[5px]">
                       利用率 {pct}% · 空闲 {spare} 个
-                      {pct < 50 && !expired && <span className="text-warning"> · 利用率偏低，续费可考虑缩减</span>}
+                      {health === 'low' && !expired && <span className="text-warning"> · 利用率偏低，续费可考虑缩减</span>}
                     </p>
                   </div>
 
                   <div className="w-[150px] shrink-0 text-right">
                     <p className="text-[13px] text-text">{pool.expireDate}</p>
-                    <p className={`text-[12px] mt-[3px] ${!expired && isPoolExpiring(state, pool) ? 'text-warning' : 'text-text-muted'}`}>
-                      {expired ? '已过期' : `剩余 ${left} 天`}
+                    <p className={`text-[12px] mt-[3px] ${expiring ? 'text-warning' : 'text-text-muted'}`}>
+                      {expired ? '已过期' : daysLeftLabel(left)}
                     </p>
                   </div>
 
                   <StatusBadge status={expired ? '已过期' : spare > 0 ? '席位充足' : '席位已满'} />
-                  <ChevronDown size={15} className={`text-text-muted shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+                  <ChevronDown size={14} className={`text-text-muted shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`} />
                 </div>
 
                 {expanded && (
@@ -204,12 +219,12 @@ export default function SeatPools() {
                                 : 'btn-primary text-white cursor-pointer'
                             }`}
                             title={spare === 0 ? '无空闲席位，请先扩容' : expired ? '席位池已过期' : ''}>
-                            <UserPlus size={13} /> 分配席位
+                            <UserPlus size={14} /> 分配席位
                           </button>
                           {mod && mod.unitPrice > 0 && (
-                            <button onClick={() => { setRenewing(pool); setRenewSeats(pool.total); setPayMethod('在线支付'); }}
+                            <button onClick={() => { setRenewing(pool); setRenewSeats(pool.total); setPayMethod('在线支付'); setOrderPlaced(false); }}
                               className="h-[32px] px-4 rounded-full text-[13px] font-semibold text-primary bg-primary-bg hover:brightness-95 transition-colors cursor-pointer inline-flex items-center gap-[6px]">
-                              <RefreshCw size={13} /> 续费
+                              <RefreshCw size={14} /> 续费
                             </button>
                           )}
                         </div>
@@ -240,9 +255,9 @@ export default function SeatPools() {
                                 {assigner?.name} 于 {a.assignedAt} 分配
                               </div>
                               {manage && (
-                                <button onClick={() => setRevoking(a.id)}
+                                <button onClick={() => { setRevoking(a.id); setRevokeReason(''); }}
                                   className="h-[32px] px-3.5 rounded-full text-[13px] font-semibold text-danger bg-danger-bg hover:brightness-95 transition-all cursor-pointer shrink-0 inline-flex items-center gap-1">
-                                  <UserMinus size={12} /> 回收
+                                  <UserMinus size={14} /> 回收
                                 </button>
                               )}
                             </div>
@@ -270,9 +285,11 @@ export default function SeatPools() {
         </div>
 
         {list.length === 0 && (
-          <div className="panel py-16 text-center">
-            <KeyRound size={44} className="mx-auto mb-4 text-text-placeholder" />
-            <p className="text-[15px] text-text-muted">没有符合条件的席位池</p>
+          <div className="panel py-16 flex flex-col items-center">
+            <div className="w-[44px] h-[44px] rounded-full bg-surface-hover flex items-center justify-center mb-3">
+              <KeyRound size={20} className="text-text-placeholder" />
+            </div>
+            <p className="text-[13px] text-text-muted">没有符合条件的席位池</p>
           </div>
         )}
       </div>
@@ -282,14 +299,16 @@ export default function SeatPools() {
         {assigning && (
           <div className="flex flex-col gap-4">
             <div className="px-4 py-3 rounded-sm bg-surface-secondary">
-              <p className="text-[14px] text-text">{moduleOf(state, assigning.moduleId)?.name}</p>
+              <p className="text-[14px] text-text">
+                {(() => { const m = moduleOf(state, assigning.moduleId); return m ? moduleLabel(m) : ''; })()}
+              </p>
               <p className="text-[13px] text-text-muted mt-1">
                 当前空闲 {spareSeats(state, assigning)} 个席位 · 到期日 {assigning.expireDate}
               </p>
             </div>
 
             <div>
-              <label className="block text-[14px] text-text-secondary mb-2">选择成员</label>
+              <label className="block text-[13px] font-medium text-text-secondary mb-2">选择成员</label>
               <select value={pickedMember} onChange={(e) => setPickedMember(e.target.value)}
                 className="w-full h-[36px] px-3 text-[14px] field focus:border-primary focus:outline-none cursor-pointer">
                 <option value="">请选择要分配的成员</option>
@@ -304,20 +323,20 @@ export default function SeatPools() {
               </p>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center justify-end gap-3">
+              <button onClick={() => setAssigning(null)}
+                className="btn-soft h-[38px] px-5 text-[13.5px] font-semibold cursor-pointer">
+                取消
+              </button>
               <button disabled={!pickedMember}
                 onClick={() => {
                   dispatch({ type: 'ASSIGN_SEAT', poolId: assigning.id, memberId: pickedMember });
                   setAssigning(null);
                 }}
-                className={`h-[36px] px-5 rounded-full text-[14px] font-semibold transition-colors ${
+                className={`h-[38px] px-5 rounded-full text-[13.5px] font-semibold transition-colors ${
                   pickedMember ? 'btn-primary text-white cursor-pointer' : 'bg-surface-hover text-text-placeholder cursor-not-allowed'
                 }`}>
                 确认分配
-              </button>
-              <button onClick={() => setAssigning(null)}
-                className="btn-soft h-[38px] px-5 text-[14px] font-semibold cursor-pointer">
-                取消
               </button>
             </div>
           </div>
@@ -325,7 +344,7 @@ export default function SeatPools() {
       </Modal>
 
       {/* Reclaim a seat back to the pool */}
-      <Modal open={Boolean(revoking)} onClose={() => setRevoking(null)} title="回收席位" width={460}>
+      <Modal open={Boolean(revoking)} onClose={() => { setRevoking(null); setRevokeReason(''); }} title="回收席位" width={460}>
         {revoking && (() => {
           const a = state.assignments.find((x) => x.id === revoking);
           const holder = a ? memberOf(state, a.memberId) : undefined;
@@ -334,18 +353,33 @@ export default function SeatPools() {
             <div className="flex flex-col gap-4">
               <div className="px-4 py-3 rounded-sm bg-warning-bg">
                 <p className="text-[14px] text-warning leading-relaxed">
-                  回收后 {holder?.name} 将立即无法启动「{mod?.name}」，该席位释放回池中可重新分配给他人。
+                  回收后 {holder?.name} 将立即无法启动「{mod ? moduleLabel(mod) : ''}」，该席位释放回池中可重新分配给他人。
                   历史使用记录（已用 {a?.usedDays} 天）会保留在审计日志中。
                 </p>
               </div>
-              <div className="flex items-center gap-3">
-                <button onClick={() => { dispatch({ type: 'REVOKE_SEAT', assignmentId: revoking }); setRevoking(null); }}
-                  className="h-[38px] px-5 rounded-full text-[14px] font-semibold bg-danger text-white hover:brightness-110 transition-all cursor-pointer">
-                  确认回收
-                </button>
-                <button onClick={() => setRevoking(null)}
-                  className="btn-soft h-[38px] px-5 text-[14px] font-semibold cursor-pointer">
+              <div>
+                <label className="block text-[13px] font-medium text-text-secondary mb-2">原因/备注（选填）</label>
+                <textarea
+                  value={revokeReason}
+                  onChange={(e) => setRevokeReason(e.target.value)}
+                  placeholder="例如：成员离职、调岗、长期未使用等，会记入审计日志"
+                  rows={3}
+                  className="w-full px-3 py-2 text-[14px] field focus:border-primary focus:outline-none resize-none"
+                />
+              </div>
+              <div className="flex items-center justify-end gap-3">
+                <button onClick={() => { setRevoking(null); setRevokeReason(''); }}
+                  className="btn-soft h-[38px] px-5 text-[13.5px] font-semibold cursor-pointer">
                   取消
+                </button>
+                <button
+                  onClick={() => {
+                    dispatch({ type: 'REVOKE_SEAT', assignmentId: revoking, reason: revokeReason.trim() || undefined });
+                    setRevoking(null);
+                    setRevokeReason('');
+                  }}
+                  className="h-[38px] px-5 rounded-full text-[13.5px] font-semibold bg-danger text-white hover:brightness-110 transition-all cursor-pointer">
+                  确认回收
                 </button>
               </div>
             </div>
@@ -354,17 +388,48 @@ export default function SeatPools() {
       </Modal>
 
       {/* Renew by placing a new order against the same pool */}
-      <Modal open={Boolean(renewing)} onClose={() => setRenewing(null)} title="续费席位池" width={520}>
+      <Modal
+        open={Boolean(renewing)}
+        onClose={() => { setRenewing(null); setOrderPlaced(false); }}
+        title="续费席位池"
+        width={520}
+      >
         {renewing && (() => {
           const mod = moduleOf(state, renewing.moduleId)!;
           const used = allocatedSeats(state, renewing.id);
           const amount = mod.unitPrice * renewSeats;
           const shrinking = renewSeats < renewing.total;
+
+          if (orderPlaced) {
+            return (
+              <div className="flex flex-col gap-4">
+                <div className="px-4 py-3 rounded-sm bg-primary-bg">
+                  <p className="text-[14px] text-primary leading-relaxed">
+                    续费订单已生成，当前状态为「待支付」。「{moduleLabel(mod)}」的席位总数与到期日<span className="font-semibold">尚未变化</span>，
+                    还需前往「订单与账单」页{payMethod === '在线支付' ? '完成支付' : '提交转账凭证，并等待厂商确认到账'}后才会真正生效。
+                  </p>
+                </div>
+                <div className="flex items-center justify-end gap-3">
+                  <button
+                    onClick={() => { setRenewing(null); setOrderPlaced(false); }}
+                    className="btn-soft h-[38px] px-5 text-[13.5px] font-semibold cursor-pointer">
+                    稍后处理
+                  </button>
+                  <button
+                    onClick={() => { setRenewing(null); setOrderPlaced(false); navigate('/orders'); }}
+                    className="h-[38px] px-5 text-[13.5px] font-semibold btn-primary text-white cursor-pointer">
+                    前往订单与账单支付
+                  </button>
+                </div>
+              </div>
+            );
+          }
+
           return (
             <div className="flex flex-col gap-4">
               <div className="border border-border rounded-sm divide-y divide-divider">
                 {[
-                  { label: '模块', value: `${mod.name}（${mod.edition}）` },
+                  { label: '模块', value: moduleLabel(mod) },
                   { label: '当前席位', value: `${renewing.total} 个，其中 ${used} 个在用` },
                   { label: '当前到期日', value: renewing.expireDate },
                   { label: '续费后到期', value: `延长 ${mod.duration} 天` },
@@ -377,7 +442,7 @@ export default function SeatPools() {
               </div>
 
               <div>
-                <label className="block text-[14px] text-text-secondary mb-2">续费席位数</label>
+                <label className="block text-[13px] font-medium text-text-secondary mb-2">续费席位数</label>
                 <input type="number" min={used} max={99} value={renewSeats}
                   onChange={(e) => setRenewSeats(Math.max(used, Math.min(99, Number(e.target.value) || used)))}
                   className="w-[130px] h-[36px] px-3 text-[14px] field focus:border-primary focus:outline-none" />
@@ -388,11 +453,11 @@ export default function SeatPools() {
               </div>
 
               <div>
-                <label className="block text-[14px] text-text-secondary mb-2">支付方式</label>
+                <label className="block text-[13px] font-medium text-text-secondary mb-2">支付方式</label>
                 <div className="flex items-center gap-2">
                   {(['在线支付', '对公转账'] as PayMethod[]).map((p) => (
                     <button key={p} onClick={() => setPayMethod(p)}
-                      className={`h-[34px] px-4 rounded-full text-[13px] font-semibold transition-colors cursor-pointer ${
+                      className={`h-[32px] px-4 rounded-full text-[13px] font-semibold transition-colors cursor-pointer ${
                         payMethod === p ? 'bg-primary-bg text-primary' : 'bg-surface-hover text-text-secondary hover:bg-border'
                       }`}>
                       {p}
@@ -400,7 +465,9 @@ export default function SeatPools() {
                   ))}
                 </div>
                 <p className="text-[12px] text-text-placeholder mt-2">
-                  {payMethod === '在线支付' ? '支付后席位立即续期' : '需厂商确认到账后席位才续期'}
+                  {payMethod === '在线支付'
+                    ? '点击"生成续费订单"仅创建一笔待支付订单，还需前往「订单与账单」页完成支付，席位数与到期日才会更新。'
+                    : '点击"生成续费订单"后，需前往「订单与账单」页提交转账凭证，厂商确认到账后席位才会续期。'}
                 </p>
               </div>
 
@@ -409,17 +476,17 @@ export default function SeatPools() {
                 <span className="text-[20px] font-bold text-orange">¥{amount.toLocaleString()}</span>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center justify-end gap-3">
+                <button onClick={() => { setRenewing(null); setOrderPlaced(false); }}
+                  className="btn-soft h-[38px] px-5 text-[13.5px] font-semibold cursor-pointer">
+                  取消
+                </button>
                 <button onClick={() => {
                   dispatch({ type: 'CREATE_ORDER', moduleId: renewing.moduleId, seats: renewSeats, payMethod, renewPoolId: renewing.id });
-                  setRenewing(null);
+                  setOrderPlaced(true);
                 }}
-                  className="h-[36px] px-5  text-[14px] font-medium btn-primary text-white cursor-pointer">
+                  className="h-[38px] px-5 text-[13.5px] font-semibold btn-primary text-white cursor-pointer">
                   生成续费订单
-                </button>
-                <button onClick={() => setRenewing(null)}
-                  className="btn-soft h-[38px] px-5 text-[14px] font-semibold cursor-pointer">
-                  取消
                 </button>
               </div>
             </div>

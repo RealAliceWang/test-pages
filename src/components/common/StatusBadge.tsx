@@ -1,4 +1,4 @@
-type Tone = 'info' | 'success' | 'warning' | 'danger' | 'neutral';
+type Tone = 'info' | 'success' | 'warning' | 'danger' | 'neutral' | 'orange';
 
 /** Flat tinted chip. The ring was doing nothing at this size but add noise. */
 const tones: Record<Tone, string> = {
@@ -7,6 +7,7 @@ const tones: Record<Tone, string> = {
   warning: 'bg-warning-bg text-warning',
   danger: 'bg-danger-bg text-danger',
   neutral: 'bg-surface-hover text-text-muted',
+  orange: 'bg-orange-bg text-orange',
 };
 
 const dots: Record<Tone, string> = {
@@ -15,6 +16,7 @@ const dots: Record<Tone, string> = {
   warning: 'bg-warning-light',
   danger: 'bg-danger-light',
   neutral: 'bg-text-placeholder',
+  orange: 'bg-orange-light',
 };
 
 const map: Record<string, Tone> = {
@@ -24,8 +26,12 @@ const map: Record<string, Tone> = {
   已开通: 'success',
   席位充足: 'success',
   席位已满: 'warning',
+  已满: 'warning',
   未开通: 'neutral',
   已下架: 'neutral',
+  // editions — 商业版 is orange everywhere, 免费版 stays quiet
+  商业版: 'orange',
+  免费版: 'neutral',
   // approval chain
   待部门审批: 'warning',
   待企业审批: 'warning',

@@ -1,5 +1,16 @@
-import { useMemo } from 'react';
-import { Gauge, Info, Layers, PackageX, TrendingDown, UserCheck } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import {
+  BarChart3,
+  ChevronDown,
+  Gauge,
+  Inbox,
+  Info,
+  Layers,
+  PackageX,
+  PieChart as PieChartIcon,
+  TrendingDown,
+  UserCheck,
+} from 'lucide-react';
 import {
   Area,
   AreaChart,
@@ -31,6 +42,8 @@ import {
   visibleMembers,
 } from '../store';
 import { can, scopeOf } from '../domain/permissions';
+import { METER_FILL, poolHealth } from '../domain/poolHealth';
+import { daysLeftLabel } from '../domain/format';
 import { usageHistory } from '../domain/seed';
 import { chart, chartSeries, chartTooltip } from '../theme';
 import MetricCard, { type Metric } from '../components/common/MetricCard';
@@ -38,18 +51,53 @@ import RingProgress from '../components/common/RingProgress';
 
 const ACCENTS = chartSeries;
 
-const axisTick = { fontSize: 12.5, fill: chart.axis };
+const axisTick = { fontSize: 13, fill: chart.axis };
 const axisLine = { stroke: chart.grid };
 const tooltipStyle = chartTooltip;
 
 const card = 'panel p-6';
 
-/** Seats a healthy pool should reach before a renewal is worth its price. */
-const HEALTHY_RATE = 50;
+const PERIOD_OPTIONS = [
+  { label: '近 7 天', days: 7 },
+  { label: '近 14 天', days: 14 },
+  { label: '近 30 天', days: 30 },
+] as const;
+
+type PeriodDays = (typeof PERIOD_OPTIONS)[number]['days'];
+
+/** Shifts a seeded 'MM-DD' label by `days` (may be negative). The seed never
+ *  crosses a year boundary, so a throwaway fixed-year Date is enough. */
+function shiftLabel(mmdd: string, days: number): string {
+  const [month, day] = mmdd.split('-').map(Number);
+  const d = new Date(2026, month - 1, day);
+  d.setDate(d.getDate() + days);
+  return `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/** usageHistory only seeds 14 real days. Shorter windows slice its tail; the
+ *  30-day window is padded with earlier days cycled from the same pattern
+ *  (lightly damped so it doesn't read as an exact repeat) rather than
+ *  inventing a second, disconnected dataset. */
+function historyForPeriod(days: number): typeof usageHistory {
+  if (days <= usageHistory.length) return usageHistory.slice(usageHistory.length - days);
+  const missing = days - usageHistory.length;
+  const lead = Array.from({ length: missing }, (_, idx) => {
+    const stepsBack = missing - idx;
+    const source = usageHistory[usageHistory.length - 1 - (stepsBack % usageHistory.length)];
+    const damp = 0.7 + 0.05 * (stepsBack % 5);
+    return {
+      date: shiftLabel(usageHistory[0].date, -stepsBack),
+      launches: Math.max(1, Math.round(source.launches * damp)),
+      activeMembers: Math.max(1, Math.round(source.activeMembers * damp)),
+    };
+  });
+  return [...lead, ...usageHistory];
+}
 
 export default function Statistics() {
   const { state, me, myOrg, myDept } = useApp();
   const scope = scopeOf(me.role);
+  const [periodDays, setPeriodDays] = useState<PeriodDays>(14);
 
   const pools = useMemo(
     () => (scope === 'platform' ? state.seatPools : state.seatPools.filter((p) => p.orgId === me.orgId)),
@@ -67,11 +115,27 @@ export default function Statistics() {
     return visibleAssignments(state, me).filter((a) => a.status === '生效中');
   }, [state, me, scope, pools]);
 
-  const totalSeats = pools.reduce((sum, p) => sum + p.total, 0);
-  const allocated = pools.reduce((sum, p) => sum + allocatedSeats(state, p.id), 0);
+  // Enterprise-wide allocated total, independent of the department scoping
+  // below — the usage-trend factor further down estimates a department's
+  // overall share of company activity, not just the pools it happens to use.
+  const orgAllocated = pools.reduce((sum, p) => sum + allocatedSeats(state, p.id), 0);
+
+  // A department owns no seat quota of its own — pools are a shared org
+  // resource — so the ring / low-rate / idle numbers a department admin sees
+  // are scoped down to the pools their own members actually hold seats in,
+  // the same subset the "本部门持有席位" card already relies on. Org and
+  // platform scope keep using every pool in scope (scopePools === pools).
+  const scopePools = useMemo(() => {
+    if (scope !== 'dept') return pools;
+    const heldPoolIds = new Set(activeSeats.map((a) => a.poolId));
+    return pools.filter((p) => heldPoolIds.has(p.id));
+  }, [scope, pools, activeSeats]);
+
+  const totalSeats = scopePools.reduce((sum, p) => sum + p.total, 0);
+  const allocated = scopePools.reduce((sum, p) => sum + allocatedSeats(state, p.id), 0);
   const spare = Math.max(0, totalSeats - allocated);
   const utilization = totalSeats ? Math.round((allocated / totalSeats) * 100) : 0;
-  const idleCost = pools.reduce(
+  const idleCost = scopePools.reduce(
     (sum, p) => sum + spareSeats(state, p) * (moduleOf(state, p.moduleId)?.unitPrice ?? 0),
     0,
   );
@@ -80,10 +144,11 @@ export default function Statistics() {
   const scopeMemberCount = visibleMembers(state, me).length;
   const orgCount = new Set(pools.map((p) => p.orgId)).size;
 
-  /* Pools sitting below the healthy line. The ring above already carries the
-     overall rate, so the metric row reports the actionable count instead. */
-  const lowRateCount = pools.filter(
-    (p) => p.total && Math.round((allocatedSeats(state, p.id) / p.total) * 100) < HEALTHY_RATE,
+  /* Pools sitting below the healthy line (poolHealth's "low" bucket). The
+     ring above already carries the overall rate, so the metric row reports
+     the actionable count instead. */
+  const lowRateCount = scopePools.filter(
+    (p) => p.total && poolHealth(Math.round((allocatedSeats(state, p.id) / p.total) * 100)) === 'low',
   ).length;
 
   const scopeLabel =
@@ -105,29 +170,29 @@ export default function Statistics() {
       icon: Layers,
       label: scope === 'dept' ? '本部门持有席位' : '席位总量',
       value: scope === 'dept' ? activeSeats.length : totalSeats,
-      hint: scope === 'dept' ? `企业席位池共 ${totalSeats} 席` : `分布在 ${pools.length} 个席位池`,
+      hint: scope === 'dept' ? `涉及 ${scopePools.length} 个模块的席位池` : `分布在 ${pools.length} 个席位池`,
       tone: 'accent',
     },
     {
       icon: Gauge,
       label: '低利用率席位池',
       value: lowRateCount,
-      hint: `低于 ${HEALTHY_RATE}% 健康线的池`,
-      tone: lowRateCount ? 'attention' : 'positive',
+      hint: '低于 50% 健康线的池',
+      tone: 'attention',
     },
     {
       icon: UserCheck,
       label: scope === 'dept' ? '本部门活跃成员' : '活跃成员',
       value: holders,
       hint: scope === 'platform' ? `覆盖 ${orgCount} 家企业` : `范围内共 ${scopeMemberCount} 人`,
-      tone: 'neutral',
+      tone: 'positive',
     },
     {
       icon: PackageX,
       label: '闲置席位',
       value: spare,
       hint: idleCost > 0 ? `闲置成本约 ¥${idleCost.toLocaleString()}/年` : '闲置席位均为免费版，无成本',
-      tone: spare > 0 ? 'attention' : 'neutral',
+      tone: 'neutral',
     },
   ];
 
@@ -137,27 +202,27 @@ export default function Statistics() {
     scope === 'platform'
       ? 4.5
       : scope === 'dept'
-        ? Math.max(0.15, allocated ? activeSeats.length / allocated : 1)
+        ? Math.max(0.15, orgAllocated ? activeSeats.length / orgAllocated : 1)
         : 1;
 
   const trend = useMemo(
     () =>
-      usageHistory.map((p) => ({
+      historyForPeriod(periodDays).map((p) => ({
         date: p.date,
         launches: Math.round(p.launches * factor),
         activeMembers: Math.max(1, Math.round(p.activeMembers * factor)),
       })),
-    [factor],
+    [factor, periodDays],
   );
 
   const trendTitle =
     scope === 'platform' ? '平台用量趋势（全平台汇总）' : scope === 'org' ? '企业用量趋势' : '本部门用量趋势';
   const trendNote =
     scope === 'platform'
-      ? '近 14 天 · 跨企业汇总估算'
+      ? `近 ${periodDays} 天 · 跨企业汇总估算`
       : scope === 'org'
-        ? '近 14 天 · 全企业实际值'
-        : `近 14 天 · 按本部门席位占比 ${Math.round(factor * 100)}% 折算`;
+        ? `近 ${periodDays} 天 · 全企业实际值`
+        : `近 ${periodDays} 天 · 按本部门席位占比 ${Math.round(factor * 100)}% 折算`;
 
   const moduleRanking = useMemo(() => {
     const counts = new Map<string, number>();
@@ -198,7 +263,7 @@ export default function Statistics() {
     [pools, state, activeSeats],
   );
 
-  const lowRows = poolRows.filter((r) => r.rate < HEALTHY_RATE);
+  const lowRows = poolRows.filter((r) => poolHealth(r.rate) === 'low');
   const lowWaste = lowRows.reduce((sum, r) => sum + r.spare * r.unitPrice, 0);
 
   const showDistribution = can(me.role, 'stats:org') || can(me.role, 'stats:platform');
@@ -222,11 +287,26 @@ export default function Statistics() {
     <div>
       <Header
         title="用量统计"
-        subtitle={`数据范围：${scopeLabel} · 近 14 天`}
+        subtitle={`数据范围：${scopeLabel} · 近 ${periodDays} 天`}
         actions={
-          <span className="text-[13px] font-semibold text-text-secondary bg-surface-secondary rounded-full px-3.5 py-[7px]">
-            统计周期：近 14 天
-          </span>
+          <div className="relative">
+            <select
+              aria-label="统计周期"
+              value={periodDays}
+              onChange={(e) => setPeriodDays(Number(e.target.value) as PeriodDays)}
+              className="field h-[32px] pl-3 pr-[30px] text-[14px] text-text appearance-none cursor-pointer"
+            >
+              {PERIOD_OPTIONS.map((o) => (
+                <option key={o.days} value={o.days}>
+                  统计周期：{o.label}
+                </option>
+              ))}
+            </select>
+            <ChevronDown
+              size={13}
+              className="absolute right-[10px] top-1/2 -translate-y-1/2 text-text-placeholder pointer-events-none"
+            />
+          </div>
         }
       />
 
@@ -242,15 +322,16 @@ export default function Statistics() {
               <p className="num text-[14px] font-semibold text-text mt-2.5">
                 {allocated} / {totalSeats} 席
               </p>
-              <p className="text-[12.5px] text-text-muted mt-1.5 leading-relaxed">
-                {utilization >= HEALTHY_RATE
+              <p className="text-[13px] text-text-muted mt-1.5 leading-relaxed">
+                {poolHealth(utilization) !== 'low'
                   ? '利用率健康，续费时可维持现有规模'
-                  : `低于 ${HEALTHY_RATE}% 健康线，续费可考虑缩减`}
+                  : '低于 50% 健康线，续费可考虑缩减'}
+                {scope === 'dept' ? '（仅统计本部门涉及的模块）' : ''}
               </p>
             </div>
           </div>
 
-          <div className="xl:col-span-8 grid grid-cols-2 gap-4 stagger">
+          <div className="xl:col-span-8 grid grid-cols-2 gap-5 stagger">
             {cards.map((c) => (
               <MetricCard key={c.label} metric={c} />
             ))}
@@ -304,7 +385,7 @@ export default function Statistics() {
                 verticalAlign="bottom"
                 iconType="circle"
                 iconSize={8}
-                wrapperStyle={{ fontSize: 12.5, color: chart.axis, paddingTop: 10 }}
+                wrapperStyle={{ fontSize: 13, color: chart.axis, paddingTop: 10 }}
               />
               <Area
                 yAxisId="left"
@@ -336,7 +417,12 @@ export default function Statistics() {
               <span className="text-[13px] text-text-muted">Top 8 · 生效中席位</span>
             </div>
             {moduleRanking.length === 0 ? (
-              <p className="text-[14px] text-text-muted py-16 text-center">当前范围内暂无生效中的席位</p>
+              <div className="py-16 flex flex-col items-center gap-2">
+                <div className="w-[44px] h-[44px] rounded-full bg-surface-hover flex items-center justify-center">
+                  <BarChart3 size={20} className="text-text-placeholder" />
+                </div>
+                <p className="text-[13px] text-text-muted mt-1 text-center">当前范围内暂无生效中的席位</p>
+              </div>
             ) : (
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={moduleRanking} layout="vertical" margin={{ left: 8, right: 16 }}>
@@ -345,7 +431,7 @@ export default function Statistics() {
                   <YAxis
                     type="category"
                     dataKey="name"
-                    tick={{ fontSize: 12.5, fill: chart.axis }}
+                    tick={axisTick}
                     axisLine={false}
                     tickLine={false}
                     width={104}
@@ -368,7 +454,12 @@ export default function Statistics() {
                 </span>
               </div>
               {distribution.length === 0 ? (
-                <p className="text-[14px] text-text-muted py-16 text-center">暂无可分布的席位数据</p>
+                <div className="py-16 flex flex-col items-center gap-2">
+                  <div className="w-[44px] h-[44px] rounded-full bg-surface-hover flex items-center justify-center">
+                    <PieChartIcon size={20} className="text-text-placeholder" />
+                  </div>
+                  <p className="text-[13px] text-text-muted mt-1 text-center">暂无可分布的席位数据</p>
+                </div>
               ) : (
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
@@ -381,6 +472,16 @@ export default function Statistics() {
                       dataKey="value"
                       stroke="none"
                       fontSize={13}
+                      // Unrelated global state (e.g. the flash toast auto-
+                      // dismissing) re-renders the whole app and can hand this
+                      // chart a new `distribution` array reference even when
+                      // its values haven't changed. Recharts treats a new
+                      // array as "new data" and replays the enter animation,
+                      // which flashes the chart empty mid-transition. The
+                      // entrance animation isn't essential here, so it's
+                      // switched off rather than chasing every upstream
+                      // reference change.
+                      isAnimationActive={false}
                       label={({ name, value }) => `${name} ${value}`}
                       labelLine={{ stroke: 'var(--color-text-placeholder)', strokeWidth: 1 }}
                     >
@@ -406,7 +507,7 @@ export default function Statistics() {
             <div className="mt-3 flex items-start gap-2 bg-warning-bg rounded-sm px-3 py-2">
               <TrendingDown size={15} className="text-warning shrink-0 mt-[2px]" />
               <p className="text-[13px] text-text-secondary leading-relaxed">
-                利用率低于 {HEALTHY_RATE}% 的席位池已标黄（{lowRows.length} 个）：闲置席位不会自动退费，
+                利用率低于 50% 的席位池已标黄（{lowRows.length} 个）：闲置席位不会自动退费，
                 续费时可考虑缩减席位数
                 {lowWaste > 0 ? `，这部分闲置席位年成本约 ¥${lowWaste.toLocaleString()}` : ''}。
               </p>
@@ -434,24 +535,21 @@ export default function Statistics() {
               </thead>
               <tbody>
                 {poolRows.map((r) => {
-                  const low = r.rate < HEALTHY_RATE;
-                  /* Lemon is the healthy fill; only under-used pools break to
-                     amber, so the eye lands on the exceptions. */
-                  const barColor = low ? chart.attention : chart.signal;
+                  /* Health bucket and fill come from the shared poolHealth
+                     contract — under-used rows get the pale caution tint so
+                     the eye lands on the exceptions. */
+                  const health = poolHealth(r.rate);
                   return (
                     <tr
                       key={r.id}
-                      className={`border-t border-hairline ${low ? 'bg-warning-bg' : 'hover:bg-surface-hover'} transition-colors`}
+                      className={`border-t border-hairline ${health === 'low' ? 'bg-caution-light/15' : 'hover:bg-surface-hover'} transition-colors`}
                     >
                       {scope === 'platform' && (
                         <td className="px-5 py-3 text-text-secondary whitespace-nowrap">{r.orgName}</td>
                       )}
                       <td className="px-5 py-3 text-text whitespace-nowrap">{r.name}</td>
                       <td className="px-5 py-3 whitespace-nowrap">
-                        <StatusBadge
-                          status={r.edition}
-                          tone={r.edition === '商业版' ? 'info' : 'neutral'}
-                        />
+                        <StatusBadge status={r.edition} />
                       </td>
                       <td className="px-5 py-3 text-right text-text tabular-nums">{r.total}</td>
                       <td className="px-5 py-3 text-right text-text-secondary tabular-nums">{r.alloc}</td>
@@ -466,15 +564,16 @@ export default function Statistics() {
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-2.5">
                           <div className="meter flex-1 min-w-[70px]">
-                            <span style={{ width: `${r.rate}%`, background: barColor }} />
+                            <span style={{ width: `${Math.min(r.rate, 100)}%`, background: METER_FILL[health] }} />
                           </div>
                           <span
                             className={`num text-[13px] font-semibold w-[38px] text-right ${
-                              low ? 'text-warning' : 'text-text'
+                              health === 'low' ? 'text-warning' : 'text-text'
                             }`}
                           >
                             {r.rate}%
                           </span>
+                          {health === 'full' && <StatusBadge status="已满" />}
                         </div>
                       </td>
                       <td className="px-5 py-3 whitespace-nowrap">
@@ -482,7 +581,7 @@ export default function Statistics() {
                         {r.daysLeft < 0 ? (
                           <span className="text-[13px] text-danger ml-2">已过期</span>
                         ) : r.daysLeft <= POOL_EXPIRING_DAYS ? (
-                          <span className="text-[13px] text-orange ml-2">剩 {r.daysLeft} 天</span>
+                          <span className="text-[13px] text-warning ml-2">{daysLeftLabel(r.daysLeft)}</span>
                         ) : null}
                       </td>
                     </tr>
@@ -490,8 +589,13 @@ export default function Statistics() {
                 })}
                 {poolRows.length === 0 && (
                   <tr className="border-t border-border">
-                    <td colSpan={9} className="px-5 py-16 text-center text-[14px] text-text-muted">
-                      当前范围内还没有席位池
+                    <td colSpan={9} className="px-5 py-16">
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="w-[44px] h-[44px] rounded-full bg-surface-hover flex items-center justify-center">
+                          <Inbox size={20} className="text-text-placeholder" />
+                        </div>
+                        <p className="text-[13px] text-text-muted mt-1 text-center">当前范围内还没有席位池</p>
+                      </div>
                     </td>
                   </tr>
                 )}

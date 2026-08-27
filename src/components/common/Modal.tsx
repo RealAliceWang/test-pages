@@ -1,5 +1,5 @@
 import { X } from 'lucide-react';
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import type { ReactNode } from 'react';
 
@@ -12,9 +12,40 @@ interface ModalProps {
   width?: number;
 }
 
+const FOCUSABLE =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
 export default function Modal({ open, onClose, title, header, children, width = 520 }: ModalProps) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape') onClose();
+    if (e.key === 'Escape') {
+      onClose();
+      return;
+    }
+    /* Trap Tab / Shift+Tab inside the dialog. */
+    if (e.key !== 'Tab') return;
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const focusables = Array.from(dialog.querySelectorAll<HTMLElement>(FOCUSABLE));
+    if (focusables.length === 0) {
+      e.preventDefault();
+      dialog.focus();
+      return;
+    }
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    const active = document.activeElement;
+    const inside = active instanceof HTMLElement && dialog.contains(active);
+    if (e.shiftKey) {
+      if (!inside || active === first) {
+        e.preventDefault();
+        last.focus();
+      }
+    } else if (!inside || active === last) {
+      e.preventDefault();
+      first.focus();
+    }
   }, [onClose]);
 
   useEffect(() => {
@@ -27,6 +58,20 @@ export default function Modal({ open, onClose, title, header, children, width = 
       document.body.style.overflow = '';
     };
   }, [open, handleKeyDown]);
+
+  /* Move focus into the dialog on open, hand it back on close. Kept separate
+     from the listener effect so an unstable `onClose` identity cannot bounce
+     focus around mid-session. */
+  useEffect(() => {
+    if (!open) return;
+    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const dialog = dialogRef.current;
+    const first = dialog?.querySelector<HTMLElement>(FOCUSABLE);
+    (first ?? dialog)?.focus();
+    return () => {
+      previous?.focus();
+    };
+  }, [open]);
 
   if (!open) return null;
 
@@ -47,15 +92,17 @@ export default function Modal({ open, onClose, title, header, children, width = 
         }}
       />
       <div
-        className="relative bg-surface rounded-xl overflow-hidden rise"
+        ref={dialogRef}
+        tabIndex={-1}
+        className="relative bg-surface rounded-xl overflow-hidden rise outline-none"
         style={{ width, maxHeight: '85vh', boxShadow: 'var(--shadow-float)' }}
       >
         <div className="flex items-center justify-between px-6 py-[16px] border-b border-hairline">
-          {header || <h3 className="text-[17px] font-bold text-text tracking-[-0.02em]">{title}</h3>}
+          {header || <h3 className="text-[16px] font-bold text-text tracking-[-0.02em]">{title}</h3>}
           <button
             onClick={onClose}
             aria-label="关闭"
-            className="btn-icon w-8 h-8 cursor-pointer shrink-0"
+            className="btn-icon w-9 h-9 cursor-pointer shrink-0"
           >
             <X size={16} strokeWidth={2.2} />
           </button>

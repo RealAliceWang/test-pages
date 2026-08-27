@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Check, ChevronDown, Repeat2, Search } from 'lucide-react';
+import { Bell, Check, ChevronDown, LogOut, Repeat2, Search } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { deptOf, orgOf, todoCountOf, useApp } from '../../store';
 import { DEMO_ORG_ID, VENDOR_ORG_ID } from '../../domain/seed';
@@ -23,15 +23,27 @@ export default function Header({ title, subtitle, actions, search }: HeaderProps
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const ref = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     const onDown = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || !open) return;
+      setOpen(false);
+      // Return focus to the control that opened the panel, so keyboard users
+      // are never dropped back onto the page body.
+      triggerRef.current?.focus();
+    };
     document.addEventListener('mousedown', onDown);
-    return () => document.removeEventListener('mousedown', onDown);
-  }, []);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [open]);
 
   const todo = todoCountOf(state, me);
 
@@ -92,7 +104,7 @@ export default function Header({ title, subtitle, actions, search }: HeaderProps
           className="relative w-11 h-11 rounded-full bg-surface border border-border text-text-secondary flex items-center justify-center cursor-pointer transition-colors hover:text-text">
           <Bell size={18} />
           {todo > 0 && (
-            <span className="absolute top-[6px] right-[6px] min-w-[17px] h-[17px] px-[4px] rounded-full bg-danger text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">
+            <span className="absolute top-[6px] right-[6px] min-w-[17px] h-[17px] px-[4px] rounded-full bg-danger text-white text-[12px] font-bold flex items-center justify-center ring-2 ring-white">
               {todo}
             </span>
           )}
@@ -100,7 +112,7 @@ export default function Header({ title, subtitle, actions, search }: HeaderProps
 
         <div className="relative" ref={ref}>
           {/* The whole identity control is one pill, matching button language. */}
-          <button onClick={() => setOpen(!open)}
+          <button ref={triggerRef} onClick={() => setOpen(!open)}
             aria-label="账号与身份"
             aria-haspopup="menu"
             aria-expanded={open}
@@ -109,7 +121,7 @@ export default function Header({ title, subtitle, actions, search }: HeaderProps
             }`}>
             <div className="text-right hidden sm:block">
               <p className="text-[13.5px] font-bold text-text leading-tight">{me.name}</p>
-              <p className="text-[11.5px] text-text-muted leading-tight mt-[2px]">
+              <p className="text-[12px] text-text-muted leading-tight mt-[2px]">
                 {roleLabels[me.role]}
                 {myDept ? ` · ${myDept.name}` : ''}
               </p>
@@ -125,19 +137,18 @@ export default function Header({ title, subtitle, actions, search }: HeaderProps
             <div className="panel-floating absolute right-0 top-full mt-2 w-[308px] z-50 overflow-hidden rise">
               <div className="px-4 py-[13px] border-b border-hairline">
                 <p className="text-[14px] font-bold text-text">{me.name} · {me.title}</p>
-                <p className="text-[12.5px] text-text-muted mt-[3px] truncate">{myOrg.name}</p>
+                <p className="text-[13px] text-text-muted mt-[3px] truncate">{myOrg.name}</p>
               </div>
 
               {/* Walkthrough aid, not a product feature: no real deployment lets a
                   member assume another role. Tinted and fenced off by a dashed
                   rule so it never reads as part of the account menu above. */}
               <div className="bg-surface-secondary border-t border-dashed border-border" role="group" aria-label="演示用身份切换">
+                {/* Walkthrough affordance, intentionally quiet: no badge, no
+                    disclaimer paragraph — the eyebrow label is enough. */}
                 <div className="px-4 pt-3 pb-1.5 flex items-center gap-[6px]">
                   <Repeat2 size={13} className="text-text-placeholder" />
                   <span className="eyebrow">切换身份</span>
-                  <span className="ml-auto text-[10.5px] font-bold text-warning bg-warning-bg rounded-full px-[7px] py-[2px]">
-                    仅演示用
-                  </span>
                 </div>
 
                 <div className="px-2 pb-2 flex flex-col gap-0.5">
@@ -151,7 +162,7 @@ export default function Header({ title, subtitle, actions, search }: HeaderProps
                         className={`w-full flex items-center gap-3 px-2.5 py-2 rounded-lg text-left transition-colors cursor-pointer ${
                           active ? 'bg-primary-bg' : 'hover:bg-surface'
                         }`}>
-                        <div className="w-[30px] h-[30px] rounded-full flex items-center justify-center text-white text-[12.5px] font-semibold shrink-0"
+                        <div className="w-[30px] h-[30px] rounded-full flex items-center justify-center text-white text-[13px] font-semibold shrink-0"
                           style={{ background: m.avatarColor }}>
                           {m.name.charAt(0)}
                         </div>
@@ -169,11 +180,18 @@ export default function Header({ title, subtitle, actions, search }: HeaderProps
                   })}
                 </div>
 
-                <div className="px-4 py-[11px] border-t border-hairline">
-                  <p className="text-[12px] text-text-muted leading-relaxed">
-                    仅用于演示各角色视角，正式环境不提供该入口。切换后侧边栏菜单、数据范围与可执行操作会随权限变化。
-                  </p>
-                </div>
+              </div>
+
+              {/* Session exit — RequireAuth redirects to /login the moment
+                  `authed` flips, so no navigation call is needed here. */}
+              <div className="px-2 py-2 border-t border-hairline bg-surface">
+                <button
+                  onClick={() => { setOpen(false); dispatch({ type: 'LOGOUT' }); }}
+                  className="w-full flex items-center gap-2.5 px-2.5 h-[38px] rounded-lg text-left text-[13.5px] font-semibold text-danger hover:bg-danger-bg transition-colors cursor-pointer"
+                >
+                  <LogOut size={15} strokeWidth={2.2} className="shrink-0" />
+                  退出登录
+                </button>
               </div>
             </div>
           )}

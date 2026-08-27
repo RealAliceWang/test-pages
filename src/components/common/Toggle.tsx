@@ -1,14 +1,18 @@
 interface ToggleProps {
   enabled: boolean;
   onChange: (v: boolean) => void;
+  /** Accessible name for the switch, e.g. "上架状态". */
+  ariaLabel?: string;
 }
 
-export default function Toggle({ enabled, onChange }: ToggleProps) {
+export default function Toggle({ enabled, onChange, ariaLabel }: ToggleProps) {
   return (
     <button
+      type="button"
       onClick={() => onChange(!enabled)}
       role="switch"
       aria-checked={enabled}
+      aria-label={ariaLabel}
       className={`relative w-[44px] h-[26px] rounded-full cursor-pointer transition-colors duration-300 shrink-0 ${
         enabled ? 'bg-ink' : 'bg-[#D3D7DE]'
       }`}

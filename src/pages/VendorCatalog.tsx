@@ -12,6 +12,7 @@ import TabFilter from '../components/common/TabFilter';
 import Toggle from '../components/common/Toggle';
 import { useApp } from '../store';
 import { categories } from '../domain/seed';
+import { moduleLabel } from '../domain/format';
 import type { CatalogModule } from '../domain/types';
 import { moduleIconMap } from '../assets/moduleIcons';
 
@@ -28,8 +29,7 @@ const PAGE_SIZE = 12;
 
 const selectCls =
   'h-[32px] px-2 text-[14px] text-text-secondary field outline-none focus:border-primary transition-colors cursor-pointer';
-const numberInputCls =
-  'w-full h-[40px] px-3 text-[15px] text-text bg-surface-secondary border border-border rounded-sm outline-none focus:border-primary focus:bg-surface transition-colors';
+const numberInputCls = 'field w-full h-[40px] px-4 text-[15px] text-text';
 
 const columns = ['模块', '分类', '版本', '授权期限', '节点数', '单价', '已售席位', '开通企业', '上架状态', '操作'];
 
@@ -122,7 +122,7 @@ export default function VendorCatalog() {
     { icon: Boxes, value: metrics.total, label: '模块总数', hint: '目录内全部模块', tone: 'accent' },
     { icon: CircleCheck, value: metrics.listed, label: '已上架', hint: '企业可见并可申请', tone: 'positive' },
     { icon: Crown, value: metrics.commercial, label: '商业版模块', hint: '需付费购买席位', tone: 'neutral' },
-    { icon: Coins, value: money(metrics.avgPrice), label: '商业版平均单价', hint: '按席位年费计算', tone: 'neutral' },
+    { icon: Coins, value: money(metrics.avgPrice), label: '商业版平均单价', hint: '按席位年费计算', tone: 'attention' },
   ];
 
   return (
@@ -236,7 +236,7 @@ export default function VendorCatalog() {
                     </td>
 
                     <td className="px-4 py-[12px]">
-                      <StatusBadge status={mod.edition} tone={free ? 'neutral' : 'warning'} />
+                      <StatusBadge status={mod.edition} />
                     </td>
 
                     <td className="px-4 py-[12px] text-[14px] text-text-secondary whitespace-nowrap">
@@ -284,6 +284,7 @@ export default function VendorCatalog() {
                       <div className="flex items-center gap-[10px]">
                         <Toggle
                           enabled={mod.listed}
+                          ariaLabel={`${mod.listed ? '下架' : '上架'} ${moduleLabel(mod)}`}
                           onChange={(next) => {
                             if (next) {
                               dispatch({ type: 'SET_MODULE_LISTED', moduleId: mod.id, listed: true });
@@ -304,16 +305,16 @@ export default function VendorCatalog() {
                         <button
                           disabled
                           title="免费版通过厂商免费额度发放，不参与定价"
-                          className="h-[30px] px-[10px] rounded-full text-[13px] text-text-placeholder bg-surface-hover cursor-not-allowed inline-flex items-center gap-[4px] whitespace-nowrap"
+                          className="h-[32px] px-3 rounded-full text-[13px] font-semibold text-text-placeholder bg-surface-hover cursor-not-allowed inline-flex items-center gap-[4px] whitespace-nowrap"
                         >
-                          <Lock size={12} /> 不可定价
+                          <Lock size={14} /> 不可定价
                         </button>
                       ) : (
                         <button
                           onClick={() => openPrice(r)}
                           className="h-[32px] px-3 rounded-full text-[13px] font-semibold text-primary bg-primary-bg hover:brightness-95 transition-all cursor-pointer inline-flex items-center gap-[4px] whitespace-nowrap"
                         >
-                          <Tag size={12} /> 调整定价
+                          <Tag size={14} /> 调整定价
                         </button>
                       )}
                     </td>
@@ -325,8 +326,10 @@ export default function VendorCatalog() {
 
           {filtered.length === 0 && (
             <div className="py-16 text-center">
-              <Boxes size={40} className="mx-auto mb-3 text-text-placeholder" />
-              <p className="text-[14px] text-text-muted">没有符合条件的模块</p>
+              <span className="w-[44px] h-[44px] rounded-full bg-surface-hover flex items-center justify-center mx-auto mb-4">
+                <Boxes size={20} className="text-text-muted" />
+              </span>
+              <p className="text-[13px] text-text-muted">没有符合条件的模块</p>
             </div>
           )}
 
@@ -337,7 +340,7 @@ export default function VendorCatalog() {
               </span>
               <button
                 onClick={() => setShown(shown + PAGE_SIZE)}
-                className="h-[34px] px-4 rounded-full text-[14px] font-semibold text-primary bg-primary-bg hover:brightness-95 transition-all cursor-pointer"
+                className="btn-soft h-[34px] px-5 text-[13px] font-semibold cursor-pointer"
               >
                 加载更多（剩余 {rest}）
               </button>
@@ -357,7 +360,7 @@ export default function VendorCatalog() {
               />
               <div>
                 <p className="text-[15px] font-medium text-text">
-                  {delistRow.mod.name}（{delistRow.mod.edition}）
+                  {moduleLabel(delistRow.mod)}
                 </p>
                 <p className="text-[13px] text-text-muted mt-[3px]">
                   {delistRow.mod.code} · {delistRow.mod.category}
@@ -383,16 +386,16 @@ export default function VendorCatalog() {
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-3 pt-1">
+            <div className="flex items-center justify-end gap-3 pt-1">
               <button
                 onClick={() => setDelistRow(null)}
-                className="btn-soft h-[42px] text-[14px] font-semibold cursor-pointer"
+                className="btn-soft h-[38px] px-5 text-[13.5px] font-semibold cursor-pointer"
               >
                 取消
               </button>
               <button
                 onClick={submitDelist}
-                className="h-[42px] rounded-full text-[14px] font-semibold text-white bg-danger hover:brightness-110 transition-colors cursor-pointer"
+                className="h-[38px] px-5 rounded-full text-[13.5px] font-semibold text-white bg-danger hover:brightness-110 transition-colors cursor-pointer"
               >
                 确认下架
               </button>
@@ -412,7 +415,7 @@ export default function VendorCatalog() {
               />
               <div>
                 <p className="text-[15px] font-medium text-text">
-                  {priceRow.mod.name}（{priceRow.mod.edition}）
+                  {moduleLabel(priceRow.mod)}
                 </p>
                 <p className="text-[13px] text-text-muted mt-[3px]">
                   {priceRow.mod.code} · {priceRow.mod.category}
@@ -434,7 +437,7 @@ export default function VendorCatalog() {
             </div>
 
             <div>
-              <label htmlFor="price-input" className="block text-[14px] font-medium text-text mb-[6px]">
+              <label htmlFor="price-input" className="block text-[13px] font-medium text-text-secondary mb-[6px]">
                 新的席位单价（元 / 席位 / 年）
               </label>
               <input
@@ -472,17 +475,17 @@ export default function VendorCatalog() {
                 ` 该模块已有 ${priceRow.soldSeats} 个席位分布在 ${priceRow.orgCount} 家企业，续费时将按新单价计算。`}
             </p>
 
-            <div className="grid grid-cols-2 gap-3 pt-1">
+            <div className="flex items-center justify-end gap-3 pt-1">
               <button
                 onClick={() => setPriceRow(null)}
-                className="btn-soft h-[42px] text-[14px] font-semibold cursor-pointer"
+                className="btn-soft h-[38px] px-5 text-[13.5px] font-semibold cursor-pointer"
               >
                 取消
               </button>
               <button
                 onClick={submitPrice}
                 disabled={!priceSubmittable}
-                className="btn-primary h-[42px] text-[14px] font-semibold cursor-pointer disabled:cursor-not-allowed"
+                className="btn-primary h-[38px] px-5 text-[13.5px] font-semibold cursor-pointer disabled:cursor-not-allowed"
               >
                 确认调价
               </button>

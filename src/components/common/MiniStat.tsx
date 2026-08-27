@@ -37,14 +37,14 @@ export default function MiniStat({
   const body = (
     <>
       <div className="flex items-center justify-between gap-2">
-        <p className="text-[12.5px] font-semibold text-text-secondary truncate">{label}</p>
+        <p className="text-[13px] font-semibold text-text-secondary truncate">{label}</p>
         {Icon && <Icon size={14} className="text-text-placeholder shrink-0" />}
       </div>
 
       {/* Figure and meter travel together; only the label and hint are pinned
           to the tile's edges, so a stretched tile still reads as one block. */}
       <div>
-        <p className="display-num text-[30px] text-text">
+        <p className="display-num text-[27px] text-text">
           {current}
           {total > 0 && <span className="text-text-placeholder">/{total}</span>}
           {unit && <span className="text-[13px] font-semibold text-text-muted ml-1">{unit}</span>}
@@ -60,12 +60,12 @@ export default function MiniStat({
                 }}
               />
             </div>
-            <span className="num text-[11.5px] font-bold text-text-muted shrink-0">{pct}%</span>
+            <span className="num text-[12px] font-bold text-text-muted shrink-0">{pct}%</span>
           </div>
         )}
       </div>
 
-      {hint && <p className="text-[11.5px] text-text-muted truncate">{hint}</p>}
+      {hint && <p className="text-[12px] text-text-muted truncate">{hint}</p>}
     </>
   );
 

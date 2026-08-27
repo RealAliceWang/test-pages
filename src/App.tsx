@@ -1,7 +1,10 @@
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 import Layout from './components/layout/Layout';
 import RequirePermission from './components/common/RequirePermission';
+import RequireAuth from './components/common/RequireAuth';
 import { AppProvider } from './store';
+import Login from './pages/auth/Login';
+import Register from './pages/auth/Register';
 
 import Workbench from './pages/Workbench';
 import ModuleCenter from './pages/ModuleCenter';
@@ -24,7 +27,11 @@ export default function App() {
     <AppProvider>
       <HashRouter>
         <Routes>
-          <Route element={<Layout />}>
+          {/* Auth pages live outside the shell — no sidebar, no task rail. */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+
+          <Route element={<RequireAuth><Layout /></RequireAuth>}>
             <Route path="/" element={<Workbench />} />
             <Route path="/profile" element={<Profile />} />
 

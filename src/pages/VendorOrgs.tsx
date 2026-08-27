@@ -14,6 +14,8 @@ import {
   spareSeats, useApp,
 } from '../store';
 import { VENDOR_ORG_ID } from '../domain/seed';
+import { daysLeftLabel } from '../domain/format';
+import { METER_FILL, POOL_EXPIRING_DAYS, poolHealth } from '../domain/poolHealth';
 import type { Organization, SeatPool } from '../domain/types';
 
 /** A pool of one customer org, enriched with everything the row renders. */
@@ -46,24 +48,17 @@ const verifyOptions = ['全部认证状态', '已认证', '未认证'] as const;
 
 const selectCls =
   'h-[32px] px-2 text-[14px] text-text-secondary field outline-none focus:border-primary transition-colors cursor-pointer';
-const numberInputCls =
-  'w-full h-[40px] px-3 text-[15px] text-text bg-surface-secondary border border-border rounded-sm outline-none focus:border-primary focus:bg-surface transition-colors';
+const numberInputCls = 'field w-full h-[40px] px-4 text-[15px] text-text';
 
 const columns = ['企业', '成员', '席位（已分配/持有）', '免费额度', '累计成交额', '状态', '创建时间', '联系人', '操作'];
 
 const money = (n: number) => `¥${n.toLocaleString()}`;
 
 function UsageBar({ percent }: { percent: number }) {
-  // Shared meter; only pressure thresholds depart from the default signal fill.
-  const fill =
-    percent >= 90
-      ? 'var(--color-danger-light)'
-      : percent >= 70
-        ? 'var(--color-warning-light)'
-        : 'var(--color-signal)';
+  // Shared meter; thresholds and fills come from the site-wide pool-health scale.
   return (
     <div className="meter w-[92px]">
-      <span style={{ width: `${percent}%`, background: fill }} />
+      <span style={{ width: `${Math.min(percent, 100)}%`, background: METER_FILL[poolHealth(percent)] }} />
     </div>
   );
 }
@@ -185,7 +180,7 @@ export default function VendorOrgs() {
     { icon: Building2, value: metrics.customers, label: '客户企业总数', hint: `${unverified.length} 家待认证`, tone: 'accent' },
     { icon: BadgeCheck, value: metrics.verified, label: '已认证企业', hint: '可正常下单与扩容', tone: 'positive' },
     { icon: Ticket, value: metrics.soldSeats, label: '全平台已售席位', hint: '含采购与免费额度', tone: 'neutral' },
-    { icon: Coins, value: money(metrics.gmv), label: '累计成交额', hint: '已完成订单合计', tone: 'positive' },
+    { icon: Coins, value: money(metrics.gmv), label: '累计成交额', hint: '已完成订单合计', tone: 'attention' },
   ];
 
   return (
@@ -305,7 +300,7 @@ export default function VendorOrgs() {
                       <div className="mt-[6px]"><UsageBar percent={r.usage} /></div>
                       {r.expiringCount > 0 && (
                         <p className="text-[12px] text-warning mt-[5px] inline-flex items-center gap-[3px]">
-                          <CalendarClock size={11} /> {r.expiringCount} 个池 30 天内到期
+                          <CalendarClock size={11} /> {r.expiringCount} 个池 {POOL_EXPIRING_DAYS} 天内到期
                         </p>
                       )}
                     </td>
@@ -336,17 +331,17 @@ export default function VendorOrgs() {
                           onClick={() => openQuota(r)}
                           className="h-[32px] px-3 rounded-full text-[13px] font-semibold text-primary bg-primary-bg hover:brightness-95 transition-all cursor-pointer inline-flex items-center gap-[4px] whitespace-nowrap"
                         >
-                          <SlidersHorizontal size={12} /> 调整额度
+                          <SlidersHorizontal size={14} /> 调整额度
                         </button>
                         <button
                           onClick={() => setStatusOrg(r)}
-                          className={`h-[30px] px-[10px] rounded-full text-[13px] transition-all cursor-pointer inline-flex items-center gap-[4px] whitespace-nowrap ${
+                          className={`h-[32px] px-3 rounded-full text-[13px] font-semibold transition-all cursor-pointer inline-flex items-center gap-[4px] whitespace-nowrap ${
                             disabled
                               ? 'text-success bg-success-bg hover:brightness-95'
                               : 'text-danger bg-danger-bg hover:brightness-95'
                           }`}
                         >
-                          {disabled ? <><Power size={12} /> 启用</> : <><Ban size={12} /> 停用</>}
+                          {disabled ? <><Power size={14} /> 启用</> : <><Ban size={14} /> 停用</>}
                         </button>
                       </div>
                     </td>
@@ -389,9 +384,9 @@ export default function VendorOrgs() {
                                       {p.expired ? (
                                         <span className="text-[14px] text-text-muted">{p.pool.expireDate}（已过期）</span>
                                       ) : p.expiring ? (
-                                        <span className="text-[14px] text-danger inline-flex items-center gap-[4px]">
+                                        <span className="text-[14px] text-warning inline-flex items-center gap-[4px]">
                                           <TriangleAlert size={12} />
-                                          {p.pool.expireDate}（剩 {p.restDays} 天）
+                                          {p.pool.expireDate}（{daysLeftLabel(p.restDays)}）
                                         </span>
                                       ) : (
                                         <span className="text-[14px] text-text-secondary">{p.pool.expireDate}</span>
@@ -413,8 +408,10 @@ export default function VendorOrgs() {
 
           {list.length === 0 && (
             <div className="py-16 text-center">
-              <Building2 size={40} className="mx-auto mb-3 text-text-placeholder" />
-              <p className="text-[14px] text-text-muted">没有符合条件的企业</p>
+              <span className="w-[44px] h-[44px] rounded-full bg-surface-hover flex items-center justify-center mx-auto mb-4">
+                <Building2 size={20} className="text-text-muted" />
+              </span>
+              <p className="text-[13px] text-text-muted">没有符合条件的企业</p>
             </div>
           )}
         </div>
@@ -440,7 +437,7 @@ export default function VendorOrgs() {
             </div>
 
             <div>
-              <label htmlFor="quota-input" className="block text-[14px] font-medium text-text mb-[6px]">
+              <label htmlFor="quota-input" className="block text-[13px] font-medium text-text-secondary mb-[6px]">
                 新的免费席位额度
               </label>
               <input
@@ -474,17 +471,17 @@ export default function VendorOrgs() {
               免费额度只影响后续的额度扩容审批，不会改动企业已持有的席位。
             </p>
 
-            <div className="grid grid-cols-2 gap-3 pt-1">
+            <div className="flex items-center justify-end gap-3 pt-1">
               <button
                 onClick={() => setQuotaOrg(null)}
-                className="btn-soft h-[42px] text-[14px] font-semibold cursor-pointer"
+                className="btn-soft h-[38px] px-5 text-[13.5px] font-semibold cursor-pointer"
               >
                 取消
               </button>
               <button
                 onClick={submitQuota}
                 disabled={!quotaSubmittable}
-                className="btn-primary h-[42px] text-[14px] font-semibold cursor-pointer disabled:cursor-not-allowed"
+                className="btn-primary h-[38px] px-5 text-[13.5px] font-semibold cursor-pointer disabled:cursor-not-allowed"
               >
                 确认调整
               </button>
@@ -527,16 +524,16 @@ export default function VendorOrgs() {
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-3 pt-1">
+            <div className="flex items-center justify-end gap-3 pt-1">
               <button
                 onClick={() => setStatusOrg(null)}
-                className="btn-soft h-[42px] text-[14px] font-semibold cursor-pointer"
+                className="btn-soft h-[38px] px-5 text-[13.5px] font-semibold cursor-pointer"
               >
                 取消
               </button>
               <button
                 onClick={submitStatus}
-                className={`h-[40px] rounded-full text-[14px] font-semibold text-white transition-all hover:brightness-110 cursor-pointer ${
+                className={`h-[38px] px-5 rounded-full text-[13.5px] font-semibold text-white transition-all hover:brightness-110 cursor-pointer ${
                   statusOrg.org.status === '正常' ? 'bg-danger' : 'bg-success'
                 }`}
               >

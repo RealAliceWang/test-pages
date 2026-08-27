@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  BadgeCheck, CreditCard, Receipt, ShoppingCart, Wallet,
+  BadgeCheck, Clock, CreditCard, Receipt, ShoppingCart, Wallet,
 } from 'lucide-react';
 import Header from '../components/layout/Header';
 import MetricCard, { type Metric } from '../components/common/MetricCard';
@@ -9,8 +9,9 @@ import SearchBar from '../components/common/SearchBar';
 import StatusBadge from '../components/common/StatusBadge';
 import Modal from '../components/common/Modal';
 import { can } from '../domain/permissions';
+import { moduleLabel } from '../domain/format';
 import {
-  deptOf, memberOf, moduleOf, orgOf, useApp, visibleOrders,
+  addDays, daysBetween, deptOf, memberOf, moduleOf, orgOf, poolById, useApp, visibleOrders,
 } from '../store';
 import type { Application, Order, PayMethod } from '../domain/types';
 
@@ -56,8 +57,10 @@ export default function Orders() {
   const stats: Metric[] = [
     { icon: Receipt, value: orders.length, label: isVendor ? '平台订单总数' : '订单总数', hint: '含全部状态的订单', tone: 'accent' },
     { icon: Wallet, value: `¥${paidAmount.toLocaleString()}`, label: isVendor ? '累计成交额' : '累计支出', hint: '已完成订单合计', tone: 'positive' },
-    { icon: CreditCard, value: `¥${unpaidAmount.toLocaleString()}`, label: '待支付金额', hint: unpaidAmount ? '支付后席位方可扩容' : '暂无待支付订单', tone: unpaidAmount ? 'attention' : 'neutral' },
-    { icon: BadgeCheck, value: pendingConfirm.length, label: isVendor ? '待确认到账' : '等待厂商确认', hint: '厂商确认后自动建池', tone: pendingConfirm.length ? 'attention' : 'neutral' },
+    { icon: CreditCard, value: `¥${unpaidAmount.toLocaleString()}`, label: '待支付金额', hint: unpaidAmount ? '支付后席位方可扩容' : '暂无待支付订单', tone: 'attention' },
+    /* Violet is the vendor-side hue, and a fixed tone keeps this card from
+       ever matching its amber neighbour. */
+    { icon: BadgeCheck, value: pendingConfirm.length, label: isVendor ? '待确认到账' : '等待厂商确认', hint: '厂商确认后自动建池', tone: 'neutral' },
   ];
 
   return (
@@ -97,7 +100,7 @@ export default function Orders() {
                     <ShoppingCart size={18} className="text-primary shrink-0" />
                     <div className="min-w-0 flex-1">
                       <p className="text-[14px] text-text">
-                        {mod?.name}（{mod?.edition}） · {app.seats} 个席位
+                        {mod ? moduleLabel(mod) : '—'} · {app.seats} 个席位
                       </p>
                       <p className="text-[13px] text-text-muted mt-[3px]">
                         {app.code} · {applicant?.name} · {dept?.name} · {app.projectName}
@@ -107,7 +110,7 @@ export default function Orders() {
                       ¥{((mod?.unitPrice ?? 0) * app.seats).toLocaleString()}
                     </span>
                     <button onClick={() => { setPlacing(app); setSeats(app.seats); setPayMethod('在线支付'); }}
-                      className="h-[32px] px-4  text-[13px] font-medium btn-primary text-white cursor-pointer shrink-0">
+                      className="btn-primary h-[32px] px-4 text-[13px] font-semibold cursor-pointer shrink-0">
                       立即下单
                     </button>
                   </div>
@@ -153,15 +156,14 @@ export default function Orders() {
                       <>
                         <td className="px-5 py-[14px] text-[14px] text-text-secondary">{org?.shortName ?? '—'}</td>
                         <td className="px-5 py-[14px] text-[14px] text-text-secondary">
-                          {mod?.name}
+                          {mod ? moduleLabel(mod) : '—'}
                           <span className="text-text-muted"> · {o.seats} 席</span>
                         </td>
                       </>
                     ) : (
                       <>
                         <td className="px-5 py-[14px]">
-                          <p className="text-[14px] text-text-secondary">{mod?.name}</p>
-                          <p className="text-[12px] text-text-muted mt-[2px]">{mod?.edition}</p>
+                          <p className="text-[14px] text-text-secondary">{mod ? moduleLabel(mod) : '—'}</p>
                         </td>
                         <td className="px-5 py-[14px] text-[14px] text-text text-center">{o.seats}</td>
                       </>
@@ -178,7 +180,7 @@ export default function Orders() {
                         {canManage && o.status === '待支付' && (
                           <>
                             <button onClick={() => setPaying(o)}
-                              className="h-[30px] px-3  text-[13px] font-medium btn-primary text-white cursor-pointer whitespace-nowrap">
+                              className="btn-primary h-[32px] px-3.5 text-[13px] font-semibold cursor-pointer whitespace-nowrap">
                               支付
                             </button>
                             <button onClick={() => setCancelling(o)}
@@ -188,20 +190,26 @@ export default function Orders() {
                           </>
                         )}
                         {canManage && o.status === '待厂商确认' && (
-                          <button onClick={() => setCancelling(o)}
-                            className="btn-soft h-[32px] px-3.5 text-[13px] font-semibold cursor-pointer whitespace-nowrap">
-                            申请退款
-                          </button>
+                          <div className="flex items-center gap-2.5">
+                            <span className="inline-flex items-center gap-1.5 text-[13px] text-text-muted whitespace-nowrap">
+                              <Clock size={13} className="text-text-placeholder" />
+                              等待厂商确认
+                            </span>
+                            <button onClick={() => setCancelling(o)}
+                              className="inline-flex items-center h-[32px] px-2 text-[13px] font-medium text-danger hover:brightness-75 hover:underline underline-offset-2 transition-all cursor-pointer whitespace-nowrap">
+                              申请退款
+                            </button>
+                          </div>
                         )}
                         {canConfirm && o.status === '待厂商确认' && (
                           <button onClick={() => setConfirming(o)}
-                            className="h-[32px] px-3.5 rounded-full text-[13px] font-semibold text-white bg-success hover:brightness-110 transition-all cursor-pointer whitespace-nowrap">
+                            className="btn-outline h-[32px] px-3.5 text-[13px] font-semibold cursor-pointer whitespace-nowrap">
                             确认到账
                           </button>
                         )}
                         {canConfirm && o.status === '退款中' && (
                           <button onClick={() => setRefunding(o)}
-                            className="h-[32px] px-3.5 rounded-full text-[13px] font-semibold text-white bg-warning hover:brightness-110 transition-all cursor-pointer whitespace-nowrap">
+                            className="h-[32px] px-3.5 rounded-full text-[13px] font-semibold text-white bg-danger hover:brightness-110 transition-all cursor-pointer whitespace-nowrap">
                             确认退款
                           </button>
                         )}
@@ -221,9 +229,11 @@ export default function Orders() {
           </table>
 
           {list.length === 0 && (
-            <div className="py-16 text-center">
-              <Receipt size={44} className="mx-auto mb-4 text-text-placeholder" />
-              <p className="text-[15px] text-text-muted">没有{sel === '全部' ? '' : sel}订单</p>
+            <div className="py-16 flex flex-col items-center">
+              <div className="w-[44px] h-[44px] rounded-full bg-surface-hover flex items-center justify-center mb-3">
+                <Receipt size={20} className="text-text-placeholder" />
+              </div>
+              <p className="text-[13px] text-text-muted">没有{sel === '全部' ? '' : sel}订单</p>
             </div>
           )}
         </div>
@@ -240,7 +250,7 @@ export default function Orders() {
               <div className="border border-border rounded-sm divide-y divide-divider">
                 {[
                   { label: '关联申请', value: `${placing.code} · ${applicant?.name}` },
-                  { label: '采购模块', value: `${mod.name}（${mod.edition}）` },
+                  { label: '采购模块', value: moduleLabel(mod) },
                   { label: '席位单价', value: `¥${mod.unitPrice.toLocaleString()}/席位/年` },
                   { label: '授权期限', value: `${mod.duration} 天` },
                 ].map((r) => (
@@ -252,21 +262,22 @@ export default function Orders() {
               </div>
 
               <div>
-                <label className="block text-[14px] text-text-secondary mb-2">采购席位数</label>
+                <label className="block text-[13px] font-medium text-text-secondary mb-2">采购席位数</label>
                 <input type="number" min={1} max={99} value={seats}
                   onChange={(e) => setSeats(Math.max(1, Math.min(99, Number(e.target.value) || 1)))}
                   className="w-[130px] h-[36px] px-3 text-[14px] field focus:border-primary focus:outline-none" />
                 <p className="text-[12px] text-text-placeholder mt-2">
                   申请人请求 {placing.seats} 个。可多采购以留出余量，后续可直接分配给其他成员。
+                  {seats > placing.seats && `将比申请多出 ${seats - placing.seats} 个，作为空闲余量。`}
                 </p>
               </div>
 
               <div>
-                <label className="block text-[14px] text-text-secondary mb-2">支付方式</label>
+                <label className="block text-[13px] font-medium text-text-secondary mb-2">支付方式</label>
                 <div className="flex items-center gap-2">
                   {(['在线支付', '对公转账'] as PayMethod[]).map((p) => (
                     <button key={p} onClick={() => setPayMethod(p)}
-                      className={`h-[34px] px-4 rounded-full text-[13px] font-semibold transition-colors cursor-pointer ${
+                      className={`h-[32px] px-4 rounded-full text-[13px] font-semibold transition-colors cursor-pointer ${
                         payMethod === p ? 'bg-primary-bg text-primary' : 'bg-surface-hover text-text-secondary hover:bg-border'
                       }`}>
                       {p}
@@ -285,17 +296,17 @@ export default function Orders() {
                 <span className="text-[20px] font-bold text-orange">¥{amount.toLocaleString()}</span>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center justify-end gap-3">
+                <button onClick={() => setPlacing(null)}
+                  className="btn-soft h-[38px] px-5 text-[13.5px] font-semibold cursor-pointer">
+                  取消
+                </button>
                 <button onClick={() => {
                   dispatch({ type: 'CREATE_ORDER', moduleId: placing.moduleId, seats, payMethod, applicationId: placing.id });
                   setPlacing(null);
                 }}
-                  className="h-[36px] px-5  text-[14px] font-medium btn-primary text-white cursor-pointer">
+                  className="btn-primary h-[38px] px-5 text-[13.5px] font-semibold cursor-pointer">
                   生成订单
-                </button>
-                <button onClick={() => setPlacing(null)}
-                  className="btn-soft h-[38px] px-5 text-[14px] font-semibold cursor-pointer">
-                  取消
                 </button>
               </div>
             </div>
@@ -307,32 +318,55 @@ export default function Orders() {
       <Modal open={Boolean(paying)} onClose={() => setPaying(null)} title="支付订单" width={480}>
         {paying && (() => {
           const mod = moduleOf(state, paying.moduleId);
+          const renewPool = paying.renewPoolId ? poolById(state, paying.renewPoolId) : undefined;
+          const app = paying.applicationId
+            ? state.applications.find((a) => a.id === paying.applicationId)
+            : undefined;
+          const applicant = app ? memberOf(state, app.applicantId) : undefined;
+
+          let onlinePayText: string;
+          if (renewPool) {
+            // Renewal: seats can shrink, so the meaningful change is the extended expiry.
+            const term = mod?.duration ?? 365;
+            const base = daysBetween(state.now, renewPool.expireDate) > 0 ? renewPool.expireDate : state.now;
+            const newExpire = addDays(base, term);
+            const inUse = state.assignments.filter((a) => a.poolId === renewPool.id && a.status === '生效中').length;
+            const newTotal = Math.max(paying.seats, inUse);
+            onlinePayText = `支付成功后，该席位池将续期，总数调整为 ${newTotal} 个，到期日延长至 ${newExpire}。`;
+          } else if (app && paying.seats > app.seats) {
+            onlinePayText = `支付成功后，${paying.seats} 个席位计入企业席位池：${app.seats} 个自动分配给申请人${applicant?.name ? ` ${applicant.name}` : ''}，剩余 ${paying.seats - app.seats} 个作为空闲余量，可在席位池中继续分配。`;
+          } else if (app) {
+            onlinePayText = `支付成功后，${paying.seats} 个席位立即计入企业席位池，并自动分配给申请人${applicant?.name ? ` ${applicant.name}` : ''}。`;
+          } else {
+            onlinePayText = `支付成功后，${paying.seats} 个席位立即计入企业席位池。`;
+          }
+
           return (
             <div className="flex flex-col gap-4">
               <div className="text-center py-4">
                 <p className="text-[13px] text-text-muted">应付金额</p>
-                <p className="text-[32px] font-bold text-orange mt-2">¥{paying.amount.toLocaleString()}</p>
+                <p className="text-[20px] font-bold text-orange mt-2">¥{paying.amount.toLocaleString()}</p>
                 <p className="text-[13px] text-text-muted mt-2">
-                  {mod?.name} · {paying.seats} 个席位 · {paying.payMethod}
+                  {mod ? moduleLabel(mod) : '—'} · {paying.seats} 个席位 · {paying.payMethod}
                 </p>
               </div>
 
               <div className={`px-4 py-3 rounded-sm ${paying.payMethod === '在线支付' ? 'bg-success-bg' : 'bg-primary-bg'}`}>
                 <p className={`text-[13px] leading-relaxed ${paying.payMethod === '在线支付' ? 'text-success' : 'text-primary'}`}>
                   {paying.payMethod === '在线支付'
-                    ? `支付成功后，${paying.seats} 个席位立即计入企业席位池${paying.applicationId ? '，并自动分配给申请人' : ''}。`
+                    ? onlinePayText
                     : '提交转账凭证后订单转为「待厂商确认」，厂商核对到账后席位才会发放。'}
                 </p>
               </div>
 
-              <div className="flex items-center gap-3">
-                <button onClick={() => { dispatch({ type: 'PAY_ORDER', orderId: paying.id }); setPaying(null); }}
-                  className="h-[36px] px-5  text-[14px] font-medium btn-primary text-white cursor-pointer">
-                  {paying.payMethod === '在线支付' ? '确认支付' : '提交转账凭证'}
-                </button>
+              <div className="flex items-center justify-end gap-3">
                 <button onClick={() => setPaying(null)}
-                  className="btn-soft h-[38px] px-5 text-[14px] font-semibold cursor-pointer">
+                  className="btn-soft h-[38px] px-5 text-[13.5px] font-semibold cursor-pointer">
                   取消
+                </button>
+                <button onClick={() => { dispatch({ type: 'PAY_ORDER', orderId: paying.id }); setPaying(null); }}
+                  className="btn-primary h-[38px] px-5 text-[13.5px] font-semibold cursor-pointer">
+                  {paying.payMethod === '在线支付' ? '确认支付' : '提交转账凭证'}
                 </button>
               </div>
             </div>
@@ -351,7 +385,7 @@ export default function Orders() {
                 {[
                   { label: '订单号', value: confirming.orderNo },
                   { label: '客户企业', value: org?.name ?? '—' },
-                  { label: '采购内容', value: `${mod?.name} · ${confirming.seats} 个席位` },
+                  { label: '采购内容', value: `${mod ? moduleLabel(mod) : '—'} · ${confirming.seats} 个席位` },
                   { label: '金额', value: `¥${confirming.amount.toLocaleString()}` },
                   { label: '付款时间', value: confirming.paidAt ?? '—' },
                 ].map((r) => (
@@ -368,14 +402,14 @@ export default function Orders() {
                 </p>
               </div>
 
-              <div className="flex items-center gap-3">
-                <button onClick={() => { dispatch({ type: 'CONFIRM_ORDER', orderId: confirming.id }); setConfirming(null); }}
-                  className="h-[38px] px-5 rounded-full text-[14px] font-semibold bg-success text-white hover:brightness-110 transition-all cursor-pointer">
-                  确认已到账
-                </button>
+              <div className="flex items-center justify-end gap-3">
                 <button onClick={() => setConfirming(null)}
-                  className="btn-soft h-[38px] px-5 text-[14px] font-semibold cursor-pointer">
+                  className="btn-soft h-[38px] px-5 text-[13.5px] font-semibold cursor-pointer">
                   取消
+                </button>
+                <button onClick={() => { dispatch({ type: 'CONFIRM_ORDER', orderId: confirming.id }); setConfirming(null); }}
+                  className="btn-primary h-[38px] px-5 text-[13.5px] font-semibold cursor-pointer">
+                  确认已到账
                 </button>
               </div>
             </div>
@@ -397,17 +431,19 @@ export default function Orders() {
               <p className="text-[13px] text-warning leading-relaxed">
                 {cancelling.status === '待厂商确认'
                   ? `${cancelling.orderNo}（¥${cancelling.amount.toLocaleString()}）的款项已支付，取消需由厂商核对后退款。提交后订单转为「退款中」，厂商确认退款后关闭。`
-                  : `取消 ${cancelling.orderNo}（¥${cancelling.amount.toLocaleString()}）后，关联的申请将退回「待采购」，申请人不会获得席位。如需重新采购请再次下单。`}
+                  : cancelling.applicationId
+                    ? `取消 ${cancelling.orderNo}（¥${cancelling.amount.toLocaleString()}）后，关联的申请将退回「待采购」，申请人不会获得席位。如需重新采购请再次下单。`
+                    : `取消 ${cancelling.orderNo}（¥${cancelling.amount.toLocaleString()}）后订单关闭，不会发放席位。如需重新采购请再次下单。`}
               </p>
             </div>
-            <div className="flex items-center gap-3">
-              <button onClick={() => { dispatch({ type: 'CANCEL_ORDER', orderId: cancelling.id }); setCancelling(null); }}
-                className="h-[38px] px-5 rounded-full text-[14px] font-semibold bg-danger text-white hover:brightness-110 transition-all cursor-pointer">
-                {cancelling.status === '待厂商确认' ? '提交退款申请' : '确认取消'}
-              </button>
+            <div className="flex items-center justify-end gap-3">
               <button onClick={() => setCancelling(null)}
-                className="btn-soft h-[38px] px-5 text-[14px] font-semibold cursor-pointer">
+                className="btn-soft h-[38px] px-5 text-[13.5px] font-semibold cursor-pointer">
                 返回
+              </button>
+              <button onClick={() => { dispatch({ type: 'CANCEL_ORDER', orderId: cancelling.id }); setCancelling(null); }}
+                className="h-[38px] px-5 rounded-full text-[13.5px] font-semibold bg-danger text-white hover:brightness-110 transition-all cursor-pointer">
+                {cancelling.status === '待厂商确认' ? '提交退款申请' : '确认取消'}
               </button>
             </div>
           </div>
@@ -424,14 +460,14 @@ export default function Orders() {
                 （{refunding.orderNo}）。订单将关闭，关联申请退回「待采购」，席位不发放。此操作记入平台审计日志。
               </p>
             </div>
-            <div className="flex items-center gap-3">
-              <button onClick={() => { dispatch({ type: 'CONFIRM_REFUND', orderId: refunding.id }); setRefunding(null); }}
-                className="h-[38px] px-5 rounded-full text-[14px] font-semibold bg-warning text-white hover:brightness-110 transition-all cursor-pointer">
-                确认已退款
-              </button>
+            <div className="flex items-center justify-end gap-3">
               <button onClick={() => setRefunding(null)}
-                className="btn-soft h-[38px] px-5 text-[14px] font-semibold cursor-pointer">
+                className="btn-soft h-[38px] px-5 text-[13.5px] font-semibold cursor-pointer">
                 返回
+              </button>
+              <button onClick={() => { dispatch({ type: 'CONFIRM_REFUND', orderId: refunding.id }); setRefunding(null); }}
+                className="h-[38px] px-5 rounded-full text-[13.5px] font-semibold bg-danger text-white hover:brightness-110 transition-all cursor-pointer">
+                确认已退款
               </button>
             </div>
           </div>

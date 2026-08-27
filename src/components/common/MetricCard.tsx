@@ -19,12 +19,32 @@ export type MetricTone = 'neutral' | 'accent' | 'positive' | 'attention';
  *   tint  — the card's pale wash, and the plinth behind a fallback glyph
  *   solid — the drawn icon's body, dark enough to hold its shape on that wash
  *   on    — a bare lucide stroke sitting on the plinth, needing 4.5:1 there
+ *
+ * All three reference the shared tokens in index.css (the -light tier carries
+ * the wash, the text tier carries the glyph) so a palette change lands here
+ * automatically.
  */
 const tones: Record<MetricTone, { tint: string; solid: string; on: string }> = {
-  neutral: { tint: '#A78BFA', solid: '#7C3AED', on: '#2E1065' },
-  accent: { tint: '#38BDF8', solid: '#0284C7', on: '#052E45' },
-  positive: { tint: '#34D399', solid: '#059669', on: '#04372A' },
-  attention: { tint: '#FBBF24', solid: '#D97706', on: '#432B04' },
+  neutral: {
+    tint: 'var(--color-violet-light)',
+    solid: 'var(--color-violet)',
+    on: 'var(--color-violet)',
+  },
+  accent: {
+    tint: 'var(--color-signal)',
+    solid: 'var(--color-signal-deep)',
+    on: 'var(--color-signal-deep)',
+  },
+  positive: {
+    tint: 'var(--color-success-light)',
+    solid: 'var(--color-success)',
+    on: 'var(--color-success)',
+  },
+  attention: {
+    tint: 'var(--color-warning-light)',
+    solid: 'var(--color-warning)',
+    on: 'var(--color-warning)',
+  },
 };
 
 export interface Metric {
@@ -73,12 +93,12 @@ export default function MetricCard({ metric, onGo }: MetricCardProps) {
         <p className="eyebrow truncate">{metric.label}</p>
       </div>
 
-      <p className="display-num mt-[16px] text-[40px] text-text">{metric.value}</p>
+      <p className="display-num mt-[16px] text-[34px] text-text">{metric.value}</p>
 
       <div className="mt-auto pt-[14px] flex items-end justify-between gap-2">
         {/* Secondary ink, not muted: the tinted ground eats the ~0.5 of
             contrast that muted grey had spare on plain white. */}
-        <p className="text-[12.5px] text-text-secondary leading-[17px] truncate">{metric.hint}</p>
+        <p className="text-[13px] text-text-secondary leading-[18px] truncate">{metric.hint}</p>
         {metric.to && (
           <ArrowUpRight
             size={15}

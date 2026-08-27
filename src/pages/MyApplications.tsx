@@ -5,6 +5,7 @@ import Header from '../components/layout/Header';
 import TabFilter from '../components/common/TabFilter';
 import StatusBadge from '../components/common/StatusBadge';
 import { moduleIconMap } from '../assets/moduleIcons';
+import { moduleLabel } from '../domain/format';
 import { deptOf, kindLabels, moduleOf, useApp } from '../store';
 import type { Application, ApprovalStep } from '../domain/types';
 
@@ -79,7 +80,7 @@ export default function MyApplications() {
         subtitle={`共 ${mine.length} 条申请记录 · ${mine.filter(isLive).length} 条正在流转`}
         actions={
           <button onClick={() => navigate('/modules')}
-            className="h-[34px] px-4 rounded-full text-[14px] font-semibold text-primary bg-primary-bg hover:brightness-95 transition-colors cursor-pointer">
+            className="btn-outline h-[38px] px-5 text-[13.5px] font-semibold cursor-pointer">
             新建申请
           </button>
         }
@@ -109,8 +110,7 @@ export default function MyApplications() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <p className="text-[15px] font-medium text-text truncate">
-                        {mod?.name}
-                        {mod?.edition === '商业版' && <span className="text-text-muted font-normal">（商业版）</span>}
+                        {mod ? moduleLabel(mod) : '未知模块'}
                       </p>
                       <span className="text-[12px] px-[6px] py-[1px] rounded-sm bg-surface-hover text-text-muted shrink-0">
                         {kindLabels[app.kind]}
@@ -153,7 +153,7 @@ export default function MyApplications() {
 
                         {withdrawable && (
                           <button onClick={() => dispatch({ type: 'WITHDRAW_APPLICATION', applicationId: app.id })}
-                            className="mt-4 h-[34px] px-4 rounded-full text-[13px] font-semibold text-danger bg-danger-bg hover:brightness-95 transition-all cursor-pointer">
+                            className="mt-4 h-[32px] px-4 rounded-full text-[13px] font-semibold text-danger bg-danger-bg hover:brightness-95 transition-all cursor-pointer">
                             撤销申请
                           </button>
                         )}
@@ -174,20 +174,24 @@ export default function MyApplications() {
         </div>
 
         {list.length === 0 && (
-          <div className="panel py-16 text-center">
+          <div className="panel py-16 flex flex-col items-center">
             {sel === '全部' ? (
               <>
-                <ClipboardList size={44} className="mx-auto mb-4 text-text-placeholder" />
-                <p className="text-[15px] text-text-muted mb-4">你还没有提交过授权申请</p>
+                <div className="w-[44px] h-[44px] rounded-full bg-surface-hover flex items-center justify-center mb-3">
+                  <ClipboardList size={20} className="text-text-placeholder" />
+                </div>
+                <p className="text-[13px] text-text-muted mb-5">你还没有提交过授权申请</p>
                 <button onClick={() => navigate('/modules')}
-                  className="h-[36px] px-5  text-[14px] font-medium btn-primary text-white cursor-pointer">
+                  className="btn-primary h-[38px] px-5 text-[13.5px] font-semibold cursor-pointer">
                   去模块中心申请
                 </button>
               </>
             ) : (
               <>
-                <Clock size={44} className="mx-auto mb-4 text-text-placeholder" />
-                <p className="text-[15px] text-text-muted">没有{sel}的申请</p>
+                <div className="w-[44px] h-[44px] rounded-full bg-surface-hover flex items-center justify-center mb-3">
+                  <Clock size={20} className="text-text-placeholder" />
+                </div>
+                <p className="text-[13px] text-text-muted">没有{sel}的申请</p>
               </>
             )}
           </div>

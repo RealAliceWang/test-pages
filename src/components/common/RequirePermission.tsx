@@ -27,7 +27,7 @@ export default function RequirePermission({
         <div className="w-[60px] h-[60px] rounded-2xl bg-warning-bg flex items-center justify-center mx-auto mb-5 ring-1 ring-inset ring-warning/15">
           <ShieldAlert size={27} className="text-warning" strokeWidth={2.1} />
         </div>
-        <p className="text-[18px] font-bold text-text tracking-[-0.01em]">当前角色无权访问该页面</p>
+        <p className="text-[16px] font-bold text-text tracking-[-0.01em]">当前角色无权访问该页面</p>
         <p className="text-[13.5px] text-text-muted mt-3 leading-relaxed">
           你正以「{roleLabels[me.role]}」身份登录。该页面仅对具备相应权限的角色开放，
           可在右上角切换身份后再访问。

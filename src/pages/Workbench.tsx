@@ -17,6 +17,8 @@ import {
 import { can, canAny } from '../domain/permissions';
 import { roleLabels } from '../domain/types';
 import { usageHistory } from '../domain/seed';
+import { daysLeftLabel, moduleLabel } from '../domain/format';
+import { POOL_EXPIRING_DAYS } from '../domain/poolHealth';
 
 export default function Workbench() {
   const navigate = useNavigate();
@@ -190,19 +192,23 @@ export default function Workbench() {
     me.role === 'MEMBER'
       ? mySeats.map((a) => {
           const pool = state.seatPools.find((p) => p.id === a.poolId);
+          const mod = moduleOf(state, a.moduleId);
           return {
             id: a.id,
-            name: moduleOf(state, a.moduleId)?.name ?? a.moduleId,
-            note: `${moduleOf(state, a.moduleId)?.edition} · 已用 ${a.usedDays} 天`,
+            name: mod ? moduleLabel(mod) : a.moduleId,
+            note: `已用 ${a.usedDays} 天`,
             left: pool ? daysBetween(state.now, pool.expireDate) : 0,
           };
         })
-      : expiringPools.map(({ pool, left }) => ({
-          id: pool.id,
-          name: moduleOf(state, pool.moduleId)?.name ?? pool.moduleId,
-          note: `${allocatedSeats(state, pool.id)}/${pool.total} 在用 · ${pool.expireDate}`,
-          left,
-        }));
+      : expiringPools.map(({ pool, left }) => {
+          const mod = moduleOf(state, pool.moduleId);
+          return {
+            id: pool.id,
+            name: mod ? moduleLabel(mod) : pool.moduleId,
+            note: `${allocatedSeats(state, pool.id)}/${pool.total} 在用 · ${pool.expireDate}`,
+            left,
+          };
+        });
 
   /* Entry points this identity can actually reach. */
   const shortcuts = [
@@ -246,8 +252,8 @@ export default function Workbench() {
         <div className="xl:col-span-5 xl:order-1 panel-feature px-6 py-6 flex flex-col justify-between min-h-[212px]">
           <div className="relative flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <p className="text-[21px] font-extrabold leading-[1.2] tracking-[-0.02em]">{me.name}</p>
-              <p className="text-[12.5px] font-semibold mt-1.5">{me.title}</p>
+              <p className="text-[20px] font-extrabold leading-[1.2] tracking-[-0.02em]">{me.name}</p>
+              <p className="text-[13px] font-semibold mt-1.5">{me.title}</p>
               <p className="text-[12px] font-medium mt-1">
                 {myOrg.shortName}
                 {myDept ? ` · ${myDept.name}` : ''}
@@ -262,12 +268,12 @@ export default function Workbench() {
                 track="rgba(255,255,255,0.24)"
                 caption={hero.unit}
                 label={
-                  <span className="display-num text-[17px] text-white">{Math.round(hero.ring)}%</span>
+                  <span className="display-num text-[16px] text-white">{Math.round(hero.ring)}%</span>
                 }
               />
             ) : (
               <span
-                className="w-[62px] h-[62px] rounded-full flex items-center justify-center text-[24px] font-extrabold shrink-0 ring-2 ring-white/30"
+                className="w-[62px] h-[62px] rounded-full flex items-center justify-center text-[26px] font-extrabold shrink-0 ring-2 ring-white/30"
                 style={{ background: me.avatarColor }}
               >
                 {me.name.charAt(0)}
@@ -282,7 +288,7 @@ export default function Workbench() {
             </div>
             <button
               onClick={() => navigate(hero.cta.to)}
-              className="shrink-0 h-[38px] px-5 rounded-full bg-white text-[13px] font-bold inline-flex items-center gap-1.5 cursor-pointer transition-transform duration-200 hover:scale-[1.04] active:scale-[0.97]"
+              className="shrink-0 h-[38px] px-5 rounded-full bg-white text-[13.5px] font-semibold inline-flex items-center gap-1.5 cursor-pointer transition-transform duration-200 hover:scale-[1.04] active:scale-[0.97]"
               style={{ color: 'var(--color-feature-deep)' }}
             >
               {hero.cta.label}
@@ -306,7 +312,7 @@ export default function Workbench() {
           className="xl:col-span-7 xl:order-4"
         >
           <div className="flex items-baseline gap-2.5">
-            <span className="display-num text-[38px] text-text">{activityTotal}</span>
+            <span className="display-num text-[34px] text-text">{activityTotal}</span>
             <span className="text-[13px] font-semibold text-text-muted">次模块启动</span>
             <span className="ml-auto text-[12px] text-text-placeholder">日均 {activityAvg} 次</span>
           </div>
@@ -334,8 +340,8 @@ export default function Workbench() {
                     {m.name.charAt(0)}
                   </span>
                   <div className="min-w-0 w-full">
-                    <p className="text-[12.5px] font-semibold text-text truncate">{m.name}</p>
-                    <p className="text-[11px] text-text-muted truncate mt-[2px]">{m.title}</p>
+                    <p className="text-[13px] font-semibold text-text truncate">{m.name}</p>
+                    <p className="text-[12px] text-text-muted truncate mt-[2px]">{m.title}</p>
                   </div>
                 </div>
               ))}
@@ -363,21 +369,23 @@ export default function Workbench() {
               >
                 <div className="min-w-0">
                   <p className="text-[13px] font-semibold text-text truncate">{w.name}</p>
-                  <p className="text-[11.5px] text-text-muted mt-[3px] truncate">{w.note}</p>
+                  <p className="text-[12px] text-text-muted mt-[3px] truncate">{w.note}</p>
                 </div>
                 <span
                   className={`num text-[12px] font-bold rounded-full px-2.5 py-[3px] shrink-0 ${
-                    w.left <= 15 ? 'bg-warning-bg text-warning' : 'bg-surface-hover text-text-secondary'
+                    w.left <= POOL_EXPIRING_DAYS
+                      ? 'bg-warning-bg text-warning'
+                      : 'bg-surface-hover text-text-secondary'
                   }`}
                 >
-                  剩 {w.left} 天
+                  {daysLeftLabel(w.left)}
                 </span>
               </button>
             ))}
 
             {watchlist.length === 0 && (
               <div className="flex-1 flex flex-col justify-center py-8 text-center">
-                <span className="w-[46px] h-[46px] rounded-full bg-surface-secondary flex items-center justify-center mx-auto mb-3">
+                <span className="w-[44px] h-[44px] rounded-full bg-surface-hover flex items-center justify-center mx-auto mb-3">
                   <KeyRound size={20} className="text-text-placeholder" />
                 </span>
                 <p className="text-[13px] text-text-muted">
@@ -406,7 +414,7 @@ export default function Workbench() {
                 </span>
                 <div className="min-w-0 w-full">
                   <p className="text-[13px] font-semibold text-text truncate">{s.label}</p>
-                  <p className="text-[11.5px] text-text-muted mt-[3px] truncate">{s.hint}</p>
+                  <p className="text-[12px] text-text-muted mt-[3px] truncate">{s.hint}</p>
                 </div>
               </button>
             ))}
