@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { ArrowUpRight } from 'lucide-react';
 
@@ -5,16 +6,18 @@ import { ArrowUpRight } from 'lucide-react';
 export type MetricTone = 'neutral' | 'accent' | 'positive' | 'attention';
 
 /**
- * Tone shows up in one place only: a hairline rule above the figure, plus the
- * icon. Filled colour chips on every card made a row of KPIs read as four
- * unrelated badges competing for attention — the numbers are the content, so
- * colour stays subordinate to them.
+ * One hue per tone, fed to both the card's corner wash and the icon plinth
+ * through a single custom property. Tying them together is what keeps a row of
+ * four tiles reading as a set rather than four unrelated colour choices.
+ *
+ * `on` is the glyph colour: each is picked to clear 4.5:1 against the middle
+ * of its own plinth, which rules out the lighter mid-tones for amber.
  */
-const tones: Record<MetricTone, { rule: string; icon: string }> = {
-  neutral: { rule: 'bg-text-placeholder/35', icon: 'text-text-placeholder' },
-  accent: { rule: 'bg-signal', icon: 'text-signal-deep' },
-  positive: { rule: 'bg-success-light', icon: 'text-success' },
-  attention: { rule: 'bg-warning-light', icon: 'text-warning' },
+const tones: Record<MetricTone, { tint: string; on: string }> = {
+  neutral: { tint: '#94A3B8', on: '#1E293B' },
+  accent: { tint: '#38BDF8', on: '#052E45' },
+  positive: { tint: '#34D399', on: '#04372A' },
+  attention: { tint: '#FBBF24', on: '#432B04' },
 };
 
 export interface Metric {
@@ -34,26 +37,25 @@ interface MetricCardProps {
 /**
  * The single KPI tile used across every page.
  *
- * Reads top to bottom as rule → label → figure → hint, with the figure given
+ * Reads top to bottom as icon + label → figure → hint, with the figure given
  * far more weight than anything around it. The label sits on one fixed line so
  * the big figures land on a shared baseline and a row scans as one line of
  * numbers rather than four separate boxes.
  */
 export default function MetricCard({ metric, onGo }: MetricCardProps) {
   const tone = tones[metric.tone ?? 'neutral'];
+  const style = { '--metric-tint': tone.tint } as CSSProperties;
 
   const body = (
     <>
-      {/* Short tone rule: enough colour to group the card, too little to
-          compete with the figure below it. */}
-      <span className={`block h-[3px] w-[26px] rounded-full ${tone.rule}`} />
-
-      <div className="mt-[14px] flex items-center gap-2">
-        <metric.icon size={14} strokeWidth={2.2} className={`shrink-0 ${tone.icon}`} />
+      <div className="flex items-center gap-2.5">
+        <span className="metric-icon w-[38px] h-[38px] rounded-[13px] flex items-center justify-center shrink-0">
+          <metric.icon size={18} strokeWidth={2.3} style={{ color: tone.on }} />
+        </span>
         <p className="eyebrow truncate">{metric.label}</p>
       </div>
 
-      <p className="display-num mt-[10px] text-[40px] text-text">{metric.value}</p>
+      <p className="display-num mt-[16px] text-[40px] text-text">{metric.value}</p>
 
       <div className="mt-auto pt-[14px] flex items-end justify-between gap-2">
         <p className="text-[12.5px] text-text-muted leading-[17px] truncate">{metric.hint}</p>
@@ -67,12 +69,23 @@ export default function MetricCard({ metric, onGo }: MetricCardProps) {
     </>
   );
 
-  const base = 'panel group flex flex-col px-6 py-[22px] w-full text-left';
-  if (!metric.to || !onGo) return <div className={base}>{body}</div>;
+  const base = 'panel metric-tile group flex flex-col px-6 py-[22px] w-full text-left';
+  if (!metric.to || !onGo) {
+    return (
+      <div className={base} style={style}>
+        {body}
+      </div>
+    );
+  }
 
   const to = metric.to;
   return (
-    <button type="button" onClick={() => onGo(to)} className={`${base} panel-hover cursor-pointer`}>
+    <button
+      type="button"
+      onClick={() => onGo(to)}
+      style={style}
+      className={`${base} panel-hover cursor-pointer`}
+    >
       {body}
     </button>
   );

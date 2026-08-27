@@ -457,6 +457,39 @@
     color: var(--color-signal-deep);
   }
 
+  /* ---- KPI tiles ----
+     A tinted corner wash instead of a flat white fill. The tint is strongest
+     at the top-left, where the icon and label sit, and gone by the middle of
+     the card, so the figure below still reads on plain white. Kept under 6%
+     alpha: any heavier and four of these in a row turn into stripes. */
+  .metric-tile {
+    position: relative;
+    overflow: hidden;
+    background-color: var(--color-surface);
+    background-image: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--metric-tint) 12%, transparent) 0%,
+      color-mix(in srgb, var(--metric-tint) 4%, transparent) 34%,
+      transparent 62%
+    );
+  }
+
+  /* Icon plinth. Two stops plus an inner top highlight and a soft drop give
+     the flat lucide glyph a raised, moulded look without importing a second
+     icon set. */
+  .metric-icon {
+    background-image: linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--metric-tint) 88%, white) 0%,
+      var(--metric-tint) 52%,
+      color-mix(in srgb, var(--metric-tint) 82%, black) 100%
+    );
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.55),
+      inset 0 -1px 2px color-mix(in srgb, var(--metric-tint) 60%, black),
+      0 6px 14px -6px color-mix(in srgb, var(--metric-tint) 70%, transparent);
+  }
+
   /* ---- Motion ---- */
   .rise {
     animation: rise 460ms var(--ease-fluid) both;
