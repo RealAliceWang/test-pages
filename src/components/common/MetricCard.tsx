@@ -6,15 +6,19 @@ import { ArrowUpRight } from 'lucide-react';
 export type MetricTone = 'neutral' | 'accent' | 'positive' | 'attention';
 
 /**
- * One hue per tone, fed to both the card's corner wash and the icon plinth
- * through a single custom property. Tying them together is what keeps a row of
- * four tiles reading as a set rather than four unrelated colour choices.
+ * One hue per tone, fed to both the card's wash and the icon plinth through a
+ * single custom property. Tying them together is what keeps a row of four
+ * tiles reading as a set rather than four unrelated colour choices.
+ *
+ * Tone stays semantic — amber means "needs attention", green means healthy —
+ * so a row is not a fixed four-colour rotation. Neutral takes violet rather
+ * than grey purely so the fourth hue holds its own next to the other three.
  *
  * `on` is the glyph colour: each is picked to clear 4.5:1 against the middle
  * of its own plinth, which rules out the lighter mid-tones for amber.
  */
 const tones: Record<MetricTone, { tint: string; on: string }> = {
-  neutral: { tint: '#94A3B8', on: '#1E293B' },
+  neutral: { tint: '#A78BFA', on: '#2E1065' },
   accent: { tint: '#38BDF8', on: '#052E45' },
   positive: { tint: '#34D399', on: '#04372A' },
   attention: { tint: '#FBBF24', on: '#432B04' },
@@ -58,7 +62,9 @@ export default function MetricCard({ metric, onGo }: MetricCardProps) {
       <p className="display-num mt-[16px] text-[40px] text-text">{metric.value}</p>
 
       <div className="mt-auto pt-[14px] flex items-end justify-between gap-2">
-        <p className="text-[12.5px] text-text-muted leading-[17px] truncate">{metric.hint}</p>
+        {/* Secondary ink, not muted: the tinted ground eats the ~0.5 of
+            contrast that muted grey had spare on plain white. */}
+        <p className="text-[12.5px] text-text-secondary leading-[17px] truncate">{metric.hint}</p>
         {metric.to && (
           <ArrowUpRight
             size={15}

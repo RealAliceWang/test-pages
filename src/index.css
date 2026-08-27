@@ -458,19 +458,19 @@
   }
 
   /* ---- KPI tiles ----
-     A tinted corner wash instead of a flat white fill. The tint is strongest
-     at the top-left, where the icon and label sit, and gone by the middle of
-     the card, so the figure below still reads on plain white. Kept under 6%
-     alpha: any heavier and four of these in a row turn into stripes. */
+     The whole card is tinted, not just a corner: a pale wash of its own hue
+     running from the top-left down to near-white at the bottom-right. Held
+     under 22% even at the strongest stop so body copy keeps its contrast and
+     the figure still reads as ink on a light ground. */
   .metric-tile {
     position: relative;
     overflow: hidden;
     background-color: var(--color-surface);
     background-image: linear-gradient(
       135deg,
-      color-mix(in srgb, var(--metric-tint) 12%, transparent) 0%,
-      color-mix(in srgb, var(--metric-tint) 4%, transparent) 34%,
-      transparent 62%
+      color-mix(in srgb, var(--metric-tint) 22%, white) 0%,
+      color-mix(in srgb, var(--metric-tint) 11%, white) 46%,
+      color-mix(in srgb, var(--metric-tint) 4%, white) 100%
     );
   }
 
