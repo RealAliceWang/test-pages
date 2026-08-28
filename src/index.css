@@ -608,6 +608,18 @@
   animation: auth-drift var(--drift-dur, 10s) ease-in-out infinite;
 }
 
+/* Fluid blobs for the auth backdrop: the silhouette slowly re-flows through
+   asymmetric border-radius states while drifting a few pixels, which reads
+   as liquid glass rather than a shape being scaled. */
+@keyframes auth-blob {
+  0%, 100% { border-radius: 58% 42% 55% 45% / 52% 58% 42% 48%; transform: translateY(-8px) rotate(var(--blob-rot, 0deg)); }
+  33% { border-radius: 46% 54% 47% 53% / 61% 43% 57% 39%; transform: translateY(6px) rotate(var(--blob-rot, 0deg)); }
+  66% { border-radius: 53% 47% 61% 39% / 44% 56% 44% 56%; transform: translateY(10px) rotate(var(--blob-rot, 0deg)); }
+}
+.auth-blob {
+  animation: auth-blob var(--blob-dur, 22s) ease-in-out infinite;
+}
+
 /* Respect reduced-motion preference */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
