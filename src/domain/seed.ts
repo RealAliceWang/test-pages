@@ -48,7 +48,7 @@ export const VENDOR_ORG_ID = 'org-vendor';
 /** The vendor's beneficiary account, shown on every bank-transfer pay sheet.
     Buyers wire against this and quote the order number as the reference. */
 export const VENDOR_BANK = {
-  name: '上海见筑结构工程技术有限公司',
+  name: '上海同磊土木工程技术有限公司',
   bank: '招商银行股份有限公司上海分行',
   account: '1219 0682 5510 902',
 } as const;
@@ -59,8 +59,8 @@ export const DEMO_ORG_ID = 'org-1';
 export const organizations: Organization[] = [
   {
     id: 'org-vendor',
-    name: '上海见筑结构工程技术有限公司',
-    shortName: '见筑结构',
+    name: '上海同磊土木工程技术有限公司',
+    shortName: '同磊土木',
     code: 'VENDOR',
     verified: true,
     freeSeatQuota: 0,
@@ -167,7 +167,7 @@ export const members: Member[] = [
   { id: 'x-4',  orgId: 'org-3', deptId: null, name: '邵鹏',   employeeNo: 'ZY0011', title: '钢结构工程师', role: 'MEMBER',    email: 'shaopeng@zhongyuan.com', phone: '136****5530', status: '在职', joinedAt: '2025-09-12', lastLogin: '2026-03-31 09:18', avatarColor: '#EA580C' },
   { id: 'x-5',  orgId: 'org-4', deptId: null, name: '钱多',   employeeNo: 'XC0001', title: '总经理',       role: 'ORG_ADMIN', email: 'qianduo@xinchuang.com', phone: '025-8834****', status: '在职', joinedAt: '2026-03-20', lastLogin: '2026-03-24 11:30', avatarColor: '#0891B2' },
   // Vendor side
-  { id: 'v-1',  orgId: 'org-vendor', deptId: null, name: '沈涛', employeeNo: 'JZ0006', title: '云授权运营专员', role: 'VENDOR_OPS', email: 'shentao@jianzhu.com', phone: '021-6598****', status: '在职', joinedAt: '2024-06-01', lastLogin: '2026-03-31 09:00', avatarColor: '#0F2744' },
+  { id: 'v-1',  orgId: 'org-vendor', deptId: null, name: '沈涛', employeeNo: 'TL0006', title: '云授权运营专员', role: 'VENDOR_OPS', email: 'shentao@tonglei.com', phone: '021-6598****', status: '在职', joinedAt: '2024-06-01', lastLogin: '2026-03-31 09:00', avatarColor: '#0F2744' },
 ];
 
 /** The identity the demo starts from: an ordinary engineer. */
