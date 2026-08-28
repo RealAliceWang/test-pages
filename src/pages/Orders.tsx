@@ -71,8 +71,13 @@ export default function Orders() {
      company's registered name; copied-row feedback for the beneficiary card. */
   const [remit, setRemit] = useState<Remittance>({ company: '', bank: '', account: '' });
   const [copied, setCopied] = useState<string | null>(null);
+  /* Direct-integration semantics: WeChat and Alipay each issue their own
+     code, so the cashier carries a wallet switch rather than claiming one
+     aggregate code both apps could scan. */
+  const [wallet, setWallet] = useState<'微信支付' | '支付宝'>('微信支付');
   useEffect(() => {
     if (paying?.payMethod === '对公转账') setRemit({ company: myOrg.name, bank: '', account: '' });
+    setWallet('微信支付');
     setCopied(null);
   }, [paying, myOrg.name]);
   const [confirming, setConfirming] = useState<Order | null>(null);
@@ -402,22 +407,40 @@ export default function Orders() {
               <div className="flex flex-col gap-4">
                 {head}
 
-                {/* The cashier: an order-bound code plus the two wallets it
-                    accepts. Wallet dots use third-party brand colours — the
-                    one place the palette rules step aside for brand marks. */}
+                {/* The cashier. Each wallet issues its own code (direct
+                    integration, not an aggregate code), so the marks below
+                    the QR are a real switch: pick a wallet, get its code.
+                    Wallet dots use third-party brand colours — the one place
+                    the palette rules step aside for brand marks. */}
                 <div className="flex flex-col items-center gap-3 py-5 rounded-md bg-surface-secondary">
                   <div className="p-3 bg-surface rounded-sm border border-border">
-                    <FakeQr seed={paying.orderNo} />
+                    <FakeQr seed={`${paying.orderNo}:${wallet}`} />
                   </div>
-                  <div className="flex items-center gap-4 text-[13px] font-medium text-text-secondary">
-                    <span className="inline-flex items-center gap-1.5">
-                      <span className="w-[8px] h-[8px] rounded-full" style={{ background: '#07C160' }} />微信支付
-                    </span>
-                    <span className="inline-flex items-center gap-1.5">
-                      <span className="w-[8px] h-[8px] rounded-full" style={{ background: '#1677FF' }} />支付宝
-                    </span>
+                  {/* Segmented control on a visible track, so the unselected
+                      wallet still reads as a clickable option rather than a
+                      static badge. */}
+                  <div className="flex items-center gap-1 p-1 rounded-full bg-surface-hover"
+                    role="tablist" aria-label="选择支付钱包">
+                    {(['微信支付', '支付宝'] as const).map((w) => {
+                      const on = wallet === w;
+                      return (
+                        <button
+                          key={w}
+                          role="tab"
+                          aria-selected={on}
+                          onClick={() => setWallet(w)}
+                          className={`inline-flex items-center gap-1.5 h-[30px] px-3.5 rounded-full text-[13px] font-semibold cursor-pointer transition-colors ${
+                            on ? 'bg-surface text-text shadow-sm' : 'text-text-muted hover:text-text-secondary'
+                          }`}
+                        >
+                          <span className="w-[8px] h-[8px] rounded-full"
+                            style={{ background: w === '微信支付' ? '#07C160' : '#1677FF' }} />
+                          {w}
+                        </button>
+                      );
+                    })}
                   </div>
-                  <p className="text-[12px] text-text-muted">请使用手机扫码完成支付，支付结果实时同步</p>
+                  <p className="text-[12px] text-text-muted">请打开{wallet}扫一扫，支付结果实时同步</p>
                 </div>
 
                 <div className="px-4 py-3 rounded-sm bg-success-bg">
