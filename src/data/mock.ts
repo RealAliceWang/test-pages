@@ -256,15 +256,15 @@ export const currentUser: UserProfile = {
   role: '结构工程师',
   userId: '123456789',
   avatar: '',
-  company: '上海同磊土木工程技术有限公司',
+  company: '上海见筑结构工程技术有限公司',
   companyVerified: true,
   phone: '12345678900',
-  email: 'user@tonglei.com',
+  email: 'user@jianzhu.com',
   serverIp: '192.168.100.10',
   serverConnected: true,
   registerTime: '2025-01-15',
   lastLogin: '2026-03-31 09:42',
-  associatedCompany: '上海同磊建筑科技有限公司',
+  associatedCompany: '上海见筑结构科技有限公司',
 };
 
 export interface MyModuleUsage {
