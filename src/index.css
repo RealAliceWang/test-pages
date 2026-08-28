@@ -399,6 +399,18 @@
     background: var(--color-surface-hover);
   }
 
+  /* On the frosted auth card the standard field grey melts into the 62%
+     translucent white behind it, so fields there sit one shade deeper and
+     carry a faint hairline. Focus behaviour is untouched. */
+  .auth-card .field {
+    background: #E3E8EF;
+    border-color: rgba(10, 12, 16, 0.07);
+  }
+
+  .auth-card .field:hover:not(:focus):not(:focus-within) {
+    background: #DDE3EB;
+  }
+
   .field:focus,
   .field:focus-within {
     background: var(--color-surface);

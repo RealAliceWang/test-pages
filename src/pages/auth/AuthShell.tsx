@@ -149,7 +149,7 @@ export default function AuthShell({ width = 440, children }: { width?: number; c
           {/* Frosted card: translucent enough that the stray droplet and the
               ambient colour read through its surface. */}
           <div
-            className="panel px-8 py-8 border border-white/60"
+            className="auth-card panel px-8 py-8 border border-white/60"
             style={{
               background: 'rgba(255,255,255,.62)',
               backdropFilter: 'blur(24px) saturate(1.4)',
