@@ -29,15 +29,16 @@ export default function ActivityChart({ data, focusIndex, focusLabel }: Activity
         const active = i === focus;
         /* Floor at 12% so a zero day still shows a stub rather than vanishing. */
         const height = Math.max(12, Math.round((d.value / peak) * 100));
-        /* One series, one hue: every bar with data wears the signal family
-           (peak saturated, the rest a lighter step) so quieter days still read
-           as data. Grey is reserved for genuinely empty days — the same
-           "empty capacity" meaning it has on meter tracks. */
+        /* Quiet days wear a soft mint and the peak wears signal blue — two
+           steps of one blue family sat too close to tell apart, so the
+           emphasis now rides on a hue change rather than a lightness change.
+           Grey is still reserved for genuinely empty days — the same "empty
+           capacity" meaning it has on meter tracks. */
         const fill = d.value === 0
           ? 'var(--color-surface-hover)'
           : active
             ? 'var(--color-signal)'
-            : 'var(--color-signal-soft)';
+            : 'var(--color-success-soft)';
 
         return (
           <div key={d.label} className="flex-1 flex flex-col items-center gap-2.5 h-full justify-end"

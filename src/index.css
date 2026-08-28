@@ -36,6 +36,9 @@
   /* ── Semantic states — text tones all clear 4.5:1 on their own tint ────── */
   --color-success: #047857;
   --color-success-light: #10B981;
+  /* Soft graphic tier: quiet chart marks (e.g. the activity bars that are not
+     the highlighted peak). A mint, so it never collides with the signal blues. */
+  --color-success-soft: #A7F3D0;
   --color-success-bg: #ECFDF5;
   --color-warning: #B45309;
   --color-warning-light: #F59E0B;
