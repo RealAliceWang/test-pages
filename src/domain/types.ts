@@ -179,6 +179,13 @@ export interface Application {
 export type OrderStatus = '待支付' | '待厂商确认' | '退款中' | '已完成' | '已取消';
 export type PayMethod = '对公转账' | '在线支付';
 
+/** The buyer's bank details on a transfer payment — what the vendor reconciles against. */
+export interface Remittance {
+  company: string;
+  bank: string;
+  account: string;
+}
+
 export interface Order {
   id: string;
   orderNo: string;
@@ -197,6 +204,8 @@ export interface Order {
   renewPoolId?: string;
   applicationId?: string;
   invoiceNo?: string;
+  /** Present once a bank-transfer payment has been submitted. */
+  remittance?: Remittance;
 }
 
 // ---------------------------------------------------------------- audit

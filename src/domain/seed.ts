@@ -45,6 +45,14 @@ export const categories: ModuleCategory[] = [
 
 export const VENDOR_ORG_ID = 'org-vendor';
 
+/** The vendor's beneficiary account, shown on every bank-transfer pay sheet.
+    Buyers wire against this and quote the order number as the reference. */
+export const VENDOR_BANK = {
+  name: '上海同磊土木工程技术有限公司',
+  bank: '招商银行股份有限公司上海分行',
+  account: '1219 0682 5510 902',
+} as const;
+
 /** The customer organization the demo is told from. */
 export const DEMO_ORG_ID = 'org-1';
 

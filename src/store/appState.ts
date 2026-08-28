@@ -15,6 +15,7 @@ import type {
   Order,
   Organization,
   PayMethod,
+  Remittance,
   Role,
   SeatPool,
 } from '../domain/types';
@@ -452,7 +453,7 @@ type Action =
   | { type: 'ASSIGN_SEAT'; poolId: string; memberId: string }
   | { type: 'REVOKE_SEAT'; assignmentId: string; reason?: string }
   | { type: 'CREATE_ORDER'; moduleId: string; seats: number; payMethod: PayMethod; applicationId?: string; renewPoolId?: string }
-  | { type: 'PAY_ORDER'; orderId: string }
+  | { type: 'PAY_ORDER'; orderId: string; remittance?: Remittance }
   | { type: 'CONFIRM_ORDER'; orderId: string }
   | { type: 'CANCEL_ORDER'; orderId: string }
   | { type: 'CONFIRM_REFUND'; orderId: string }
@@ -1179,16 +1180,19 @@ export function reducer(state: AppState, action: Action): AppState {
 
       // Bank transfers need the vendor to confirm receipt; online pay lands at once.
       if (order.payMethod === '对公转账') {
-        log(ctx, '支付订单', order.orderNo, `对公转账支付 ¥${order.amount.toLocaleString()}，等待厂商确认到账`);
+        log(ctx, '支付订单', order.orderNo,
+          `对公转账支付 ¥${order.amount.toLocaleString()}${action.remittance ? `，付款方：${action.remittance.company}` : ''}，等待厂商确认到账`);
         return commit(
           state,
           ctx,
           {
             orders: state.orders.map((o) =>
-              o.id === order.id ? { ...o, status: '待厂商确认' as const, paidAt: ctx.now } : o,
+              o.id === order.id
+                ? { ...o, status: '待厂商确认' as const, paidAt: ctx.now, remittance: action.remittance }
+                : o,
             ),
           },
-          { kind: 'info', text: `转账凭证已提交，等待厂商确认到账后席位生效` },
+          { kind: 'info', text: `汇款信息已提交，等待厂商确认到账后席位生效` },
         );
       }
 

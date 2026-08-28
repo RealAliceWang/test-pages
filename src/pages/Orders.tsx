@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import {
   BadgeCheck, Clock, CreditCard, Receipt, ShoppingCart, Wallet,
 } from 'lucide-react';
@@ -10,15 +10,52 @@ import StatusBadge from '../components/common/StatusBadge';
 import Modal from '../components/common/Modal';
 import { can } from '../domain/permissions';
 import { moduleLabel } from '../domain/format';
+import { VENDOR_BANK } from '../domain/seed';
 import {
   addDays, daysBetween, deptOf, memberOf, moduleOf, orgOf, poolById, useApp, visibleOrders,
 } from '../store';
-import type { Application, Order, PayMethod } from '../domain/types';
+import type { Application, Order, PayMethod, Remittance } from '../domain/types';
 
 const filters = ['全部', '待支付', '待厂商确认', '退款中', '已完成', '已取消'] as const;
 
+/**
+ * Deterministic mock QR so the checkout reads like a real cashier page.
+ * Not scannable — the demo has no payment backend — but stable per order:
+ * the same order always draws the same code.
+ */
+function FakeQr({ seed }: { seed: string }) {
+  const N = 21;
+  let s = 2166136261;
+  for (let i = 0; i < seed.length; i++) s = ((s ^ seed.charCodeAt(i)) * 16777619) >>> 0;
+  const rand = () => {
+    s ^= s << 13; s >>>= 0; s ^= s >>> 17; s ^= s << 5; s >>>= 0;
+    return s / 0xffffffff;
+  };
+  const inFinder = (x: number, y: number) =>
+    (x < 7 && y < 7) || (x >= N - 7 && y < 7) || (x < 7 && y >= N - 7);
+  const finderOn = (x: number, y: number) => {
+    const fx = x >= N - 7 ? x - (N - 7) : x;
+    const fy = y >= N - 7 ? y - (N - 7) : y;
+    return fx === 0 || fy === 0 || fx === 6 || fy === 6 || (fx >= 2 && fx <= 4 && fy >= 2 && fy <= 4);
+  };
+  const cells: ReactNode[] = [];
+  for (let y = 0; y < N; y++) {
+    for (let x = 0; x < N; x++) {
+      if (inFinder(x, y) ? finderOn(x, y) : rand() < 0.45) {
+        cells.push(<rect key={`${x}-${y}`} x={x} y={y} width="1" height="1" />);
+      }
+    }
+  }
+  return (
+    <svg viewBox={`0 0 ${N} ${N}`} width="148" height="148" aria-hidden="true"
+      className="text-ink" fill="currentColor" shapeRendering="crispEdges">
+      {cells}
+    </svg>
+  );
+}
+
 export default function Orders() {
-  const { state, me, dispatch } = useApp();
+  const { state, me, myOrg, dispatch } = useApp();
 
   const isVendor = me.role === 'VENDOR_OPS';
   const canManage = can(me.role, 'order:manage');
@@ -30,6 +67,14 @@ export default function Orders() {
   const [seats, setSeats] = useState(1);
   const [payMethod, setPayMethod] = useState<PayMethod>('在线支付');
   const [paying, setPaying] = useState<Order | null>(null);
+  /* Bank-transfer pay sheet: the remitter's details, prefilled with the
+     company's registered name; copied-row feedback for the beneficiary card. */
+  const [remit, setRemit] = useState<Remittance>({ company: '', bank: '', account: '' });
+  const [copied, setCopied] = useState<string | null>(null);
+  useEffect(() => {
+    if (paying?.payMethod === '对公转账') setRemit({ company: myOrg.name, bank: '', account: '' });
+    setCopied(null);
+  }, [paying, myOrg.name]);
   const [confirming, setConfirming] = useState<Order | null>(null);
   const [cancelling, setCancelling] = useState<Order | null>(null);
   const [refunding, setRefunding] = useState<Order | null>(null);
@@ -315,7 +360,8 @@ export default function Orders() {
       </Modal>
 
       {/* Pay */}
-      <Modal open={Boolean(paying)} onClose={() => setPaying(null)} title="支付订单" width={480}>
+      <Modal open={Boolean(paying)} onClose={() => setPaying(null)}
+        title={paying?.payMethod === '对公转账' ? '对公转账付款' : '扫码支付'} width={480}>
         {paying && (() => {
           const mod = moduleOf(state, paying.moduleId);
           const renewPool = paying.renewPoolId ? poolById(state, paying.renewPoolId) : undefined;
@@ -341,21 +387,142 @@ export default function Orders() {
             onlinePayText = `支付成功后，${paying.seats} 个席位立即计入企业席位池。`;
           }
 
+          const head = (
+            <div className="text-center">
+              <p className="text-[13px] text-text-muted">应付金额</p>
+              <p className="text-[20px] font-bold text-orange mt-1 num">¥{paying.amount.toLocaleString()}</p>
+              <p className="text-[13px] text-text-muted mt-1">
+                {mod ? moduleLabel(mod) : '—'} · {paying.seats} 个席位 · 订单号 {paying.orderNo}
+              </p>
+            </div>
+          );
+
+          if (paying.payMethod === '在线支付') {
+            return (
+              <div className="flex flex-col gap-4">
+                {head}
+
+                {/* The cashier: an order-bound code plus the two wallets it
+                    accepts. Wallet dots use third-party brand colours — the
+                    one place the palette rules step aside for brand marks. */}
+                <div className="flex flex-col items-center gap-3 py-5 rounded-md bg-surface-secondary">
+                  <div className="p-3 bg-surface rounded-sm border border-border">
+                    <FakeQr seed={paying.orderNo} />
+                  </div>
+                  <div className="flex items-center gap-4 text-[13px] font-medium text-text-secondary">
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className="w-[8px] h-[8px] rounded-full" style={{ background: '#07C160' }} />微信支付
+                    </span>
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className="w-[8px] h-[8px] rounded-full" style={{ background: '#1677FF' }} />支付宝
+                    </span>
+                  </div>
+                  <p className="text-[12px] text-text-muted">请使用手机扫码完成支付，支付结果实时同步</p>
+                </div>
+
+                <div className="px-4 py-3 rounded-sm bg-success-bg">
+                  <p className="text-[13px] text-success leading-relaxed">{onlinePayText}</p>
+                </div>
+
+                <div className="flex items-center justify-end gap-3">
+                  <button onClick={() => setPaying(null)}
+                    className="btn-soft h-[38px] px-5 text-[13.5px] font-semibold cursor-pointer">
+                    取消
+                  </button>
+                  <button onClick={() => { dispatch({ type: 'PAY_ORDER', orderId: paying.id }); setPaying(null); }}
+                    className="btn-primary h-[38px] px-5 text-[13.5px] font-semibold cursor-pointer">
+                    我已完成支付
+                  </button>
+                </div>
+              </div>
+            );
+          }
+
+          /* Bank transfer: beneficiary card on top, remitter form below —
+             the same two halves a real B2B remittance slip carries. */
+          const remitOk =
+            remit.company.trim().length > 0 &&
+            remit.bank.trim().length > 0 &&
+            remit.account.replace(/\D/g, '').length >= 8;
+          const beneficiary = [
+            { label: '收款户名', value: VENDOR_BANK.name },
+            { label: '开户银行', value: VENDOR_BANK.bank },
+            { label: '银行账号', value: VENDOR_BANK.account },
+            { label: '汇款附言', value: paying.orderNo, hint: '务必备注订单号，便于厂商对账' },
+          ];
+
           return (
             <div className="flex flex-col gap-4">
-              <div className="text-center py-4">
-                <p className="text-[13px] text-text-muted">应付金额</p>
-                <p className="text-[20px] font-bold text-orange mt-2">¥{paying.amount.toLocaleString()}</p>
-                <p className="text-[13px] text-text-muted mt-2">
-                  {mod ? moduleLabel(mod) : '—'} · {paying.seats} 个席位 · {paying.payMethod}
-                </p>
+              {head}
+
+              <div>
+                <p className="text-[13px] font-medium text-text-secondary mb-1.5">收款账户</p>
+                <div className="border border-border rounded-sm divide-y divide-divider">
+                  {beneficiary.map((row) => (
+                    <div key={row.label} className="flex items-center px-4 py-[9px]">
+                      <span className="w-[68px] shrink-0 text-[13px] text-text-muted">{row.label}</span>
+                      <span className="flex-1 min-w-0 text-[13px]">
+                        <span className="block text-text num">{row.value}</span>
+                        {/* Hint on its own line: inline it and narrow modals
+                            orphan the closing bracket onto a lonely row. */}
+                        {row.hint && <span className="block text-[12px] text-text-muted mt-[2px]">{row.hint}</span>}
+                      </span>
+                      <button
+                        onClick={() => { navigator.clipboard?.writeText(row.value); setCopied(row.label); }}
+                        className="shrink-0 ml-3 text-[12px] font-medium text-primary hover:underline cursor-pointer">
+                        {copied === row.label ? '已复制' : '复制'}
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              <div className={`px-4 py-3 rounded-sm ${paying.payMethod === '在线支付' ? 'bg-success-bg' : 'bg-primary-bg'}`}>
-                <p className={`text-[13px] leading-relaxed ${paying.payMethod === '在线支付' ? 'text-success' : 'text-primary'}`}>
-                  {paying.payMethod === '在线支付'
-                    ? onlinePayText
-                    : '提交转账凭证后订单转为「待厂商确认」，厂商核对到账后席位才会发放。'}
+              <div>
+                <p className="text-[13px] font-medium text-text-secondary mb-1.5">付款方信息</p>
+                <div className="flex flex-col gap-3">
+                  <label className="block">
+                    <span className="block text-[13px] font-medium text-text-secondary mb-1.5">付款户名</span>
+                    <input
+                      className="field w-full h-[38px] px-4 text-[14px]"
+                      aria-label="付款户名"
+                      placeholder="对公账户名称"
+                      value={remit.company}
+                      onChange={(e) => setRemit({ ...remit, company: e.target.value })}
+                    />
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className="block">
+                      <span className="block text-[13px] font-medium text-text-secondary mb-1.5">开户银行</span>
+                      <input
+                        className="field w-full h-[38px] px-4 text-[14px]"
+                        aria-label="付款方开户银行"
+                        placeholder="如 建设银行上海分行"
+                        value={remit.bank}
+                        onChange={(e) => setRemit({ ...remit, bank: e.target.value })}
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="block text-[13px] font-medium text-text-secondary mb-1.5">银行账号</span>
+                      <input
+                        className="field w-full h-[38px] px-4 text-[14px] num"
+                        aria-label="付款方银行账号"
+                        placeholder="仅数字"
+                        value={remit.account}
+                        onChange={(e) => {
+                          /* Group the account 4-by-4 as typed, matching the
+                             beneficiary card's formatting. */
+                          const digits = e.target.value.replace(/\D/g, '').slice(0, 24);
+                          setRemit({ ...remit, account: digits.replace(/(\d{4})(?=\d)/g, '$1 ') });
+                        }}
+                      />
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div className="px-4 py-3 rounded-sm bg-primary-bg">
+                <p className="text-[13px] text-primary leading-relaxed">
+                  汇款金额需与订单金额一致。提交后订单转为「待厂商确认」，厂商核对到账后席位发放，一般 1–3 个工作日。
                 </p>
               </div>
 
@@ -364,9 +531,11 @@ export default function Orders() {
                   className="btn-soft h-[38px] px-5 text-[13.5px] font-semibold cursor-pointer">
                   取消
                 </button>
-                <button onClick={() => { dispatch({ type: 'PAY_ORDER', orderId: paying.id }); setPaying(null); }}
+                <button
+                  disabled={!remitOk}
+                  onClick={() => { dispatch({ type: 'PAY_ORDER', orderId: paying.id, remittance: { company: remit.company.trim(), bank: remit.bank.trim(), account: remit.account.trim() } }); setPaying(null); }}
                   className="btn-primary h-[38px] px-5 text-[13.5px] font-semibold cursor-pointer">
-                  {paying.payMethod === '在线支付' ? '确认支付' : '提交转账凭证'}
+                  已完成汇款，提交信息
                 </button>
               </div>
             </div>
@@ -388,6 +557,13 @@ export default function Orders() {
                   { label: '采购内容', value: `${mod ? moduleLabel(mod) : '—'} · ${confirming.seats} 个席位` },
                   { label: '金额', value: `¥${confirming.amount.toLocaleString()}` },
                   { label: '付款时间', value: confirming.paidAt ?? '—' },
+                  /* What the ops person actually reconciles against. */
+                  ...(confirming.remittance
+                    ? [
+                        { label: '付款户名', value: confirming.remittance.company },
+                        { label: '付款账户', value: `${confirming.remittance.bank} · ${confirming.remittance.account}` },
+                      ]
+                    : [{ label: '汇款信息', value: '未附（早期订单）' }]),
                 ].map((r) => (
                   <div key={r.label} className="flex px-4 py-[10px] text-[14px]">
                     <span className="w-[80px] shrink-0 text-text-muted">{r.label}</span>

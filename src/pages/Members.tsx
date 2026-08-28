@@ -502,7 +502,18 @@ export default function Members() {
                                   title={!canManage ? READ_ONLY_TIP : undefined}
                                   onClick={() => openDept(m)}
                                 />
-                                {m.status === '已停用' ? (
+                                {/* Three states, three verbs: pending accounts
+                                    activate (the invite/register loop's last
+                                    step), disabled ones re-enable, active ones
+                                    can be disabled. */}
+                                {m.status === '待激活' ? (
+                                  <MenuItem
+                                    label="激活账号"
+                                    disabled={!canManage}
+                                    title={!canManage ? READ_ONLY_TIP : undefined}
+                                    onClick={() => enableMember(m)}
+                                  />
+                                ) : m.status === '已停用' ? (
                                   <MenuItem
                                     label="启用成员"
                                     disabled={!canManage}
