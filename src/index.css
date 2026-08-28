@@ -596,6 +596,18 @@
   outline: none;
 }
 
+/* Auth backdrop: the C4D-style set pieces drift very slowly so the scene
+   feels rendered rather than pasted. Amplitude stays small — decoration must
+   never distract from the form. Killed wholesale by the reduced-motion rule
+   below. */
+@keyframes auth-drift {
+  0%, 100% { transform: translateY(-10px) rotate(var(--drift-rot, 0deg)); }
+  50% { transform: translateY(12px) rotate(var(--drift-rot, 0deg)); }
+}
+.auth-drift {
+  animation: auth-drift var(--drift-dur, 10s) ease-in-out infinite;
+}
+
 /* Respect reduced-motion preference */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
