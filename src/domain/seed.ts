@@ -270,6 +270,17 @@ export const assignments: Assignment[] = [
   seat('as-41', 'p-21', '19', 'x-2', '2025-06-01', 44, '2026-03-31', 'org-2', 'x-0'),
   seat('as-42', 'p-22', '1',  'x-3', '2025-07-25', 22, '2026-03-27', 'org-3', 'x-0'),
   seat('as-43', 'p-23', '23', 'x-4', '2025-09-12', 51, '2026-03-31', 'org-3', 'x-0'),
+
+  /* A retired grant: 张思远 once held 网架网壳 on a pool that lapsed and was
+     never renewed (its id no longer resolves — seatStatusOf falls back to the
+     assignment's own 已过期). Keeps the "已过期" tab of 我的授权 populated
+     without touching today's pool totals, and sets up 陈雨's pending purchase
+     request for the same module. */
+  {
+    id: 'as-90', poolId: 'p-retired-1', orgId: 'org-1', moduleId: '7', memberId: 'm-3',
+    assignedById: 'm-1', assignedAt: '2025-06-10', status: '已过期',
+    usedDays: 74, lastUsed: '2025-12-20',
+  },
 ];
 
 // ---------------------------------------------------------------- applications
@@ -353,6 +364,62 @@ export const applications: Application[] = [
       { role: 'VENDOR_OPS', label: '厂商额度审批', action: '待审批' },
     ],
     createdAt: '2026-03-31 08:55',
+  },
+
+  /* ---- 张思远's own history, matching the seats he actually holds so the
+     member view reads like a lived-in account rather than a fresh one. The
+     completed trio mirrors as-1/as-13/as-19's assignment dates. */
+  {
+    id: 'a-8', code: 'AP20250302001', orgId: 'org-1', deptId: 'dept-1', applicantId: 'm-3',
+    moduleId: '1', kind: 'SEAT', seats: 1,
+    reason: '入职后承接结构一所常规项目的整体建模与计算，需要建筑结构模块。',
+    projectName: '入职工位配置', status: '已完成',
+    steps: [
+      { role: 'DEPT_ADMIN', label: '部门审批', action: '通过', approverId: 'm-2', approverName: '李明', comment: '新人入职标配，池内直接分配。', actedAt: '2025-03-02 10:12' },
+    ],
+    createdAt: '2025-03-02 09:40',
+  },
+  {
+    id: 'a-9', code: 'AP20250310001', orgId: 'org-1', deptId: 'dept-1', applicantId: 'm-3',
+    moduleId: '5', kind: 'SEAT', seats: 1,
+    reason: '参与无锡金融中心多高层项目，需要多高层模块做整体验算。',
+    projectName: '无锡金融中心', status: '已完成',
+    steps: [
+      { role: 'DEPT_ADMIN', label: '部门审批', action: '通过', approverId: 'm-2', approverName: '李明', comment: '项目已立项，同意分配。', actedAt: '2025-03-10 14:05' },
+    ],
+    createdAt: '2025-03-10 11:30',
+  },
+  {
+    id: 'a-10', code: 'AP20250401001', orgId: 'org-1', deptId: 'dept-1', applicantId: 'm-3',
+    moduleId: '12', kind: 'SEAT', seats: 1,
+    reason: '金融中心项目进入基础设计阶段，需补基础设计模块完成桩基验算。',
+    projectName: '无锡金融中心', status: '已完成',
+    steps: [
+      { role: 'DEPT_ADMIN', label: '部门审批', action: '通过', approverId: 'm-2', approverName: '李明', comment: '同一项目延续需求，同意。', actedAt: '2025-04-01 09:50' },
+    ],
+    createdAt: '2025-04-01 09:05',
+  },
+  {
+    id: 'a-11', code: 'AP20260310001', orgId: 'org-1', deptId: 'dept-1', applicantId: 'm-3',
+    moduleId: '9', kind: 'QUOTA', seats: 1,
+    reason: '想用辅助结构模块出楼梯和雨篷详图，减少手算工作量。',
+    projectName: '苏州园区研发楼', status: '已驳回',
+    steps: [
+      { role: 'DEPT_ADMIN', label: '部门审批', action: '驳回', approverId: 'm-2', approverName: '李明', comment: '楼梯雨篷量不大，用现有模块简化处理即可，免费额度优先留给厂房批量需求。', actedAt: '2026-03-10 16:22' },
+    ],
+    createdAt: '2026-03-10 15:47',
+  },
+  {
+    id: 'a-12', code: 'AP20260315001', orgId: 'org-1', deptId: 'dept-1', applicantId: 'm-3',
+    moduleId: '11', kind: 'QUOTA', seats: 1,
+    reason: '研发楼中庭原方案为索膜雨棚，需做找形分析。',
+    projectName: '苏州园区研发楼', status: '已撤销',
+    steps: [
+      { role: 'DEPT_ADMIN', label: '部门审批', action: '待审批' },
+      { role: 'ORG_ADMIN',  label: '企业审批', action: '待审批' },
+      { role: 'VENDOR_OPS', label: '厂商额度审批', action: '待审批' },
+    ],
+    createdAt: '2026-03-15 10:18',
   },
 ];
 

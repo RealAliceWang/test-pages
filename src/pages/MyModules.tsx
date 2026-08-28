@@ -24,7 +24,8 @@ import type { AppState } from '../store';
 interface SeatRow {
   assignment: Assignment;
   module: CatalogModule;
-  pool: SeatPool;
+  /** Absent for lapsed historical grants whose pool was retired. */
+  pool: SeatPool | undefined;
   status: SeatStatus;
   /** Whole licence term of the pool the seat comes from. */
   totalDays: number;
@@ -70,11 +71,15 @@ export default function MyModules() {
     () =>
       assignmentsOfMember(state, me.id).flatMap((assignment) => {
         const module = moduleOf(state, assignment.moduleId);
+        /* A retired pool (lapsed and never renewed) no longer resolves, but
+           the grant is still part of the member's history — render it as a
+           fully-elapsed term instead of dropping the row. */
         const pool = poolOf(state, assignment.orgId, assignment.moduleId);
-        if (!module || !pool) return [];
+        if (!module) return [];
+        if (!pool && assignment.status !== '已过期') return [];
 
-        const totalDays = Math.max(1, daysBetween(pool.startDate, pool.expireDate));
-        const remain = daysBetween(state.now, pool.expireDate);
+        const totalDays = pool ? Math.max(1, daysBetween(pool.startDate, pool.expireDate)) : module.duration;
+        const remain = pool ? daysBetween(state.now, pool.expireDate) : 0;
         const status = seatStatusOf(state, assignment);
         const expired = status === '已过期';
 
@@ -203,10 +208,10 @@ export default function MyModules() {
                         {r.status === '已过期' ? '已过期' : daysLeftLabel(r.remainDays)}
                       </span>
                       <span className="text-text-muted">到期日期</span>
-                      <span className="text-text font-medium text-right">{r.pool.expireDate}</span>
+                      <span className="text-text font-medium text-right">{r.pool?.expireDate ?? '席位池已到期注销'}</span>
                       <span className="text-text-muted">席位来源</span>
                       <span className="text-text font-medium text-right">
-                        {r.pool.source} · 共 {r.pool.total} 席
+                        {r.pool ? `${r.pool.source} · 共 ${r.pool.total} 席` : '历史授权'}
                       </span>
                       <span className="text-text-muted">最后使用</span>
                       <span className="text-text font-medium text-right">{r.assignment.lastUsed}</span>

@@ -58,8 +58,10 @@ const as = (memberId: string) => dispatch({ type: 'SWITCH_IDENTITY', memberId })
 
 /** The newest application belonging to the seeded member. */
 const latestApp = () => state.applications.find((a) => a.applicantId === IDS.member)!;
+/* Active seats only: lapsed historical grants in the seed (e.g. 张思远's
+   expired 网架网壳) must not read as "holds the module". */
 const holds = (memberId: string, moduleId: string) =>
-  assignmentsOfMember(state, memberId).some((a) => a.moduleId === moduleId);
+  assignmentsOfMember(state, memberId).some((a) => a.moduleId === moduleId && a.status === '生效中');
 
 // ---------------------------------------------------------------- 0. baseline
 
