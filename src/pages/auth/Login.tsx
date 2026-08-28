@@ -14,15 +14,26 @@ export default function Login() {
   if (state.authed) return <Navigate to="/" replace />;
 
   function submit() {
+    /* A banner from the previous attempt must not outlive it — stale "尚未
+       激活" over a fresh attempt reads as the new attempt's verdict. */
+    if (state.flash) dispatch({ type: 'DISMISS_FLASH' });
     const v = account.trim();
     if (!v) { setHint('请输入工号、邮箱或手机号'); return; }
     if (!password) { setHint('请输入密码'); return; }
     setHint(null);
+    /* Employee numbers and emails match case-insensitively — "yg0001" must
+       work as well as "YG0001". Phone matching stays for completeness but is
+       not advertised: seeded numbers are masked and untypeable. */
+    const needle = v.toLowerCase();
     const m = state.members.find(
-      (x) => x.employeeNo === v || x.email.toLowerCase() === v.toLowerCase() || x.phone === v || x.name === v,
+      (x) =>
+        x.employeeNo.toLowerCase() === needle ||
+        x.email.toLowerCase() === needle ||
+        x.phone === v ||
+        x.name === v,
     );
     if (!m) {
-      setHint('账号不存在，请检查工号、邮箱或手机号是否正确');
+      setHint('账号不存在，请检查后重试。可用工号（如 YG0001）、邮箱或姓名登录');
       return;
     }
     dispatch({ type: 'LOGIN', memberId: m.id });
@@ -42,7 +53,7 @@ export default function Login() {
             <UserRound size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-placeholder" />
             <input
               className="field w-full h-[38px] pl-10 pr-4 text-[14px]"
-              placeholder="工号 / 邮箱 / 手机号，如 YG0001"
+              placeholder="工号 / 邮箱 / 姓名，如 YG0001"
               value={account}
               onChange={(e) => setAccount(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && submit()}

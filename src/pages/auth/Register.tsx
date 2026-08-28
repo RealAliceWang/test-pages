@@ -59,6 +59,8 @@ export default function Register() {
   }
 
   function submit() {
+    /* Clear any banner left over from a previous attempt or the login page. */
+    if (state.flash) dispatch({ type: 'DISMISS_FLASH' });
     if (!orgId) { setHint('请选择要加入的企业'); return; }
     if (!deptId) { setHint('请选择所属部门'); return; }
     if (!name.trim()) { setHint('请填写姓名'); return; }
