@@ -2,11 +2,7 @@ import { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { ArrowRight, KeyRound, UserRound } from 'lucide-react';
 import AuthShell from './AuthShell';
-import { roleLabels } from '../../domain/types';
 import { useApp } from '../../store';
-
-/** The four seeded walkthrough identities, one per role. */
-const DEMO_IDS = ['m-1', 'm-2', 'm-3', 'v-1'];
 
 export default function Login() {
   const { state, dispatch } = useApp();
@@ -17,10 +13,6 @@ export default function Login() {
   /* Signing in flips `authed`; visiting /login while signed in is pointless. */
   if (state.authed) return <Navigate to="/" replace />;
 
-  const demoMembers = DEMO_IDS
-    .map((id) => state.members.find((m) => m.id === id))
-    .filter((m): m is NonNullable<typeof m> => Boolean(m));
-
   function submit() {
     const v = account.trim();
     if (!v) { setHint('请输入工号、邮箱或手机号'); return; }
@@ -30,7 +22,7 @@ export default function Login() {
       (x) => x.employeeNo === v || x.email.toLowerCase() === v.toLowerCase() || x.phone === v || x.name === v,
     );
     if (!m) {
-      setHint('账号不存在——可检查输入，或使用下方演示账号一键登录');
+      setHint('账号不存在，请检查工号、邮箱或手机号是否正确');
       return;
     }
     dispatch({ type: 'LOGIN', memberId: m.id });
@@ -88,24 +80,10 @@ export default function Login() {
         </Link>
       </p>
 
-      {/* Walkthrough entry, deliberately whispered: one muted footnote line
-          instead of the old card grid, so the page reads as a real product
-          while reviewers can still hop between the four roles in one click. */}
-      <p className="text-[12px] text-text-placeholder text-center mt-6 select-none">
-        演示：
-        {demoMembers.map((m, i) => (
-          <span key={m.id}>
-            {i > 0 && <span className="mx-1">·</span>}
-            <button
-              onClick={() => dispatch({ type: 'LOGIN', memberId: m.id })}
-              className="hover:text-primary transition-colors cursor-pointer"
-              title={roleLabels[m.role]}
-            >
-              {m.name}
-            </button>
-          </span>
-        ))}
-      </p>
+      {/* No walkthrough shortcuts on the page itself — the login form is the
+          only way in, exactly like production. Reviewers switch roles through
+          the in-app identity switcher after signing in (any seeded account
+          name/工号/邮箱 + 任意密码 works). */}
     </AuthShell>
   );
 }
