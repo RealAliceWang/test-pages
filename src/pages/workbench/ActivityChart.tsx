@@ -27,11 +27,21 @@ export default function ActivityChart({ data, focusIndex, focusLabel }: Activity
       aria-label={`近 7 天活跃度，峰值出现在${data[focus]?.label}`}>
       {data.map((d, i) => {
         const active = i === focus;
-        /* Floor at 12% so a zero day still shows a track rather than vanishing. */
+        /* Floor at 12% so a zero day still shows a stub rather than vanishing. */
         const height = Math.max(12, Math.round((d.value / peak) * 100));
+        /* One series, one hue: every bar with data wears the signal family
+           (peak saturated, the rest a lighter step) so quieter days still read
+           as data. Grey is reserved for genuinely empty days — the same
+           "empty capacity" meaning it has on meter tracks. */
+        const fill = d.value === 0
+          ? 'var(--color-surface-hover)'
+          : active
+            ? 'var(--color-signal)'
+            : 'var(--color-signal-soft)';
 
         return (
-          <div key={d.label} className="flex-1 flex flex-col items-center gap-2.5 h-full justify-end">
+          <div key={d.label} className="flex-1 flex flex-col items-center gap-2.5 h-full justify-end"
+            title={`${d.label} · ${d.value} 次`}>
             <div className="relative w-full flex-1 flex items-end justify-center">
               {active && focusLabel && (
                 <span className="chip-signal absolute -top-1 left-1/2 -translate-x-1/2 num text-[12px] font-bold rounded-full px-2.5 py-[3px] whitespace-nowrap">
@@ -40,14 +50,11 @@ export default function ActivityChart({ data, focusIndex, focusLabel }: Activity
               )}
               <div
                 className="w-full max-w-[26px] rounded-full transition-all duration-500"
-                style={{
-                  height: `${height}%`,
-                  background: active ? 'var(--color-signal)' : 'var(--color-surface-hover)',
-                }}
+                style={{ height: `${height}%`, background: fill }}
               />
             </div>
             <span
-              className={`text-[12px] ${active ? 'font-bold text-text' : 'font-medium text-text-placeholder'}`}
+              className={`text-[12px] ${active ? 'font-bold text-text' : 'font-medium text-text-muted'}`}
             >
               {d.label}
             </span>
