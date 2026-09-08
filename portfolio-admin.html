@@ -841,7 +841,7 @@ table.prose td b{color:var(--ink);font-weight:700}
    Four hues, ten steps each, stacked vertically so a column reads as one
    hue's full range and the four columns stay row-aligned for comparison.
    The palette is deliberately short: four hues, each owning one meaning. */
-.cramp{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:clamp(14px,1.6vw,22px);
+.cramp{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(14px,1.6vw,22px);
   margin-top:clamp(26px,3vw,38px)}
 .cr-h{margin-bottom:11px}
 .cr-h b{display:block;font-size:12.5px;font-weight:700;color:var(--ink)}
@@ -859,12 +859,26 @@ table.prose td b{color:var(--ink);font-weight:700}
 .crow.tok s{opacity:1;font-weight:700}
 .crow.lt{color:var(--ink)}
 .crow.dk{color:#fff}
-@media(max-width:1080px){.cramp{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:26px}}
-@media(max-width:760px){.cramp{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:900px){.cramp{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:26px}}
 @media(max-width:430px){.cramp{grid-template-columns:minmax(0,1fr)}}
 
 .ndesc{font-size:13px;line-height:1.9;color:var(--ink-3);max-width:780px}
 .ndesc b{color:var(--ink-2);font-weight:700}
+/* ---- Neutral ramp ----
+   Ten bands with no gap between them, so the column reads as one continuous
+   scale rather than ten separate chips. Fills come from the :root tokens
+   themselves; text flips to whichever of ink or white has more contrast. */
+.nramp{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));margin-top:20px;
+  border-radius:12px;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(11,18,32,.07)}
+.nb{padding:13px 12px 14px;min-height:134px;display:flex;flex-direction:column;gap:5px}
+.nb b{font-size:11.5px;font-weight:700;line-height:1.3}
+.nb em{font-family:var(--mono);font-style:normal;font-size:11px;letter-spacing:-.02em;opacity:.88}
+/* Usage note sinks to the foot so it lines up across bands of unequal text. */
+.nb s{text-decoration:none;font-size:10.5px;opacity:.72;line-height:1.45;margin-top:auto}
+.nb.lt{color:var(--ink)}
+.nb.dk{color:#fff}
+@media(max-width:1080px){.nramp{grid-template-columns:repeat(5,minmax(0,1fr))}}
+@media(max-width:560px){.nramp{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .ndesc code{font-family:var(--mono);font-size:12px;padding:1px 5px;border-radius:4px;
   background:var(--bg-2);border:1px solid var(--line);color:var(--ink-2)}
 
@@ -2182,8 +2196,8 @@ body.shotbox-open{overflow:hidden}
     </div>
 
     <div class="reveal d1" style="margin-top:clamp(30px,4vw,48px)">
-      <div class="slabel"><i></i>色彩 · 4 组语义色阶 + 中性 10 阶</div>
-      <p class="ndesc">每组以产品实际在用的色值为<b>第 6 阶（Normal）</b>，向上 5 阶供背景、聚焦环与禁用态取用，向下 4 阶留给悬停、按下及深色场景。色阶在 OKLab 空间等距插值，所以视觉上的疏密与数值一致；每一阶都按其自身底色选择黑或白文字，最低对比度 4.76:1。末列中性色不参与状态语义，只承担文字、边框与背景三类用途，整体带轻微蓝调、与品牌蓝同相；它的 10 阶是手工定的 <code>:root</code> 变量而非插值生成，色块直接绑变量，改 token 色卡会跟着走。</p>
+      <div class="slabel"><i></i>色彩 · 4 组语义色阶</div>
+      <p class="ndesc">每组以产品实际在用的色值为<b>第 6 阶（Normal）</b>，向上 5 阶供背景、聚焦环与禁用态取用，向下 4 阶留给悬停、按下及深色场景。色阶在 OKLab 空间等距插值，所以视觉上的疏密与数值一致；每一阶都按其自身底色选择黑或白文字，最低对比度 4.98:1。</p>
       <div class="cramp">
         <div class="cr">
           <div class="cr-h"><b>品牌蓝</b><s>Brand · 主操作 / 选中 / 链接</s></div>
@@ -2245,26 +2259,28 @@ body.shotbox-open{overflow:hidden}
             <div class="crow dk" style="background:#003824"><b>Success10</b><em>#003824</em></div>
           </div>
         </div>
-        <div class="cr">
-          <div class="cr-h"><b>中性色</b><s>Neutral · 文字 5 / 边框 2 / 背景 3</s></div>
-          <div class="cr-b">
-            <div class="crow dk" style="background:var(--ink)"><b>Neutral1</b><em>#0B1220</em><s>标题 / 强调文字</s></div>
-            <div class="crow dk" style="background:var(--ink-2)"><b>Neutral2</b><em>#334155</em><s>正文</s></div>
-            <div class="crow dk" style="background:var(--ink-3)"><b>Neutral3</b><em>#64748B</em><s>次要文字 / 图标</s></div>
-            <div class="crow lt" style="background:var(--ink-4)"><b>Neutral4</b><em>#94A3B8</em><s>辅助说明</s></div>
-            <div class="crow lt" style="background:var(--ink-5)"><b>Neutral5</b><em>#CBD5E1</em><s>占位 / 禁用文字</s></div>
-            <div class="crow lt" style="background:var(--line-2)"><b>Neutral6</b><em>#D6DEE9</em><s>控件描边 / 强分割</s></div>
-            <div class="crow lt" style="background:var(--line)"><b>Neutral7</b><em>#E7ECF3</em><s>边框 / 分割线</s></div>
-            <div class="crow lt" style="background:var(--bg-3)"><b>Neutral8</b><em>#EDF3FB</em><s>蓝调面板底</s></div>
-            <div class="crow lt" style="background:var(--bg-2)"><b>Neutral9</b><em>#F5F7FA</em><s>页面底 / 表头底</s></div>
-            <div class="crow lt" style="background:var(--bg)"><b>Neutral10</b><em>#FFFFFF</em><s>卡片 / 内容面</s></div>
-          </div>
-        </div>
       </div>
     </div>
 
 
     <div class="reveal d2" style="margin-top:clamp(40px,5.2vw,68px)">
+      <div class="slabel"><i></i>中性色 · 10 阶</div>
+      <p class="ndesc">中性色共 10 阶（含黑、白两端），整体带轻微蓝调、与品牌蓝同相。按使用场景切成三段：<b>文字 1–5 阶</b>、<b>边框及分割线 6–7 阶</b>、<b>背景 8–10 阶</b>，取值需同时满足文字与所处背景的对比度要求。与上方语义色阶不同，这 10 阶是手工定的 <code>:root</code> 变量而非插值生成，色块直接绑变量，改 token 色卡会跟着走。</p>
+      <div class="nramp">
+        <div class="nb dk" style="background:var(--ink)"><b>Neutral1</b><em>#0B1220</em><s>标题 / 强调文字</s></div>
+        <div class="nb dk" style="background:var(--ink-2)"><b>Neutral2</b><em>#334155</em><s>正文</s></div>
+        <div class="nb dk" style="background:var(--ink-3)"><b>Neutral3</b><em>#64748B</em><s>次要文字 / 图标</s></div>
+        <div class="nb lt" style="background:var(--ink-4)"><b>Neutral4</b><em>#94A3B8</em><s>辅助说明</s></div>
+        <div class="nb lt" style="background:var(--ink-5)"><b>Neutral5</b><em>#CBD5E1</em><s>占位 / 禁用文字</s></div>
+        <div class="nb lt" style="background:var(--line-2)"><b>Neutral6</b><em>#D6DEE9</em><s>控件描边 / 强分割</s></div>
+        <div class="nb lt" style="background:var(--line)"><b>Neutral7</b><em>#E7ECF3</em><s>边框 / 分割线</s></div>
+        <div class="nb lt" style="background:var(--bg-3)"><b>Neutral8</b><em>#EDF3FB</em><s>蓝调面板底</s></div>
+        <div class="nb lt" style="background:var(--bg-2)"><b>Neutral9</b><em>#F5F7FA</em><s>页面底 / 表头底</s></div>
+        <div class="nb lt" style="background:var(--bg)"><b>Neutral10</b><em>#FFFFFF</em><s>卡片 / 内容面</s></div>
+      </div>
+    </div>
+
+    <div class="reveal d3" style="margin-top:clamp(40px,5.2vw,68px)">
       <div class="slabel"><i></i>字阶 · 6 级</div>
       <p class="ndesc">只有六级，且<b>层级由字号与字重共同承担</b>——数字用 800 字重加 −.04em 紧字距，正文回到 400。后台里真正需要被一眼看到的只有数字，所以标题反而克制：区块卡标题只给到 13.5px。</p>
       <div class="tscale">
