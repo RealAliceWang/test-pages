@@ -837,22 +837,30 @@ table.prose td b{color:var(--ink);font-weight:700}
 .jm>div:nth-last-child(-n+6){border-bottom:none}
 
 /* ============ DESIGN SYSTEM ============ */
-/* Five swatches, one per semantic hue. The palette is deliberately short:
-   every remaining colour on the page is a neutral or a tint of these. */
-.swatches{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(12px,2vw,26px);margin-top:clamp(32px,4vw,52px);align-items:end}
-.sw{text-align:center}
-.sw .hex{display:inline-block;padding:6px 13px;border-radius:999px;background:var(--bg);border:1px solid var(--line);
-  font-family:var(--mono);font-size:11px;font-weight:600;box-shadow:var(--sh-1);margin-bottom:14px;letter-spacing:-.02em}
-/* Capped at the diameter the orbs had while there were five of them, so
-   dropping one widens the gaps instead of inflating the remaining spheres. */
-.sw .orb{width:100%;max-width:204px;margin-inline:auto;aspect-ratio:1;border-radius:50%;position:relative}
-.sw .orb::after{content:'';position:absolute;left:15%;right:15%;top:50%;bottom:-32%;border-radius:0 0 42% 42%;
-  background:inherit;-webkit-mask-image:linear-gradient(#000,transparent 86%);mask-image:linear-gradient(#000,transparent 86%);opacity:.5}
-.sw .nm{font-size:12.5px;font-weight:700;margin-top:clamp(32px,4.4vw,58px)}
-.sw .us{font-size:11px;color:var(--ink-4);margin-top:4px;line-height:1.5}
-/* Four swatches halve cleanly, so drop straight to two columns rather than
-   three — three would strand a single orb on its own row. */
-@media(max-width:900px){.swatches{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:34px}}
+/* ---- Semantic ramps ----
+   Four hues, ten steps each, stacked vertically so a column reads as one
+   hue's full range and the four columns stay row-aligned for comparison.
+   The palette is deliberately short: four hues, each owning one meaning. */
+.cramp{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(14px,1.6vw,22px);
+  margin-top:clamp(26px,3vw,38px)}
+.cr-h{margin-bottom:11px}
+.cr-h b{display:block;font-size:12.5px;font-weight:700;color:var(--ink)}
+.cr-h s{display:block;text-decoration:none;font-size:11px;color:var(--ink-4);margin-top:3px;line-height:1.5}
+/* The palest step is a hair off white, so the column carries its own edge. */
+.cr-b{border-radius:11px;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(11,18,32,.07)}
+.crow{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:baseline;
+/* Uniform band height: rows carrying a state label would otherwise run 4px
+   taller, which reads as the steps having unequal weight. */
+  column-gap:8px;padding:9px 12px 10px;min-height:54px;align-content:start}
+.crow b{font-size:12px;font-weight:600}
+.crow em{font-family:var(--mono);font-style:normal;font-size:11px;letter-spacing:-.02em;opacity:.86}
+.crow s{grid-column:1/-1;text-decoration:none;font-size:10.5px;opacity:.7;margin-top:3px;line-height:1.4}
+/* Step 6 is the shipped token, so its label stays at full strength. */
+.crow.tok s{opacity:1;font-weight:700}
+.crow.lt{color:var(--ink)}
+.crow.dk{color:#fff}
+@media(max-width:900px){.cramp{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:26px}}
+@media(max-width:430px){.cramp{grid-template-columns:minmax(0,1fr)}}
 
 /* ---- Neutral ramp ----
    Ten steps from ink to white, every one of them a token already declared in
@@ -2192,12 +2200,69 @@ body.shotbox-open{overflow:hidden}
     </div>
 
     <div class="reveal d1" style="margin-top:clamp(30px,4vw,48px)">
-      <div class="slabel"><i></i>色彩 · 4 个语义色</div>
-      <div class="swatches">
-        <div class="sw"><span class="hex">#2563EB</span><div class="orb" style="background:radial-gradient(circle at 34% 28%,#60A5FA,#2563EB 62%,#1D4ED8)"></div><div class="nm">品牌蓝</div><div class="us">主操作 / 选中 / 链接</div></div>
-        <div class="sw"><span class="hex">#F59E0B</span><div class="orb" style="background:radial-gradient(circle at 34% 28%,#FCD34D,#F59E0B 62%,#D97706)"></div><div class="nm">警示橙</div><div class="us">待处理 / 即将到期</div></div>
-        <div class="sw"><span class="hex">#EF4444</span><div class="orb" style="background:radial-gradient(circle at 34% 28%,#FCA5A5,#EF4444 62%,#DC2626)"></div><div class="nm">危险红</div><div class="us">已满 / 停用 / 破坏性</div></div>
-        <div class="sw"><span class="hex">#10B981</span><div class="orb" style="background:radial-gradient(circle at 34% 28%,#6EE7B7,#10B981 62%,#059669)"></div><div class="nm">成功绿</div><div class="us">在职 / 已完成 / 充足</div></div>
+      <div class="slabel"><i></i>色彩 · 4 组语义色阶</div>
+      <p class="ndesc">每组以产品实际在用的色值为<b>第 6 阶（Normal）</b>，向上 5 阶供背景、聚焦环与禁用态取用，向下 4 阶留给悬停、按下及深色场景。色阶在 OKLab 空间等距插值，所以视觉上的疏密与数值一致；每一阶都按其自身底色选择黑或白文字，最低对比度 4.98:1。</p>
+      <div class="cramp">
+        <div class="cr">
+          <div class="cr-h"><b>品牌蓝</b><s>Brand · 主操作 / 选中 / 链接</s></div>
+          <div class="cr-b">
+            <div class="crow lt" style="background:#F3F7FE"><b>Brand1</b><em>#F3F7FE</em><s>Light · 浅底</s></div>
+            <div class="crow lt" style="background:#C8DBFE"><b>Brand2</b><em>#C8DBFE</em><s>Focus · 聚焦环</s></div>
+            <div class="crow lt" style="background:#A1BFF9"><b>Brand3</b><em>#A1BFF9</em><s>Disabled · 禁用</s></div>
+            <div class="crow lt" style="background:#79A2F4"><b>Brand4</b><em>#79A2F4</em></div>
+            <div class="crow lt" style="background:#5084EF"><b>Brand5</b><em>#5084EF</em><s>Hover · 悬停</s></div>
+            <div class="crow dk tok" style="background:#2563EB"><b>Brand6</b><em>#2563EB</em><s>Normal · 默认</s></div>
+            <div class="crow dk" style="background:#1A52CD"><b>Brand7</b><em>#1A52CD</em><s>Click · 按下</s></div>
+            <div class="crow dk" style="background:#0F41AF"><b>Brand8</b><em>#0F41AF</em></div>
+            <div class="crow dk" style="background:#053193"><b>Brand9</b><em>#053193</em></div>
+            <div class="crow dk" style="background:#002177"><b>Brand10</b><em>#002177</em></div>
+          </div>
+        </div>
+        <div class="cr">
+          <div class="cr-h"><b>警示橙</b><s>Warning · 待处理 / 即将到期</s></div>
+          <div class="cr-b">
+            <div class="crow lt" style="background:#FFF5EB"><b>Warning1</b><em>#FFF5EB</em><s>Light · 浅底</s></div>
+            <div class="crow lt" style="background:#FCE5CC"><b>Warning2</b><em>#FCE5CC</em><s>Focus · 聚焦环</s></div>
+            <div class="crow lt" style="background:#F9D4AB"><b>Warning3</b><em>#F9D4AB</em><s>Disabled · 禁用</s></div>
+            <div class="crow lt" style="background:#F8C386"><b>Warning4</b><em>#F8C386</em></div>
+            <div class="crow lt" style="background:#F6B15B"><b>Warning5</b><em>#F6B15B</em><s>Hover · 悬停</s></div>
+            <div class="crow lt tok" style="background:#F59E0B"><b>Warning6</b><em>#F59E0B</em><s>Normal · 默认</s></div>
+            <div class="crow lt" style="background:#C57E03"><b>Warning7</b><em>#C57E03</em><s>Click · 按下</s></div>
+            <div class="crow dk" style="background:#975F00"><b>Warning8</b><em>#975F00</em></div>
+            <div class="crow dk" style="background:#6B4201"><b>Warning9</b><em>#6B4201</em></div>
+            <div class="crow dk" style="background:#422700"><b>Warning10</b><em>#422700</em></div>
+          </div>
+        </div>
+        <div class="cr">
+          <div class="cr-h"><b>危险红</b><s>Error · 已满 / 停用 / 破坏性</s></div>
+          <div class="cr-b">
+            <div class="crow lt" style="background:#FEF4F3"><b>Error1</b><em>#FEF4F3</em><s>Light · 浅底</s></div>
+            <div class="crow lt" style="background:#FFD5D1"><b>Error2</b><em>#FFD5D1</em><s>Focus · 聚焦环</s></div>
+            <div class="crow lt" style="background:#FEB5AE"><b>Error3</b><em>#FEB5AE</em><s>Disabled · 禁用</s></div>
+            <div class="crow lt" style="background:#FA958C"><b>Error4</b><em>#FA958C</em></div>
+            <div class="crow lt" style="background:#F57169"><b>Error5</b><em>#F57169</em><s>Hover · 悬停</s></div>
+            <div class="crow lt tok" style="background:#EF4444"><b>Error6</b><em>#EF4444</em><s>Normal · 默认</s></div>
+            <div class="crow dk" style="background:#CA2E32"><b>Error7</b><em>#CA2E32</em><s>Click · 按下</s></div>
+            <div class="crow dk" style="background:#A7171F"><b>Error8</b><em>#A7171F</em></div>
+            <div class="crow dk" style="background:#830110"><b>Error9</b><em>#830110</em></div>
+            <div class="crow dk" style="background:#5D0007"><b>Error10</b><em>#5D0007</em></div>
+          </div>
+        </div>
+        <div class="cr">
+          <div class="cr-h"><b>成功绿</b><s>Success · 在职 / 已完成 / 充足</s></div>
+          <div class="cr-b">
+            <div class="crow lt" style="background:#EBFCF3"><b>Success1</b><em>#EBFCF3</em><s>Light · 浅底</s></div>
+            <div class="crow lt" style="background:#CFEDDD"><b>Success2</b><em>#CFEDDD</em><s>Focus · 聚焦环</s></div>
+            <div class="crow lt" style="background:#AEDFC6"><b>Success3</b><em>#AEDFC6</em><s>Disabled · 禁用</s></div>
+            <div class="crow lt" style="background:#8AD2AF"><b>Success4</b><em>#8AD2AF</em></div>
+            <div class="crow lt" style="background:#5FC698"><b>Success5</b><em>#5FC698</em><s>Hover · 悬停</s></div>
+            <div class="crow lt tok" style="background:#10B981"><b>Success6</b><em>#10B981</em><s>Normal · 默认</s></div>
+            <div class="crow lt" style="background:#009768"><b>Success7</b><em>#009768</em><s>Click · 按下</s></div>
+            <div class="crow dk" style="background:#007550"><b>Success8</b><em>#007550</em></div>
+            <div class="crow dk" style="background:#005639"><b>Success9</b><em>#005639</em></div>
+            <div class="crow dk" style="background:#003824"><b>Success10</b><em>#003824</em></div>
+          </div>
+        </div>
       </div>
     </div>
 
