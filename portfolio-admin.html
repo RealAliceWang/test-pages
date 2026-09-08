@@ -839,17 +839,20 @@ table.prose td b{color:var(--ink);font-weight:700}
 /* ============ DESIGN SYSTEM ============ */
 /* Five swatches, one per semantic hue. The palette is deliberately short:
    every remaining colour on the page is a neutral or a tint of these. */
-.swatches{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:clamp(12px,2vw,26px);margin-top:clamp(32px,4vw,52px);align-items:end}
+.swatches{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(12px,2vw,26px);margin-top:clamp(32px,4vw,52px);align-items:end}
 .sw{text-align:center}
 .sw .hex{display:inline-block;padding:6px 13px;border-radius:999px;background:var(--bg);border:1px solid var(--line);
   font-family:var(--mono);font-size:11px;font-weight:600;box-shadow:var(--sh-1);margin-bottom:14px;letter-spacing:-.02em}
-.sw .orb{width:100%;aspect-ratio:1;border-radius:50%;position:relative}
+/* Capped at the diameter the orbs had while there were five of them, so
+   dropping one widens the gaps instead of inflating the remaining spheres. */
+.sw .orb{width:100%;max-width:204px;margin-inline:auto;aspect-ratio:1;border-radius:50%;position:relative}
 .sw .orb::after{content:'';position:absolute;left:15%;right:15%;top:50%;bottom:-32%;border-radius:0 0 42% 42%;
   background:inherit;-webkit-mask-image:linear-gradient(#000,transparent 86%);mask-image:linear-gradient(#000,transparent 86%);opacity:.5}
 .sw .nm{font-size:12.5px;font-weight:700;margin-top:clamp(32px,4.4vw,58px)}
 .sw .us{font-size:11px;color:var(--ink-4);margin-top:4px;line-height:1.5}
-@media(max-width:900px){.swatches{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:34px}}
-@media(max-width:480px){.swatches{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* Four swatches halve cleanly, so drop straight to two columns rather than
+   three — three would strand a single orb on its own row. */
+@media(max-width:900px){.swatches{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:34px}}
 
 /* ---- Neutral ramp ----
    Ten steps from ink to white, every one of them a token already declared in
@@ -2184,18 +2187,17 @@ body.shotbox-open{overflow:hidden}
       <div class="eyebrow"><i></i>06 — 设计系统（精简版）</div>
       <div class="sh-body">
         <h2 class="sh-title">色彩承担状态语义，<br>而非装饰</h2>
-        <p class="sh-desc">品牌蓝只授予可交互元素；其余色相与状态一一绑定：<b>橙色对应待处理，红色对应受阻与破坏性操作，绿色对应在职与完成</b>，深空墨留给标题与侧边导航。</p>
+        <p class="sh-desc">品牌蓝只授予可交互元素；其余色相与状态一一绑定：<b>橙色对应待处理，红色对应受阻与破坏性操作，绿色对应在职与完成</b>。标题与侧边导航不占色相，取下方中性色最深的一阶。</p>
       </div>
     </div>
 
     <div class="reveal d1" style="margin-top:clamp(30px,4vw,48px)">
-      <div class="slabel"><i></i>色彩 · 5 个语义色</div>
+      <div class="slabel"><i></i>色彩 · 4 个语义色</div>
       <div class="swatches">
         <div class="sw"><span class="hex">#2563EB</span><div class="orb" style="background:radial-gradient(circle at 34% 28%,#60A5FA,#2563EB 62%,#1D4ED8)"></div><div class="nm">品牌蓝</div><div class="us">主操作 / 选中 / 链接</div></div>
         <div class="sw"><span class="hex">#F59E0B</span><div class="orb" style="background:radial-gradient(circle at 34% 28%,#FCD34D,#F59E0B 62%,#D97706)"></div><div class="nm">警示橙</div><div class="us">待处理 / 即将到期</div></div>
         <div class="sw"><span class="hex">#EF4444</span><div class="orb" style="background:radial-gradient(circle at 34% 28%,#FCA5A5,#EF4444 62%,#DC2626)"></div><div class="nm">危险红</div><div class="us">已满 / 停用 / 破坏性</div></div>
         <div class="sw"><span class="hex">#10B981</span><div class="orb" style="background:radial-gradient(circle at 34% 28%,#6EE7B7,#10B981 62%,#059669)"></div><div class="nm">成功绿</div><div class="us">在职 / 已完成 / 充足</div></div>
-        <div class="sw"><span class="hex">#0B1220</span><div class="orb" style="background:radial-gradient(circle at 34% 28%,#475569,#0B1220 66%,#020617)"></div><div class="nm">深空墨</div><div class="us">标题 / 侧边导航</div></div>
       </div>
     </div>
 
