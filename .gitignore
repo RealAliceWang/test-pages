@@ -6,3 +6,6 @@ dist
 .cursor/
 # Design-review screenshots: regenerated on demand by scripts/shot.ts
 .review/
+shots/
+# Local pre-edit snapshots of tracked pages; git history is the real record
+.versions/
