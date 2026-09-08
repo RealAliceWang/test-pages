@@ -869,6 +869,8 @@ table.prose td b{color:var(--ink);font-weight:700}
 .cw-head h3{font-size:clamp(23px,2.9vw,38px);font-weight:800;letter-spacing:-.032em;color:#fff;line-height:1.18}
 .cw-head p{font-size:13px;line-height:1.9;color:rgba(255,255,255,.74)}
 .cw-head p b{color:#fff;font-weight:700}
+.cw-head p code{font-family:var(--mono);font-size:12px;color:#fff;
+  background:rgba(255,255,255,.16);border-radius:5px;padding:1px 6px}
 @media(max-width:860px){.cw-head{grid-template-columns:minmax(0,1fr);align-items:start;gap:14px}}
 
 /* 1:1 component wall — an explicit 12-col grid instead of masonry columns,
@@ -879,10 +881,15 @@ table.prose td b{color:var(--ink);font-weight:700}
 .ctile{background:#fff;border-radius:12px;box-shadow:0 12px 34px rgba(6,17,48,.18)}
 .ctile{padding:18px;display:flex;flex-direction:column;grid-column:span 4;min-width:0}
 .ctile>.sp-note{margin-top:auto !important;padding-top:12px}
-.ctile.c3{grid-column:span 3}
 .ctile.c5{grid-column:span 5}
-@media(max-width:1180px){.ctile,.ctile.c3,.ctile.c5{grid-column:span 6}}
-@media(max-width:820px){.ctile,.ctile.c3,.ctile.c5{grid-column:span 12}}
+.ctile.c7{grid-column:span 7}
+.ctile.c8{grid-column:span 8}
+.ctile.c12{grid-column:span 12}
+@media(max-width:1180px){
+  .ctile,.ctile.c5{grid-column:span 6}
+  .ctile.c7,.ctile.c8,.ctile.c12{grid-column:span 12}
+}
+@media(max-width:820px){.ctile,.ctile.c5,.ctile.c7,.ctile.c8{grid-column:span 12}}
 .cn{display:flex;align-items:baseline;gap:7px;margin-bottom:11px;flex-wrap:wrap}
 .cn b{font-size:11.5px;font-weight:800;letter-spacing:-.01em;color:var(--ink)}
 .cn s{font-family:var(--mono);font-size:10px;color:var(--ink-4);text-decoration:none;letter-spacing:0}
@@ -894,14 +901,19 @@ table.prose td b{color:var(--ink);font-weight:700}
    tokens are namespaced here instead of folded into the page's own. */
 .compwall{
   --a-ink:#1C1F28;
-  --a-pri:#2F6BFF;--a-pri-dark:#1E4FD8;--a-pri-bg:#EDF2FF;
+  --a-pri:#2F6BFF;--a-pri-lt:#5B8CFF;--a-pri-dark:#1E4FD8;--a-pri-bg:#EDF2FF;
   --a-ok:#047857;--a-ok-lt:#10B981;--a-ok-bg:#ECFDF5;
   --a-warn:#B45309;--a-warn-lt:#F59E0B;--a-warn-bg:#FFFAEB;
   --a-dan:#D31F1F;--a-dan-lt:#EF4444;--a-dan-bg:#FEF2F2;
   --a-tx:#0A0C10;--a-tx2:#4A515E;--a-tx3:#6B7280;--a-tx4:#9CA3AF;
   --a-su:#FFFFFF;--a-su2:#F4F6F8;--a-su3:#EBEEF2;
-  --a-bd2:#D3D7DE;--a-hair:rgba(10,12,16,.05);
+  --a-bd:#E4E7EC;--a-bd2:#D3D7DE;--a-div:#F0F1F4;--a-hair:rgba(10,12,16,.05);
   --a-mok:#0284C7;--a-mlow:#EAB308;--a-mfull:#F97316;
+  --a-org:#C2410C;--a-org-lt:#F97316;--a-org-bg:#FFF7ED;
+  --a-vio:#6D28D9;--a-vio-lt:#8B5CF6;--a-vio-bg:#F5F3FF;
+  --a-sig:#7DD3FC;--a-ring:rgba(47,107,255,.18);
+  --a-elev:0 2px 6px rgba(10,12,16,.05),0 20px 44px -20px rgba(10,12,16,.22);
+  --a-float:0 4px 12px rgba(10,12,16,.06),0 36px 72px -28px rgba(10,12,16,.3);
 }
 /* .display-num */
 .sp-num{font-variant-numeric:tabular-nums;font-weight:800;letter-spacing:-.04em;line-height:.92;color:var(--a-tx)}
@@ -923,7 +935,10 @@ table.prose td b{color:var(--ink);font-weight:700}
 .sp-btn{height:36px;display:inline-flex;align-items:center;padding:0 16px;border-radius:999px;
   font-size:13.5px;font-weight:600;white-space:nowrap;border:1px solid transparent}
 .sp-btn.pri{background:var(--a-ink);color:#fff}
-.sp-btn.ghost{background:var(--a-su);color:var(--a-tx2);border-color:var(--a-bd2)}
+.sp-btn.out{background:transparent;color:var(--a-ink);border-color:var(--a-ink)}
+.sp-btn.ghost{background:var(--a-su);color:var(--a-tx2);border-color:var(--a-bd)}
+.sp-btn.soft{background:var(--a-su3);color:var(--a-tx)}
+.sp-btn.dis{background:var(--a-su3);color:var(--a-tx4)}
 
 /* StatusBadge — flat tinted chip, no ring */
 .sp-bads{display:flex;flex-wrap:wrap;gap:6px}
@@ -935,6 +950,8 @@ table.prose td b{color:var(--ink);font-weight:700}
 .sp-bad.warn{background:var(--a-warn-bg);color:var(--a-warn)}         .sp-bad.warn em{background:var(--a-warn-lt)}
 .sp-bad.dan{background:var(--a-dan-bg);color:var(--a-dan)}            .sp-bad.dan em{background:var(--a-dan-lt)}
 .sp-bad.neu{background:var(--a-su3);color:var(--a-tx3)}               .sp-bad.neu em{background:var(--a-tx4)}
+.sp-bad.org{background:var(--a-org-bg);color:var(--a-org)}            .sp-bad.org em{background:var(--a-org-lt)}
+.sp-bad.vio{background:var(--a-vio-bg);color:var(--a-vio)}            .sp-bad.vio em{background:var(--a-vio-lt)}
 
 /* Status → hue legend. The badge row shows the states; this states the rule
    that assigns them, which is the part that has to hold across pages. */
@@ -948,6 +965,166 @@ table.prose td b{color:var(--ink);font-weight:700}
 /* Meter — 7px track, fill hue carries pool health */
 .sp-meter{height:7px;border-radius:999px;background:var(--a-su3);overflow:hidden}
 .sp-meter span{display:block;height:100%;border-radius:999px}
+
+/* Icons are drawn at the sizes the product passes to lucide, so a specimen
+   never shows a glyph at a weight the app does not ship. */
+.sp-i{display:block;flex:none;stroke:currentColor;fill:none;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round}
+
+/* Header — page title, optional centred search, notifications, identity pill */
+.sp-hdr{display:flex;align-items:center;justify-content:space-between;gap:20px}
+.sp-hdr .ti{font-size:26px;font-weight:800;color:var(--a-tx);line-height:1.12;letter-spacing:-.035em}
+.sp-hdr .sb{font-size:13px;color:var(--a-tx3);line-height:1.25;margin-top:5px}
+.sp-hdr .mid{flex:1;max-width:420px;min-width:0}
+.sp-hdr .rt{display:flex;align-items:center;gap:10px;flex:none}
+.sp-bell{position:relative;width:44px;height:44px;border-radius:999px;background:var(--a-su);
+  border:1px solid var(--a-bd);color:var(--a-tx2);display:flex;align-items:center;justify-content:center;flex:none}
+.sp-bell b{position:absolute;top:6px;right:6px;min-width:17px;height:17px;padding:0 4px;border-radius:999px;
+  background:var(--a-warn);color:#fff;font-size:12px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px #fff}
+.sp-idp{display:flex;align-items:center;gap:10px;height:44px;padding:0 8px 0 16px;
+  border-radius:999px;background:var(--a-su);border:1px solid var(--a-bd)}
+.sp-idp .who{text-align:right}
+.sp-idp .who b{display:block;font-size:13.5px;font-weight:700;color:var(--a-tx);line-height:1.2}
+.sp-idp .who s{display:block;font-size:12px;color:var(--a-tx3);line-height:1.2;margin-top:2px;text-decoration:none}
+/* Header wraps before it squeezes: the product hides the search below lg
+   rather than letting the title and controls collide. */
+@media(max-width:1180px){.sp-hdr{flex-wrap:wrap}.sp-hdr .mid{order:3;flex-basis:100%;max-width:none}}
+@media(max-width:560px){.sp-idp .who{display:none}.sp-idp{padding:0 6px}}
+
+/* Avatar — initial on the member's own seeded colour */
+.sp-av{border-radius:999px;display:flex;align-items:center;justify-content:center;
+  color:#fff;font-weight:700;flex:none;line-height:1}
+
+/* Sidebar — 236px expanded rail; active item is a solid ink pill */
+.sp-side{width:236px;max-width:100%}
+.sp-side .grp{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--a-tx2);padding:0 14px;margin-bottom:8px}
+.sp-side .grp+.grp{margin-top:0}
+.sp-nav{display:flex;flex-direction:column;gap:2px}
+.sp-nav i{display:flex;align-items:center;gap:12px;height:42px;padding:0 14px;border-radius:999px;
+  font-size:14px;font-style:normal;color:var(--a-tx2);letter-spacing:-.005em}
+.sp-nav i.on{background:var(--a-ink);color:#fff;font-weight:600}
+.sp-nav i u{flex:1;text-decoration:none}
+.sp-nav i b{min-width:19px;height:19px;padding:0 6px;border-radius:999px;background:var(--a-warn);
+  color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none}
+
+/* DataTable — tinted head, hairline row rules, scrolls rather than squeezes */
+.sp-scroll{overflow-x:auto}
+.sp-tbl{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.sp-tbl thead tr{background:var(--a-su2)}
+.sp-tbl th{padding:12px 20px;text-align:left;font-size:13px;font-weight:400;color:var(--a-tx3);white-space:nowrap}
+.sp-tbl td{padding:14px 20px;font-size:14px;color:var(--a-tx2);border-top:1px solid var(--a-div);white-space:nowrap}
+.sp-tbl tbody tr:first-child td{border-top:1px solid var(--a-hair)}
+.sp-tbl .who b{display:block;font-size:14px;font-weight:400;color:var(--a-tx);line-height:1.2}
+.sp-tbl .who s{display:block;font-size:13px;color:var(--a-tx3);line-height:1.2;margin-top:3px;text-decoration:none}
+
+/* EmptyState — icon plate, one line of cause, one way out */
+.sp-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:22px 8px}
+.sp-empty .plate{width:48px;height:48px;border-radius:999px;background:var(--a-su2);color:var(--a-tx4);
+  display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.sp-empty p{font-size:14px;color:var(--a-tx3);margin-bottom:16px}
+
+/* TabFilter — white pill on a tinted track */
+.sp-tabs{display:inline-flex;align-items:center;gap:4px;padding:4px;border-radius:999px;
+  background:var(--a-su2);max-width:100%;flex-wrap:wrap}
+.sp-tabs span{height:32px;display:inline-flex;align-items:center;padding:0 16px;border-radius:999px;
+  font-size:13.5px;font-weight:600;color:var(--a-tx3)}
+.sp-tabs span.on{background:var(--a-su);color:var(--a-tx);box-shadow:var(--a-elev)}
+
+/* Field — one 38px pill across four states. Rendered as static boxes so the
+   wall cannot steal focus or tab order from the page. */
+.sp-fld{position:relative}
+.sp-fld .bx{height:38px;border-radius:999px;background:var(--a-su2);border:1px solid transparent;
+  padding:0 16px;display:flex;align-items:center;font-size:14px;color:var(--a-tx)}
+.sp-fld .bx.ph{color:var(--a-tx4)}
+.sp-fld.hov .bx{background:var(--a-su3)}
+.sp-fld.foc .bx{background:var(--a-su);border-color:var(--a-pri);box-shadow:0 0 0 3px var(--a-ring)}
+.sp-fld.dis .bx{color:var(--a-tx4)}
+.sp-fld .caret{display:inline-block;width:1px;height:16px;background:var(--a-tx);margin-left:1px;
+  animation:spblink 1.1s steps(1) infinite}
+@keyframes spblink{50%{opacity:0}}
+.sp-fld.srch .bx{padding-left:35px;font-size:13.5px}
+.sp-fld .mag{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--a-tx4)}
+.sp-fld.foc .mag{color:var(--a-pri)}
+.sp-flabel{font-size:12px;color:var(--a-tx3);margin-bottom:6px}
+.sp-flabel:not(:first-child){margin-top:13px}
+
+/* Toggle — 44x26 track, 20px knob, ink when on */
+.sp-togs{display:flex;flex-direction:column;gap:14px}
+.sp-togs>div{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.sp-togs p{font-size:13.5px;color:var(--a-tx2)}
+.sp-tog{width:44px;height:26px;border-radius:999px;background:var(--a-bd2);position:relative;flex:none}
+.sp-tog.on{background:var(--a-ink)}
+.sp-tog em{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:999px;background:#fff}
+.sp-tog.on em{left:21px}
+
+/* MetricCard — whole tile washed in the tone's hue, icon on a frosted plinth */
+.sp-metric{border-radius:22px;padding:22px 24px;display:flex;flex-direction:column;
+  background-color:#fff;
+  background-image:linear-gradient(135deg,color-mix(in srgb,var(--mt) 22%,white) 0%,
+    color-mix(in srgb,var(--mt) 11%,white) 46%,color-mix(in srgb,var(--mt) 4%,white) 100%)}
+.sp-metric .plinth{width:40px;height:40px;border-radius:999px;display:flex;align-items:center;justify-content:center;flex:none;
+  background-image:linear-gradient(150deg,color-mix(in srgb,var(--mt) 34%,white) 0%,
+    color-mix(in srgb,var(--mt) 18%,white) 58%,color-mix(in srgb,var(--mt) 26%,white) 100%);
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.9),
+    inset 0 0 0 1px color-mix(in srgb,var(--mt) 30%,transparent),
+    0 6px 16px -8px color-mix(in srgb,var(--mt) 85%,transparent)}
+.sp-metric .top{display:flex;align-items:center;gap:10px}
+.sp-metric .eb{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--a-tx2)}
+.sp-metric .foot{margin-top:14px;display:flex;align-items:flex-end;justify-content:space-between;gap:8px}
+.sp-metric .foot p{font-size:13px;color:var(--a-tx2);line-height:18px}
+
+/* MiniStat — the same ratio said three ways */
+.sp-ministat{background:#fff;border-radius:22px;padding:15px 16px;display:flex;flex-direction:column;gap:12px}
+.sp-ministat .hd{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.sp-ministat .hd p{font-size:13px;font-weight:600;color:var(--a-tx2)}
+.sp-ministat .rowm{display:flex;align-items:center;gap:8px;margin-top:12px}
+.sp-ministat .rowm .sp-meter{flex:1}
+.sp-ministat .pct{font-size:12px;font-weight:700;flex:none;font-variant-numeric:tabular-nums}
+.sp-ministat .hint{font-size:12px;color:var(--a-tx3)}
+
+/* RingProgress — 96px dial, 9px round-capped stroke */
+.sp-ring{position:relative;width:96px;height:96px;margin:0 auto}
+.sp-ring svg{transform:rotate(-90deg);display:block}
+.sp-ring .val{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:25px;font-weight:800;letter-spacing:-.04em;color:var(--a-tx);font-variant-numeric:tabular-nums}
+
+/* FlashToast — ink pill floating over the page */
+.sp-toast{display:inline-flex;align-items:center;gap:10px;max-width:100%;border-radius:999px;
+  background:var(--a-ink);padding:13px 22px 13px 16px;box-shadow:var(--a-float)}
+.sp-toast p{font-size:13.5px;color:#fff;font-weight:500;line-height:1.35}
+
+/* Icon button — fixed 36px square, hover swaps the fill only */
+.sp-icons{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.sp-ibtn{width:36px;height:36px;border-radius:999px;display:flex;align-items:center;justify-content:center;
+  color:var(--a-tx3);flex:none}
+.sp-ibtn.hov{background:var(--a-su3);color:var(--a-tx)}
+.sp-ibtn.on{background:var(--a-pri-bg);color:var(--a-pri-dark)}
+
+/* Modal — 520px dialog on a blurred scrim */
+.sp-modal{width:520px;max-width:100%;margin:0 auto;background:#fff;border-radius:16px;
+  overflow:hidden;box-shadow:var(--a-float)}
+.sp-modal .mh{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:16px 24px;border-bottom:1px solid var(--a-hair)}
+.sp-modal .mh h5{font-size:16px;font-weight:700;color:var(--a-tx);letter-spacing:-.02em}
+.sp-modal .mb{padding:20px 24px}
+.sp-scrim{border-radius:12px;padding:18px;background:
+  radial-gradient(320px 220px at 0% -20%,rgba(125,211,252,.44),transparent 64%),
+  radial-gradient(280px 190px at 104% 2%,rgba(96,152,255,.24),transparent 62%),#EFF1F4}
+
+/* SectionCard — quiet title, hairline rule, content below */
+.sp-sect{background:#fff;border-radius:22px;overflow:hidden}
+.sp-sect .sh2{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:18px 24px;border-bottom:1px solid var(--a-hair)}
+.sp-sect .sh2 h5{font-size:13.5px;font-weight:700;color:var(--a-tx);letter-spacing:-.01em}
+.sp-sect .sh2 s{font-size:12px;font-weight:600;color:var(--a-tx3);text-decoration:none}
+.sp-sect .sb2{padding:20px}
+
+/* Avatar sizes actually in use: 34 header, 36 table, 30 identity menu */
+.sp-avs{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
+.sp-avs figure{display:flex;flex-direction:column;align-items:center;gap:7px}
+.sp-avs figcaption{font-size:11px;color:var(--a-tx4);font-variant-numeric:tabular-nums}
 
 /* ============ SCREEN SHOWCASE ============ */
 /* Stacked, not side-by-side. These are 1600px-wide app captures; a half-width
@@ -1990,13 +2167,101 @@ body.shotbox-open{overflow:hidden}
       <div class="cw-head reveal">
         <div>
           <div class="slabel"><i></i>组件规范</div>
-          <h3>3 个核心组件，<br>撑起整条决策链</h3>
+          <h3>20 个组件，<br>撑起 20 个页面</h3>
         </div>
-        <p>三个组件各自解决决策链上的一处判断：审批卡回答「批了会怎样」，占用条回答「还有没有位子」，状态徽章回答「现在到哪一步了」。三者覆盖完整状态集，Design token 与 Figma 变量一一映射，变量更新即同步前端。</p>
+        <p>组件按语义划分，而非按外观划分。每个组件自己覆盖完整状态集（默认 / 悬停 / 选中 / 禁用 / 空态），页面层只做布局组合。<b>下方每个样本都是 1:1 尺寸</b>，尺寸、圆角、色值均取自 <code>src/</code> 里的组件源码，没有为了排版缩放或重画。</p>
       </div>
 
       <div class="cw-cols reveal">
 
+        <!-- ── 01 Header ─────────────────────────────────────────────── -->
+        <div class="ctile c12">
+          <div class="cn"><b>页面头部</b><s>Header · 每页第一行</s></div>
+          <div class="sp-hdr">
+            <div>
+              <div class="ti">席位池</div>
+              <div class="sb">8 个席位池 · 50 个席位 · 60% 已分配</div>
+            </div>
+            <div class="mid">
+              <div class="sp-fld srch">
+                <span class="mag"><svg class="sp-i" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="15" height="15"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></span>
+                <div class="bx ph">搜索模块…</div>
+              </div>
+            </div>
+            <div class="rt">
+              <span class="sp-bell"><svg class="sp-i" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="18" height="18"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg><b>4</b></span>
+              <span class="sp-idp">
+                <span class="who"><b>李澜</b><s>企业管理员 · 结构一所</s></span>
+                <span class="sp-av" style="width:34px;height:34px;font-size:13.5px;background:#2563EB">李</span>
+                <span style="color:var(--a-tx4)"><svg class="sp-i" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="14" height="14"><path d="m6 9 6 6 6-6"/></svg></span>
+              </span>
+            </div>
+          </div>
+          <p class="sp-note" style="margin-top:14px">标题 26px/800，副行把本页的总量说完；搜索只在仪表盘类页面出现。<b>右侧控件带白底与 1px 描边</b>——它们坐在带底色的 shell 上，不描边会化进背景。</p>
+        </div>
+
+        <!-- ── 02 Sidebar ────────────────────────────────────────────── -->
+        <div class="ctile">
+          <div class="cn"><b>侧边栏导航</b><s>Sidebar · 236px 展开态</s></div>
+          <div class="sp-side">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:0 6px 16px">
+              <img src="/logo.png" alt="3D3S" style="height:30px;width:auto;object-fit:contain" loading="lazy">
+              <span style="color:var(--a-tx3)"><svg class="sp-i" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="15" height="15"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/><path d="m16 15-3-3 3-3"/></svg></span>
+            </div>
+            <div class="grp">日常</div>
+            <div class="sp-nav" style="margin-bottom:22px">
+              <i class="on"><svg class="sp-i" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="19" height="19"><rect x="3" y="3" width="7" height="7" rx="1.4"/><rect x="14" y="3" width="7" height="7" rx="1.4"/><rect x="3" y="14" width="7" height="7" rx="1.4"/><rect x="14" y="14" width="7" height="7" rx="1.4"/></svg><u>工作台</u></i>
+              <i><svg class="sp-i" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="19" height="19"><path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg><u>审批中心</u><b>4</b></i>
+              <i><svg class="sp-i" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="19" height="19"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.57 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg><u>席位池</u></i>
+            </div>
+            <div class="grp">治理</div>
+            <div class="sp-nav">
+              <i><svg class="sp-i" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="19" height="19"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><u>成员管理</u></i>
+              <i><svg class="sp-i" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="19" height="19"><rect width="20" height="14" x="2" y="5" rx="2"/><path d="M2 10h20"/></svg><u>订单与账单</u></i>
+              <i><svg class="sp-i" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="19" height="19"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.14.63.71 1.08 1.36 1.09H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><u>个人信息</u></i>
+            </div>
+          </div>
+          <p class="sp-note" style="margin-top:14px">选中态是<b>实心 ink 胶囊</b>，不是浅色底：最深的墨只留给当前位置。待办数用橙色角标，与审批链的“待处理”同色。</p>
+        </div>
+
+        <!-- ── 03 DataTable ──────────────────────────────────────────── -->
+        <div class="ctile c8">
+          <div class="cn"><b>数据表格</b><s>DataTable · 成员 / 订单 / 日志共用</s></div>
+          <div class="sp-scroll">
+            <table class="sp-tbl">
+              <thead><tr><th>成员</th><th>职位</th><th>席位</th><th>状态</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td><div style="display:flex;align-items:center;gap:12px"><span class="sp-av" style="width:36px;height:36px;font-size:14px;font-weight:400;background:#8B5CF6">陈</span><span class="who"><b>陈雨</b><s>YG0011</s></span></div></td>
+                  <td>结构工程师</td><td>3</td><td><span class="sp-bad ok"><em></em>在职</span></td>
+                </tr>
+                <tr>
+                  <td><div style="display:flex;align-items:center;gap:12px"><span class="sp-av" style="width:36px;height:36px;font-size:14px;font-weight:400;background:#EC4899">刘</span><span class="who"><b>刘颖</b><s>YG0032</s></span></div></td>
+                  <td>助理工程师</td><td>1</td><td><span class="sp-bad warn"><em></em>待激活</span></td>
+                </tr>
+                <tr>
+                  <td><div style="display:flex;align-items:center;gap:12px"><span class="sp-av" style="width:36px;height:36px;font-size:14px;font-weight:400;background:#14B8A6">孙</span><span class="who"><b>孙浩</b><s>YG0009</s></span></div></td>
+                  <td>高级结构工程师</td><td>0</td><td><span class="sp-bad neu"><em></em>已停用</span></td>
+                </tr>
+                <tr>
+                  <td><div style="display:flex;align-items:center;gap:12px"><span class="sp-av" style="width:36px;height:36px;font-size:14px;font-weight:400;background:#F97316">张</span><span class="who"><b>张思远</b><s>YG0007</s></span></div></td>
+                  <td>结构工程师</td><td>2</td><td><span class="sp-bad ok"><em></em>在职</span></td>
+                </tr>
+                <tr>
+                  <td><div style="display:flex;align-items:center;gap:12px"><span class="sp-av" style="width:36px;height:36px;font-size:14px;font-weight:400;background:#0EA5E9">赵</span><span class="who"><b>赵国栋</b><s>YG0003</s></span></div></td>
+                  <td>结构二所所长</td><td>1</td><td><span class="sp-bad ok"><em></em>在职</span></td>
+                </tr>
+                <tr>
+                  <td><div style="display:flex;align-items:center;gap:12px"><span class="sp-av" style="width:36px;height:36px;font-size:14px;font-weight:400;background:#F59E0B">周</span><span class="who"><b>周敏</b><s>YG0014</s></span></div></td>
+                  <td>结构工程师</td><td>1</td><td><span class="sp-bad ok"><em></em>在职</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="sp-note" style="margin-top:14px">表头是平底色块而非描边，行间只用 1px divider。<b>状态列一律交给 StatusBadge</b>，表格自己不决定颜色，所以全站同一个状态永远长得一样。</p>
+        </div>
+
+        <!-- ── 04 ApprovalCard ───────────────────────────────────────── -->
         <div class="ctile c5">
           <div class="cn"><b>审批卡</b><s>ApprovalCard · 决策随行</s></div>
           <div class="sp-shell">
@@ -2008,7 +2273,6 @@ body.shotbox-open{overflow:hidden}
                 </div>
                 <span class="sp-bad warn" style="flex:none"><em></em>待企业审批</span>
               </div>
-
               <div style="margin-top:14px;background:var(--a-su2);border-radius:14px;padding:13px 15px">
                 <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--a-tx3)"><span>目标池余量</span><b style="color:var(--a-warn);font-weight:700">5 / 5 已满</b></div>
                 <div class="sp-meter" style="margin-top:9px"><span style="width:100%;background:var(--a-mfull)"></span></div>
@@ -2017,7 +2281,6 @@ body.shotbox-open{overflow:hidden}
                   <span class="sp-num" style="font-size:20px">¥ 13,600</span>
                 </div>
               </div>
-
               <div class="steps" style="margin-top:14px">
                 <span class="n" style="background:var(--a-ok-lt)">✓</span><span class="lb" style="font-size:12px">部门</span>
                 <span class="ln"></span>
@@ -2025,7 +2288,6 @@ body.shotbox-open{overflow:hidden}
                 <span class="ln"></span>
                 <span class="n" style="background:var(--a-bd2)">3</span><span class="lb" style="font-size:12px">发放</span>
               </div>
-
               <div class="sp-btns" style="margin-top:16px;justify-content:flex-end">
                 <span class="sp-btn ghost">驳回</span>
                 <span class="sp-btn pri">通过</span>
@@ -2033,43 +2295,87 @@ body.shotbox-open{overflow:hidden}
               <p style="font-size:11.5px;color:var(--a-warn);margin-top:9px;text-align:right">通过后需下单付费扩容</p>
             </div>
           </div>
-          <p class="sp-note" style="margin-top:11px">余量条、预估金额与审批链收敛进卡内，<b>操作后果标注在按钮旁</b>——决策依据与操作入口同屏，零跳转。</p>
+          <p class="sp-note" style="margin-top:14px">余量条、预估金额与审批链收敛进卡内，<b>操作后果标注在按钮旁</b>——决策依据与操作入口同屏，零跳转。</p>
         </div>
 
-        <div class="ctile c4">
-          <div class="cn"><b>占用条</b><s>Meter · 三层编码</s></div>
-          <div class="sp-stack">
-            <div>
-              <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--a-tx3);margin-bottom:7px"><span>钢结构设计</span><span>58%</span></div>
-              <div class="sp-meter"><span style="width:58%;background:var(--a-mok)"></span></div>
-              <p style="font-size:11.5px;color:var(--a-tx4);margin-top:7px">余量充足，续费可维持</p>
-            </div>
-            <div>
-              <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--a-tx3);margin-bottom:7px"><span>索膜结构</span><span>25%</span></div>
-              <div class="sp-meter"><span style="width:25%;background:var(--a-mlow)"></span></div>
-              <p style="font-size:11.5px;color:var(--a-tx4);margin-top:7px">利用率偏低，续费可考虑缩减</p>
-            </div>
-            <div>
-              <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--a-tx3);margin-bottom:7px"><span>网架网壳</span><span>100%</span></div>
-              <div class="sp-meter"><span style="width:100%;background:var(--a-mfull)"></span></div>
-              <p style="font-size:11.5px;color:var(--a-tx4);margin-top:7px">已满，新申请需先扩容</p>
-            </div>
-            <div>
-              <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--a-tx3);margin-bottom:7px"><span>建筑结构</span><span>42%</span></div>
-              <div class="sp-meter"><span style="width:42%;background:var(--a-mok)"></span></div>
-              <p style="font-size:11.5px;color:var(--a-tx4);margin-top:7px">余量充足，续费可维持</p>
+        <!-- ── 05 Modal ──────────────────────────────────────────────── -->
+        <div class="ctile c7">
+          <div class="cn"><b>弹窗</b><s>Modal · 520px 定宽</s></div>
+          <div class="sp-scrim">
+            <div class="sp-modal">
+              <div class="mh">
+                <h5>分配席位</h5>
+                <span style="color:var(--a-tx3)"><svg class="sp-i" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="16" height="16"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></span>
+              </div>
+              <div class="mb">
+                <div class="sp-flabel" style="margin-top:0">目标成员</div>
+                <div class="sp-fld"><div class="bx">陈雨 · 结构一所</div></div>
+                <div class="sp-flabel">席位池</div>
+                <div class="sp-fld"><div class="bx">钢结构设计 · 商业版（余 21）</div></div>
+                <div class="sp-btns" style="margin-top:20px;justify-content:flex-end">
+                  <span class="sp-btn ghost">取消</span>
+                  <span class="sp-btn pri">确认分配</span>
+                </div>
+              </div>
             </div>
           </div>
-          <p class="sp-note" style="margin-top:13px"><b>长度</b>编码占用率，<b>颜色</b>编码健康度（蓝＝正常 / 黄＝利用率偏低 / 橙＝已满），<b>辅注</b>给出处置建议——单一控件同时表达三个维度。</p>
+          <p class="sp-note" style="margin-top:14px">弹窗是全站唯一允许<b>浮层阴影</b>的面（卡片一律平铺），背景遮罩加 6px 模糊，表明下方内容可点击关闭。</p>
         </div>
 
-        <div class="ctile c3">
-          <div class="cn"><b>状态徽章</b><s>StatusBadge · 五种状态</s></div>
+        <!-- ── 06 TabFilter ──────────────────────────────────────────── -->
+        <div class="ctile">
+          <div class="cn"><b>标签筛选</b><s>TabFilter · 分段控件</s></div>
+          <div class="sp-stack" style="gap:14px">
+            <div class="sp-tabs"><span class="on">全部</span><span>待处理</span><span>已完成</span></div>
+            <div class="sp-tabs"><span>全部</span><span class="on">待处理</span><span>已完成</span></div>
+          </div>
+          <p class="sp-note" style="margin-top:14px">选中段白色填充加一级 elevated 阴影，未选中段无填充。<b>只用于互斥筛选</b>，多选场景走 chip。</p>
+        </div>
+
+        <!-- ── 07 SearchBar ──────────────────────────────────────────── -->
+        <div class="ctile">
+          <div class="cn"><b>搜索栏</b><s>SearchBar · 38px</s></div>
+          <div class="sp-stack" style="gap:12px">
+            <div class="sp-fld srch"><span class="mag"><svg class="sp-i" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="15" height="15"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></span><div class="bx ph">搜索模块…</div></div>
+            <div class="sp-fld srch foc"><span class="mag"><svg class="sp-i" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="15" height="15"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></span><div class="bx">网架<span class="caret"></span></div></div>
+          </div>
+          <p class="sp-note" style="margin-top:14px">聚焦时放大镜也跟着转成品牌蓝——<b>图标与边框同时变色</b>，确保弱视用户也能察觉焦点位置。</p>
+        </div>
+
+        <!-- ── 08 Button ─────────────────────────────────────────────── -->
+        <div class="ctile">
+          <div class="cn"><b>按钮</b><s>Button · 一套胶囊尺度</s></div>
+          <div class="sp-stack" style="gap:10px">
+            <div class="sp-btns"><span class="sp-btn pri">立即下单</span><span class="sp-btn pri">回收席位</span></div>
+            <div class="sp-btns"><span class="sp-btn out">导出</span><span class="sp-btn ghost">取消</span><span class="sp-btn soft">更多</span><span class="sp-btn dis">已停用</span></div>
+          </div>
+          <p class="sp-note" style="margin-top:14px"><b>实心 ink 按钮每屏限一个</b>；列表里重复的动作一律用描边款。四种款式共享 36px 高与胶囊圆角，只换填充。</p>
+        </div>
+
+        <!-- ── 09 Field ──────────────────────────────────────────────── -->
+        <div class="ctile">
+          <div class="cn"><b>输入框</b><s>Field · 四态</s></div>
+          <div class="sp-flabel" style="margin-top:0">默认</div>
+          <div class="sp-fld"><div class="bx ph">请输入工作邮箱</div></div>
+          <div class="sp-flabel">悬停</div>
+          <div class="sp-fld hov"><div class="bx ph">请输入工作邮箱</div></div>
+          <div class="sp-flabel">聚焦</div>
+          <div class="sp-fld foc"><div class="bx">chen.yu@yungou.com<span class="caret"></span></div></div>
+          <div class="sp-flabel">禁用</div>
+          <div class="sp-fld dis"><div class="bx">chen.yu@yungou.com</div></div>
+          <p class="sp-note" style="margin-top:14px">默认靠灰底成形，<b>只有聚焦才长出蓝边与 3px 光环</b>。多行文本区改用 12px 圆角，否则四行高的胶囊会变成跑道形。</p>
+        </div>
+
+        <!-- ── 10 StatusBadge ────────────────────────────────────────── -->
+        <div class="ctile">
+          <div class="cn"><b>状态徽章</b><s>StatusBadge · 七种语义</s></div>
           <div class="sp-bads">
             <span class="sp-bad ok"><em></em>已开通</span>
             <span class="sp-bad warn"><em></em>待企业审批</span>
             <span class="sp-bad info"><em></em>待采购</span>
             <span class="sp-bad dan"><em></em>已驳回</span>
+            <span class="sp-bad org"><em></em>商业版</span>
+            <span class="sp-bad vio"><em></em>试用中</span>
             <span class="sp-bad neu"><em></em>已过期</span>
           </div>
           <div class="sp-semmap">
@@ -2077,9 +2383,197 @@ body.shotbox-open{overflow:hidden}
             <div><em style="background:var(--a-warn-lt)"></em>警示橙<s>待处理 / 即将到期</s></div>
             <div><em style="background:var(--a-pri)"></em>品牌蓝<s>进行中 / 可交互</s></div>
             <div><em style="background:var(--a-dan-lt)"></em>危险红<s>已满 / 停用 / 破坏性</s></div>
+            <div><em style="background:var(--a-org-lt)"></em>版本橙<s>商业版标识</s></div>
+            <div><em style="background:var(--a-vio-lt)"></em>试用紫<s>试用中 / 灰度中</s></div>
             <div><em style="background:var(--a-tx4)"></em>中性灰<s>已终结 / 不可用</s></div>
           </div>
-          <p class="sp-note" style="margin-top:13px">色点与文字构成<b>双通道冗余编码</b>，不以颜色为唯一可感知手段。五种状态全站统一，对比度全部 ≥ 4.5:1，通过 WCAG AA。</p>
+          <p class="sp-note" style="margin-top:14px">状态与颜色的绑定<b>全局固定</b>，不随页面改变；色点与文字构成双通道冗余编码，对比度全部 ≥ 4.5:1。</p>
+        </div>
+
+        <!-- ── 11 Toggle ─────────────────────────────────────────────── -->
+        <div class="ctile">
+          <div class="cn"><b>开关</b><s>Toggle · 44×26 · 模块上架位</s></div>
+          <div class="sp-togs">
+            <div><p>钢结构设计 · 商业版</p><span style="display:flex;align-items:center;gap:10px;flex:none"><span class="sp-bad ok"><em></em>已上架</span><span class="sp-tog on"><em></em></span></span></div>
+            <div><p>网架网壳 · 商业版</p><span style="display:flex;align-items:center;gap:10px;flex:none"><span class="sp-bad ok"><em></em>已上架</span><span class="sp-tog on"><em></em></span></span></div>
+            <div><p>索膜结构 · 免费版</p><span style="display:flex;align-items:center;gap:10px;flex:none"><span class="sp-bad neu"><em></em>已下架</span><span class="sp-tog"><em></em></span></span></div>
+            <div><p>预应力分析 · 试用</p><span style="display:flex;align-items:center;gap:10px;flex:none"><span class="sp-bad neu"><em></em>已下架</span><span class="sp-tog"><em></em></span></span></div>
+            <div><p>建筑结构 · 商业版</p><span style="display:flex;align-items:center;gap:10px;flex:none"><span class="sp-bad ok"><em></em>已上架</span><span class="sp-tog on"><em></em></span></span></div>
+          </div>
+          <div class="sp-semmap">
+            <div><em style="background:var(--a-ink)"></em>开启<s>轨道 #1C1F28</s></div>
+            <div><em style="background:var(--a-bd2)"></em>关闭<s>轨道 #D3D7DE</s></div>
+          </div>
+          <p class="sp-note" style="margin-top:14px">开启态同样是 ink，与主按钮、侧边栏选中共用「已生效」语义。它<b>永远和一枚 StatusBadge 成对出现</b>——开关是动作，徽章是结果，两者不互相代替。</p>
+        </div>
+
+        <!-- ── 12 MetricCard ─────────────────────────────────────────── -->
+        <div class="ctile">
+          <div class="cn"><b>指标卡</b><s>MetricCard · 四种语义色</s></div>
+          <div class="sp-metric" style="--mt:#F59E0B">
+            <div class="top">
+              <span class="plinth" style="color:#B45309"><svg class="sp-i" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="18" height="18" stroke-width="2.3"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+              <span class="eb">待分配席位</span>
+            </div>
+            <p class="sp-num" style="font-size:34px;margin-top:16px">20</p>
+            <div class="foot">
+              <p>约 ¥4,200 沉没成本</p>
+              <span style="color:var(--a-tx4)"><svg class="sp-i" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="15" height="15"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></span>
+            </div>
+          </div>
+          <p class="sp-note" style="margin-top:14px">整卡按语义着色，图标坐在同色半透明托盘上；<b>无描边，靠底色分隔</b>。数字 34px，比卡内任何元素都重。</p>
+        </div>
+
+        <!-- ── 13 MiniStat ───────────────────────────────────────────── -->
+        <div class="ctile">
+          <div class="cn"><b>迷你统计</b><s>MiniStat · 比值三读</s></div>
+          <div class="sp-ministat">
+            <div class="hd"><p>网架网壳 · 商业版</p><span style="color:var(--a-tx4)"><svg class="sp-i" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="14" height="14"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.57 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg></span></div>
+            <div>
+              <p class="sp-num" style="font-size:27px;color:var(--a-warn)">5<span style="color:var(--a-tx4)">/5</span></p>
+              <div class="rowm">
+                <div class="sp-meter"><span style="width:100%;background:var(--a-mfull)"></span></div>
+                <span class="pct" style="color:var(--a-warn)">100%</span>
+              </div>
+            </div>
+            <p class="hint">已满，新申请需先扩容</p>
+          </div>
+          <p class="sp-note" style="margin-top:14px">同一比值讲三遍：<b>分数、进度条、百分比</b>，各答一个问题——多少个、有多满、离上限多远。只用于有上限的量。</p>
+        </div>
+
+        <!-- ── 14 RingProgress ───────────────────────────────────────── -->
+        <div class="ctile">
+          <div class="cn"><b>环形进度</b><s>RingProgress · 96px</s></div>
+          <div style="display:flex;gap:18px;justify-content:center;padding:10px 0 4px;flex-wrap:wrap">
+            <figure style="display:flex;flex-direction:column;align-items:center;gap:10px">
+            <div class="sp-ring">
+              <svg width="96" height="96" aria-hidden="true">
+                <circle cx="48" cy="48" r="43.5" fill="none" stroke="var(--a-su3)" stroke-width="9"/>
+                <circle cx="48" cy="48" r="43.5" fill="none" stroke="var(--a-sig)" stroke-width="9"
+                  stroke-linecap="round" stroke-dasharray="273.32" stroke-dashoffset="109.33"/>
+              </svg>
+              <span class="val">60%</span>
+            </div>
+            <figcaption style="font-size:12px;color:var(--a-tx3)">席位利用率</figcaption>
+            </figure>
+            <figure style="display:flex;flex-direction:column;align-items:center;gap:10px">
+            <div class="sp-ring">
+              <svg width="96" height="96" aria-hidden="true">
+                <circle cx="48" cy="48" r="43.5" fill="none" stroke="var(--a-su3)" stroke-width="9"/>
+                <circle cx="48" cy="48" r="43.5" fill="none" stroke="var(--a-sig)" stroke-width="9"
+                  stroke-linecap="round" stroke-dasharray="273.32" stroke-dashoffset="21.87"/>
+              </svg>
+              <span class="val">92%</span>
+            </div>
+            <figcaption style="font-size:12px;color:var(--a-tx3)">审批准时率</figcaption>
+            </figure>
+          </div>
+          <p class="sp-note" style="margin-top:14px">9px 圆头描边，<b>只用于有上限的比率，不用于计数</b>。环色取信号蓝——它不承担导航与按钮，只意味“这是个数字”。</p>
+        </div>
+
+        <!-- ── 15 Meter ──────────────────────────────────────────────── -->
+        <div class="ctile">
+          <div class="cn"><b>占用条</b><s>Meter · 健康度着色</s></div>
+          <div class="sp-stack">
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--a-tx3);margin-bottom:7px"><span>钢结构设计</span><span>58%</span></div>
+              <div class="sp-meter"><span style="width:58%;background:var(--a-mok)"></span></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--a-tx3);margin-bottom:7px"><span>索膜结构</span><span>25%</span></div>
+              <div class="sp-meter"><span style="width:25%;background:var(--a-mlow)"></span></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--a-tx3);margin-bottom:7px"><span>网架网壳</span><span>100%</span></div>
+              <div class="sp-meter"><span style="width:100%;background:var(--a-mfull)"></span></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--a-tx3);margin-bottom:7px"><span>建筑结构</span><span>42%</span></div>
+              <div class="sp-meter"><span style="width:42%;background:var(--a-mok)"></span></div>
+            </div>
+          </div>
+          <p class="sp-note" style="margin-top:14px">7px 轨道，<b>长度</b>编码占用率、<b>颜色</b>编码健康度（蓝＝正常 / 黄＝利用率偏低 / 橙＝已满）。填充色由 poolHealth 统一判定，页面不自己选色。</p>
+        </div>
+
+        <!-- ── 16 FlashToast ─────────────────────────────────────────── -->
+        <div class="ctile">
+          <div class="cn"><b>全局提示</b><s>FlashToast · 3.6s 自消</s></div>
+          <div class="sp-stack" style="gap:10px;padding:6px 0">
+            <div><span class="sp-toast"><span style="color:var(--a-ok-lt)"><svg class="sp-i" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="17" height="17" stroke-width="2.3"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></span><p>已提交，等待厂商确认</p></span></div>
+            <div><span class="sp-toast"><span style="color:var(--a-dan-lt)"><svg class="sp-i" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="17" height="17" stroke-width="2.3"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></span><p>该模块已无空闲席位，请先扩容</p></span></div>
+            <div><span class="sp-toast"><span style="color:var(--a-pri-lt)"><svg class="sp-i" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="17" height="17" stroke-width="2.3"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></span><p>已为你切换到企业管理员视角</p></span></div>
+          </div>
+          <p class="sp-note" style="margin-top:14px">ink 胶囊浮于内容之上，用于操作结果的即时反馈。<b>只换图标颜色，不换底色</b>——成功与失败共享同一个容器。</p>
+        </div>
+
+        <!-- ── 17 EmptyState ─────────────────────────────────────────── -->
+        <div class="ctile">
+          <div class="cn"><b>空态</b><s>EmptyState · 带出口</s></div>
+          <div class="sp-empty">
+            <span class="plate"><svg class="sp-i" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="20" height="20"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg></span>
+            <p>该模块暂无空闲席位</p>
+            <span class="sp-btn pri">去扩容</span>
+          </div>
+          <p class="sp-note" style="margin-top:14px">空态不只说“没有”，<b>一句说原因，一个按钮给出路</b>。图标用最淡的灰，不与下方按钮争夺注意力。</p>
+        </div>
+
+        <!-- ── 18 SectionCard ────────────────────────────────────────── -->
+        <div class="ctile">
+          <div class="cn"><b>区块卡</b><s>SectionCard · 仪表盘容器</s></div>
+          <div class="sp-sect">
+            <div class="sh2"><h5>待我审批</h5><s>查看全部</s></div>
+            <div class="sb2">
+              <div class="sp-stack" style="gap:11px">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+                  <span style="font-size:13.5px;color:var(--a-tx2)">网架网壳 · 2 席</span>
+                  <span class="sp-bad warn"><em></em>待企业审批</span>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+                  <span style="font-size:13.5px;color:var(--a-tx2)">钢结构设计 · 1 席</span>
+                  <span class="sp-bad info"><em></em>待采购</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="sp-note" style="margin-top:14px">卡标题故意只给 13.5px：<b>这个布局里是数字在承担层级</b>，标题大了反而与它标注的数据互相争夺。</p>
+        </div>
+
+        <!-- ── 19 IconButton ─────────────────────────────────────────── -->
+        <div class="ctile">
+          <div class="cn"><b>图标按钮</b><s>btn-icon · 36×36</s></div>
+          <div class="sp-stack" style="gap:13px">
+            <div><div class="sp-flabel" style="margin-top:0">默认 · 无底无框</div>
+              <div class="sp-icons"><span class="sp-ibtn"><svg class="sp-i" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="16" height="16"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></span><span class="sp-ibtn"><svg class="sp-i" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="16" height="16"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg></span><span class="sp-ibtn"><svg class="sp-i" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="16" height="16"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v5h5"/><path d="M16 13H8"/><path d="M16 17H8"/></svg></span><span class="sp-ibtn"><svg class="sp-i" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="16" height="16"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></span></div></div>
+            <div><div class="sp-flabel" style="margin-top:0">悬停 · 只添底色</div>
+              <div class="sp-icons"><span class="sp-ibtn hov"><svg class="sp-i" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="16" height="16"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></span><span class="sp-ibtn hov"><svg class="sp-i" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="16" height="16"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg></span><span class="sp-ibtn hov"><svg class="sp-i" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="16" height="16"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v5h5"/><path d="M16 13H8"/><path d="M16 17H8"/></svg></span><span class="sp-ibtn hov"><svg class="sp-i" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="16" height="16"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></span></div></div>
+            <div><div class="sp-flabel" style="margin-top:0">激活 · 品牌蓝深色字</div>
+              <div class="sp-icons"><span class="sp-ibtn on"><svg class="sp-i" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="16" height="16"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></span><span class="sp-ibtn on"><svg class="sp-i" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="16" height="16"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg></span><span class="sp-ibtn on"><svg class="sp-i" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="16" height="16"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v5h5"/><path d="M16 13H8"/><path d="M16 17H8"/></svg></span><span class="sp-ibtn on"><svg class="sp-i" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="16" height="16"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></span></div></div>
+          </div>
+          <p class="sp-note" style="margin-top:14px">固定 36×36px 胶囊图标，<b>悬停只换底色，不加边框</b>。每个都带 aria-label，图标从不单独承担语义。</p>
+        </div>
+
+        <!-- ── 20 Avatar ─────────────────────────────────────────────── -->
+        <div class="ctile">
+          <div class="cn"><b>头像</b><s>Avatar · 三级尺寸</s></div>
+          <div class="sp-avs">
+            <figure><span class="sp-av" style="width:36px;height:36px;font-size:14px;font-weight:400;background:#8B5CF6">陈</span><figcaption>36 表格</figcaption></figure>
+            <figure><span class="sp-av" style="width:34px;height:34px;font-size:13.5px;background:#2563EB">李</span><figcaption>34 页头</figcaption></figure>
+            <figure><span class="sp-av" style="width:30px;height:30px;font-size:13px;font-weight:600;background:#14B8A6">孙</span><figcaption>30 菜单</figcaption></figure>
+          </div>
+          <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--a-hair)">
+            <div class="sp-flabel" style="margin-top:0">同一人在不同页面</div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:9px">
+              <span class="sp-av" style="width:30px;height:30px;font-size:13px;font-weight:600;background:#8B5CF6">陈</span>
+              <span style="font-size:13px;color:var(--a-tx2)">陈雨</span>
+              <span style="margin-left:auto;font-size:11.5px;color:var(--a-tx4)">身份菜单</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <span class="sp-av" style="width:36px;height:36px;font-size:14px;font-weight:400;background:#8B5CF6">陈</span>
+              <span style="font-size:13px;color:var(--a-tx2)">陈雨</span>
+              <span style="margin-left:auto;font-size:11.5px;color:var(--a-tx4)">成员表格</span>
+            </div>
+          </div>
+          <p class="sp-note" style="margin-top:14px">无头像图片，<b>姓氏首字 + 成员固定色</b>。颜色写在成员数据里而非随机生成，所以同一个人在任何页面都是同一色。</p>
         </div>
 
       </div>
