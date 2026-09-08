@@ -851,6 +851,46 @@ table.prose td b{color:var(--ink);font-weight:700}
 @media(max-width:900px){.swatches{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:34px}}
 @media(max-width:480px){.swatches{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
+/* ---- Neutral ramp ----
+   Ten steps from ink to white, every one of them a token already declared in
+   :root, so a chip cannot drift from the value the page actually paints with.
+   Label ink flips at #CBD5E1 — the first step too light to carry white. */
+.ndesc{font-size:13px;line-height:1.9;color:var(--ink-3);max-width:780px}
+.ndesc b{color:var(--ink-2);font-weight:700}
+.nramp{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-top:20px}
+.nr{border-radius:12px;padding:14px 15px 15px;min-height:76px;
+  display:flex;flex-direction:column;justify-content:space-between;gap:14px}
+.nr b{font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:-.02em}
+.nr s{font-size:11.5px;text-decoration:none;line-height:1.5}
+.nr.dk b{color:#fff}
+.nr.dk s{color:rgba(255,255,255,.68)}
+.nr.lt b{color:var(--ink)}
+.nr.lt s{color:var(--ink-3)}
+/* Pale chips would dissolve into the white band, so they carry a translucent
+   ink hairline — it holds its edge on any of the light fills. */
+.nr.edge{box-shadow:inset 0 0 0 1px rgba(11,18,32,.08)}
+.nkey{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:14px;font-size:11.5px;color:var(--ink-4)}
+.nkey span{display:inline-flex;align-items:center;gap:7px}
+.nkey i{width:9px;height:9px;border-radius:2px;flex:none;box-shadow:inset 0 0 0 1px rgba(11,18,32,.10)}
+@media(max-width:900px){.nramp{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:520px){.nramp{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* ---- Type scale ----
+   Every size below is one the product actually ships; the label states name,
+   px and weight so the row doubles as the spec, and the specimen on the right
+   renders at that exact size rather than a scaled preview. */
+.tscale{margin-top:20px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--bg)}
+.ts{display:grid;grid-template-columns:170px minmax(0,1fr);align-items:center;gap:22px;
+  padding:17px 24px;border-top:1px solid var(--line)}
+.ts:first-child{border-top:0}
+.ts .k b{display:block;font-family:var(--mono);font-size:11.5px;font-weight:600;color:var(--ink-3);letter-spacing:-.01em}
+.ts .k s{display:block;font-size:11px;color:var(--ink-4);text-decoration:none;margin-top:4px;line-height:1.5}
+.ts .v{min-width:0;color:var(--ink)}
+/* Tight but not so tight that the 40px specimen collides with itself on the
+   narrow layout, where it legitimately has to wrap. */
+.ts .v.fig{font-variant-numeric:tabular-nums;letter-spacing:-.04em;line-height:1.06}
+@media(max-width:640px){.ts{grid-template-columns:minmax(0,1fr);gap:10px;padding:15px 18px}}
+
 /* ---- Component wall ----
    A full-bleed brand field carrying the specimens as white tiles. The band
    sits outside .wrap so the colour runs edge to edge, and re-centres its own
@@ -2156,6 +2196,41 @@ body.shotbox-open{overflow:hidden}
         <div class="sw"><span class="hex">#EF4444</span><div class="orb" style="background:radial-gradient(circle at 34% 28%,#FCA5A5,#EF4444 62%,#DC2626)"></div><div class="nm">危险红</div><div class="us">已满 / 停用 / 破坏性</div></div>
         <div class="sw"><span class="hex">#10B981</span><div class="orb" style="background:radial-gradient(circle at 34% 28%,#6EE7B7,#10B981 62%,#059669)"></div><div class="nm">成功绿</div><div class="us">在职 / 已完成 / 充足</div></div>
         <div class="sw"><span class="hex">#0B1220</span><div class="orb" style="background:radial-gradient(circle at 34% 28%,#475569,#0B1220 66%,#020617)"></div><div class="nm">深空墨</div><div class="us">标题 / 侧边导航</div></div>
+      </div>
+    </div>
+
+    <div class="reveal d2" style="margin-top:clamp(40px,5.2vw,68px)">
+      <div class="slabel"><i></i>中性色 · 10 阶</div>
+      <p class="ndesc">中性色共 10 阶（含黑、白两端），整体带轻微蓝调、与品牌蓝同相。按使用场景分为三类：<b>文字</b>、<b>边框及分割线</b>、<b>背景</b>，取值需同时满足文字与所处背景的对比度要求。</p>
+      <div class="nramp">
+        <div class="nr dk" style="background:var(--ink)"><b>#0B1220</b><s>标题 / 强调文字</s></div>
+        <div class="nr dk" style="background:var(--ink-2)"><b>#334155</b><s>正文</s></div>
+        <div class="nr dk" style="background:var(--ink-3)"><b>#64748B</b><s>次要文字 / 图标</s></div>
+        <div class="nr dk" style="background:var(--ink-4)"><b>#94A3B8</b><s>辅助说明</s></div>
+        <div class="nr lt" style="background:var(--ink-5)"><b>#CBD5E1</b><s>占位 / 禁用文字</s></div>
+        <div class="nr lt edge" style="background:var(--line-2)"><b>#D6DEE9</b><s>控件描边 / 强分割</s></div>
+        <div class="nr lt edge" style="background:var(--line)"><b>#E7ECF3</b><s>边框 / 分割线</s></div>
+        <div class="nr lt edge" style="background:var(--bg-3)"><b>#EDF3FB</b><s>蓝调面板底</s></div>
+        <div class="nr lt edge" style="background:var(--bg-2)"><b>#F5F7FA</b><s>页面底 / 表头底</s></div>
+        <div class="nr lt edge" style="background:var(--bg)"><b>#FFFFFF</b><s>卡片 / 内容面</s></div>
+      </div>
+      <div class="nkey">
+        <span><i style="background:var(--ink)"></i>文字类 · 5 阶（#0B1220 – #CBD5E1）</span>
+        <span><i style="background:var(--line-2)"></i>边框及分割线 · 2 阶</span>
+        <span><i style="background:var(--bg-2)"></i>背景类 · 3 阶</span>
+      </div>
+    </div>
+
+    <div class="reveal d3" style="margin-top:clamp(40px,5.2vw,68px)">
+      <div class="slabel"><i></i>字阶 · 6 级</div>
+      <p class="ndesc">只有六级，且<b>层级由字号与字重共同承担</b>——数字用 800 字重加 −.04em 紧字距，正文回到 400。后台里真正需要被一眼看到的只有数字，所以标题反而克制：区块卡标题只给到 13.5px。</p>
+      <div class="tscale">
+        <div class="ts"><div class="k"><b>Metric</b><s>40 / 800 · 工作台首屏</s></div><div class="v fig" style="font-size:40px;font-weight:800;color:var(--brand)">30 / 50 席 · 60%</div></div>
+        <div class="ts"><div class="k"><b>Figure</b><s>34 / 800 · 指标卡数字</s></div><div class="v fig" style="font-size:34px;font-weight:800">¥ 13,600</div></div>
+        <div class="ts"><div class="k"><b>Title</b><s>26 / 800 · 页面标题</s></div><div class="v" style="font-size:26px;font-weight:800;letter-spacing:-.035em;line-height:1.12">席位池</div></div>
+        <div class="ts"><div class="k"><b>Section</b><s>20 / 700 · 区块标题</s></div><div class="v" style="font-size:20px;font-weight:700;letter-spacing:-.02em">席位池 · 共 8 个</div></div>
+        <div class="ts"><div class="k"><b>Body</b><s>14 / 400 · 正文</s></div><div class="v" style="font-size:14px;font-weight:400;line-height:1.7">当前有 20 个空闲席位，其中商业版闲置对应年费约 ¥4,200。</div></div>
+        <div class="ts"><div class="k"><b>Caption</b><s>12 / 400 · 辅助说明</s></div><div class="v" style="font-size:12px;font-weight:400;color:var(--ink-4);line-height:1.6">数据范围：全企业（云构设计院）· 近 14 天</div></div>
       </div>
     </div>
   </div>
