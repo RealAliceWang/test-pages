@@ -14,7 +14,7 @@ const BASE = process.env.BASE_URL ?? 'http://localhost:5173/build-entry.html';
 
 /** One representative member per role, matching the header's identity switcher. */
 const ROLES: { role: Role; name: string }[] = [
-  { role: 'ORG_ADMIN', name: '王振华' },
+  { role: 'ORG_ADMIN', name: '李振华' },
   { role: 'DEPT_ADMIN', name: '李明' },
   { role: 'MEMBER', name: '张思远' },
   { role: 'VENDOR_OPS', name: '沈涛' },

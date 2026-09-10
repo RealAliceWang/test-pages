@@ -684,8 +684,9 @@ a{color:inherit;text-decoration:none}
 .pbars{display:flex;flex-direction:column;gap:11px}
 .pbar{display:flex;align-items:center;gap:13px}
 .pbar .l{font-size:12px;color:var(--ink-4);width:78px;flex:none;text-align:right}
-.pbar .tr{flex:1;height:7px;border-radius:4px;background:var(--bg-3);overflow:hidden}
-.pbar .fi{height:100%;border-radius:4px;background:var(--brand)}
+.pbar .tr{display:block;flex:1;height:7px;border-radius:4px;background:var(--bg-3);overflow:hidden}
+/* display:block is required — the fill is a <span>, and an inline box drops width/height. */
+.pbar .fi{display:block;height:100%;border-radius:4px;background:var(--brand)}
 .pcard.b .pbar .fi{background:var(--cyan)}
 .pbar .p{font-size:12px;font-weight:700;color:var(--ink-4);width:32px;text-align:right;font-variant-numeric:tabular-nums}
 
@@ -1487,7 +1488,7 @@ body.shotbox-open{overflow:hidden}
     </div>
 
     <div class="hero-meta reveal d1">
-      <div><div class="n">8<small>池 / 50 席</small></div><div class="t">企业持有的席位资产</div></div>
+      <div><div class="n">12<small>池 / 61 席</small></div><div class="t">企业持有的席位资产</div></div>
       <div><div class="n">60<small>% → 85%</small></div><div class="t">席位利用率目标</div></div>
       <div><div class="n">4<small>小时</small></div><div class="t">审批闭环目标（原 3–5 天）</div></div>
       <div><div class="n">4,200<small>元/年</small></div><div class="t">可回收的闲置成本</div></div>
@@ -1506,7 +1507,7 @@ body.shotbox-open{overflow:hidden}
 
     <div class="ov-split reveal d1">
       <div>
-        <p class="ov-lede"><b>3D3S 云授权系统</b> —— 面向建筑结构设计企业的 B 端授权资产管理平台，让企业管理员在决策界面内一屏获得全部判断依据。</p>
+        <p class="ov-lede"><b>3D3S 云授权系统</b> —— 面向建筑结构设计企业的 B 端授权资产管理平台，让企业管理员在一屏内获得授权决策所需的关键依据。</p>
         <p class="ov-lede" style="margin-top:22px">3D3S 含 25+ 功能模块，其中 8 个以<b>席位池</b>形式授权给企业。企业购买的不是软件副本，而是席位配额。接手时这些配额散落在合同、邮件和总工个人的 Excel 里，由此产生四类管理困境：<b>资产不可见、审批无依据、续费无佐证、操作无留痕</b>。</p>
       </div>
       <div class="ov-facts">
@@ -1520,15 +1521,15 @@ body.shotbox-open{overflow:hidden}
 
     <div class="strip reveal d2">
       <div><div class="k">组织规模</div><div class="v">云构设计院</div><div class="s">4 个部门 · 18 名成员</div></div>
-      <div><div class="k">软件资产</div><div class="v">8 个席位池 · 50 席位</div><div class="s">免费版 + 商业版双轨</div></div>
+      <div><div class="k">软件资产</div><div class="v">12 个席位池 · 61 席位</div><div class="s">免费版 + 商业版双轨</div></div>
       <div><div class="k">角色体系</div><div class="v">3 级权限体系</div><div class="s">企业管理员 / 部门管理员 / 成员</div></div>
-      <div><div class="k">核心指标</div><div class="v">审批 3–5 天 → 4 小时</div><div class="s">席位利用率 60% → 85%</div></div>
+      <div><div class="k">目标指标</div><div class="v">审批 3–5 天 → 4 小时</div><div class="s">席位利用率 60% → 85%</div></div>
     </div>
 
     <div class="opp reveal d3">
       <div class="k"><i></i>设计切口</div>
       <h4>把席位、费用、责任人与操作记录<br>聚合进同一个对象视图</h4>
-      <p>信息架构的核心对象定为<b>席位池</b>，而非功能模块。余量、成本、责任人和操作记录组织进同一详情视图后，管理员在决策界面内一屏即可获得全部判断依据——后续的导航结构、页面模板与组件规范均由这一判断推导而来。</p>
+      <p>信息架构的核心对象定为<b>席位池</b>，而非功能模块。余量、成本、责任人和操作记录组织进同一详情视图后，管理员在一屏内即可获得授权决策所需的关键依据——后续的导航结构、页面模板与组件规范均由这一判断推导而来。</p>
     </div>
   </div>
 </section>
@@ -1600,7 +1601,7 @@ body.shotbox-open{overflow:hidden}
     <div class="opp reveal d3">
       <div class="k"><i></i>差异化机会</div>
       <h4>审批过程中缺少「成本后果的实时呈现」</h4>
-      <p>三家竞品共同存在这一缺口，而它正是本方案的设计切入点：<b>审批卡内直出余量与预估费用，把后果写在按钮旁</b>。管理员不必先通过、再发现金额，决策与代价在同一屏内完成对照。</p>
+      <p>三家竞品共同存在这一缺口，而它正是本方案的设计切入点：<b>审批卡内直出余量条与预估费用，后果紧随余量框写在下方</b>。管理员不必先通过、再发现金额，决策与代价在同一屏内完成对照。</p>
     </div>
 
     <div class="slabel reveal" style="margin-top:clamp(38px,5vw,58px)"><i></i>用户画像与角色诉求</div>
@@ -1795,7 +1796,7 @@ body.shotbox-open{overflow:hidden}
         </div>
         <div class="iatree-branch">
           <div class="bnode"><span class="seq">03</span><span class="cap" style="background:var(--cyan)">处置</span><div class="zh">席位与成员</div></div>
-          <div class="leaf"><div class="n"><span class="d" style="background:var(--cyan)"></span>席位池</div><div class="r">/admin/seats</div><div class="x">8 个池的占用条与健康度，可分配与回收</div></div>
+          <div class="leaf"><div class="n"><span class="d" style="background:var(--cyan)"></span>席位池</div><div class="r">/admin/seats</div><div class="x">12 个池的占用条与健康度，可分配与回收</div></div>
           <div class="leaf"><div class="n"><span class="d" style="background:var(--cyan)"></span>成员管理</div><div class="r">/admin/members</div><div class="x">18 名成员的在职状态、角色、持有席位与最后登录</div></div>
         </div>
         <div class="iatree-branch">
@@ -1858,7 +1859,7 @@ body.shotbox-open{overflow:hidden}
           <div class="jm-side">机会</div>
           <div class="jm-cell"><span class="jm-tag o">优先级排序</span>按剩余天数与影响面排序</div>
           <div class="jm-cell"><span class="jm-tag o">决策随行</span>审批卡内直接嵌入余量条与成本预估</div>
-          <div class="jm-cell"><span class="jm-tag o">后果前置</span>「通过后需下单付费扩容」写在按钮旁</div>
+          <div class="jm-cell"><span class="jm-tag o">后果前置</span>「通过后需下单付费扩容」紧随余量框</div>
           <div class="jm-cell"><span class="jm-tag o">任务接力</span>支付成功自动生成待分配任务并回工作台</div>
           <div class="jm-cell re"><span class="jm-tag o">数据即证据</span>趋势图与审计日志一键导出 CSV</div>
         </div>
@@ -1896,18 +1897,18 @@ body.shotbox-open{overflow:hidden}
         <div class="dec-opt on">
           <div class="tag"><i></i>方案 C · 采纳</div>
           <h5>余量条与成本预估内嵌审批卡</h5>
-          <p>余量条、预估金额与审批链收敛进卡内。</p>
-          <div class="vd">采纳 — 决策依据与操作入口同屏、零跳转；代价是首屏卡片密度由 4 张降为 3 张。</div>
+          <p>两重上限同框直出：模块自己的目标池，与免费版才受限的企业免费额度，都走共享 .meter。池满是扩容单存在的原因，额度余量才决定它能否被满足；无分母的行不画条子，改用文字说明状态。</p>
+          <div class="vd">采纳 — 「我批了会怎样」在按下按钮前就有答案：池内分配 / 付费扩容 / 厂商核额三条分支各写一句后果并配语义色。代价是首屏卡片密度由 4 张降为 3 张。</div>
         </div>
       </div>
       <div class="dec-proof reveal">
         <button class="frame" type="button" data-zoom="public/portfolio/admin-approvals.webp"
-          data-fig="决策 01 · 落地" data-cap="审批中心 — 余量条、预估金额与审批链收敛进审批卡内，操作后果标注在「通过 / 驳回」按钮旁。"
+          data-fig="决策 01 · 落地" data-cap="审批中心 — 余量条、预估金额与已批记录收敛进审批卡内；无池的申请没有分母，同一位置改用文字说明状态。"
           aria-label="放大查看审批卡落地界面">
-          <img src="public/portfolio/admin-approvals.webp" alt="审批中心界面：审批卡内直出席位余量、预估金额与审批链" width="3200" height="2000" loading="lazy" style="object-position:50% 30%">
+          <img src="public/portfolio/admin-approvals.webp" alt="审批中心界面：审批卡内直出目标池余量条、企业免费额度条与预估金额" width="3200" height="3400" loading="lazy" style="object-position:50% 74%">
           <span class="zoom-hint"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5M11 8v6M8 11h6"/></svg>点击放大</span>
         </button>
-        <div class="cap"><span class="chip">采纳方案落地</span><span><b>审批卡内直出决策依据</b> — 余量条、预估金额与审批链同卡呈现，后果标注于按钮旁，审批全程零跳转。</span></div>
+        <div class="cap"><span class="chip">采纳方案落地</span><span><b>审批卡内直出决策依据</b> — 余量条、预估金额与已批记录同卡呈现，操作后果紧随其下，审批全程零跳转。</span></div>
       </div>
     </div>
 
@@ -1969,7 +1970,7 @@ body.shotbox-open{overflow:hidden}
           <div class="tag"><i></i>方案 C · 采纳</div>
           <h5>占用条三层编码</h5>
           <p>长度编码占用率，颜色编码健康度，辅注承载处置建议。</p>
-          <div class="vd">采纳 — 单一控件同时表达三个维度；8 个池首屏完整可见。</div>
+          <div class="vd">采纳 — 单一控件同时表达三个维度；扫读时长度差异直接可比。</div>
         </div>
       </div>
       <div class="dec-proof reveal">
@@ -1979,7 +1980,7 @@ body.shotbox-open{overflow:hidden}
           <img src="public/portfolio/admin-seats.webp" alt="席位池界面：占用条以长度表示占用率、颜色表示健康度" width="3200" height="2000" loading="lazy" style="object-position:50% 58%">
           <span class="zoom-hint"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5M11 8v6M8 11h6"/></svg>点击放大</span>
         </button>
-        <div class="cap"><span class="chip">采纳方案落地</span><span><b>占用条三层编码</b> — 长度＝占用率 · 颜色＝健康度 · 辅注＝处置建议，8 个池首屏一眼完成高低比较。</span></div>
+        <div class="cap"><span class="chip">采纳方案落地</span><span><b>占用条三层编码</b> — 长度＝占用率 · 颜色＝健康度 · 辅注＝处置建议，扫读中一眼完成池间高低比较。</span></div>
       </div>
     </div>
 
@@ -2071,7 +2072,7 @@ body.shotbox-open{overflow:hidden}
           <h3>审批中心<br>让「通过」带上后果</h3>
         </div>
         <div>
-          <p class="screen-lede">第一版审批卡只有申请信息加两个按钮。可用性测试中，4 位管理者<b>全部问出同一个问题：「我批了会怎样？」</b>这张卡因此重构：余量、成本预估与审批链收进卡内，操作后果直接标注在按钮旁。</p>
+          <p class="screen-lede">第一版审批卡只有申请信息加两个按钮。可用性测试中，4 位管理者<b>全部问出同一个问题：「我批了会怎样？」</b>这张卡因此重构：目标池余量条、成本预估与已批记录收进卡内，操作后果紧随余量框写在下方。</p>
           <div class="screen-spec">
             <div><div class="k">路由</div><div class="v mono">/admin/approvals</div></div>
             <div><div class="k">信息密度</div><div class="v">4 待处理 · 8 已处理</div></div>
@@ -2081,17 +2082,17 @@ body.shotbox-open{overflow:hidden}
       </div>
       <figure class="screen-shot">
         <button class="frame" type="button" data-zoom="public/portfolio/admin-approvals.webp"
-          data-fig="图 02" data-cap="审批中心 — 每张卡自带申请理由原文、审批链标签与成本预估，通过按钮旁标注后果。"
+          data-fig="图 02" data-cap="审批中心 — 每张卡自带申请理由原文、审批环节标签、目标池余量条与成本预估，操作后果紧随其下。"
           aria-label="放大查看审批中心界面">
-          <img src="public/portfolio/admin-approvals.webp" alt="审批中心：待我处理列表，每张卡包含申请人、理由、关联项目与成本预估" width="3200" height="2000" loading="lazy">
+          <img src="public/portfolio/admin-approvals.webp" alt="审批中心：待我处理列表，每张卡包含申请人、理由、关联项目、两重余量条与成本预估" width="3200" height="3400" loading="lazy">
           <span class="zoom-hint"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5M11 8v6M8 11h6"/></svg>点击放大</span>
         </button>
-        <figcaption class="shotcap"><span class="f">图 02</span><span>审批中心 — 余量、成本与审批链收进卡内</span></figcaption>
+        <figcaption class="shotcap"><span class="f">图 02</span><span>审批中心 — 余量条、成本与已批记录收进卡内</span></figcaption>
       </figure>
       <div class="feats">
         <div class="feat">
           <span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></span>
-          <div><h5>后果写在按钮旁</h5><p>免费版标「由厂商核定额度」，商业版标「需付费扩容」并给出 ¥13,600。</p></div>
+          <div><h5>后果紧随余量框</h5><p>免费版标「由厂商核定额度」，商业版标「需付费扩容」并给出 ¥13,600。</p></div>
         </div>
         <div class="feat">
           <span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M9 15h6M9 11h3"/></svg></span>
@@ -2108,10 +2109,10 @@ body.shotbox-open{overflow:hidden}
           <h3>席位池<br>一根条读完一个池</h3>
         </div>
         <div>
-          <p class="screen-lede">系统核心对象页。8 个池、2 种版本、各自到期日，统一由占用条表达——<b>长度是占用率，颜色是健康度，下方辅注是处置建议</b>。顶部横幅将闲置席位折算为年费。</p>
+          <p class="screen-lede">系统核心对象页。12 个池、2 种版本、各自到期日，统一由占用条表达——<b>长度是占用率，颜色是健康度，下方辅注是处置建议</b>。顶部横幅将闲置席位折算为年费。</p>
           <div class="screen-spec">
             <div><div class="k">路由</div><div class="v mono">/admin/seats</div></div>
-            <div><div class="k">信息密度</div><div class="v">8 席位池 · 50 席位</div></div>
+            <div><div class="k">信息密度</div><div class="v">12 席位池 · 61 席位</div></div>
             <div><div class="k">关键组件</div><div class="v">占用条 / 语义色 / 行内展开</div></div>
           </div>
         </div>
@@ -2120,15 +2121,15 @@ body.shotbox-open{overflow:hidden}
         <button class="frame" type="button" data-zoom="public/portfolio/admin-seats.webp"
           data-fig="图 03" data-cap="席位池 — 顶部横幅将闲置席位折算为年费；每行占用条同时编码占用率、健康度与处置建议。"
           aria-label="放大查看席位池界面">
-          <img src="public/portfolio/admin-seats.webp" alt="席位池页面：8 个席位池的占用条、利用率、到期日与状态徽章" width="3200" height="2000" loading="lazy">
+          <img src="public/portfolio/admin-seats.webp" alt="席位池页面：12 个席位池的占用条、利用率、到期日与状态徽章" width="3200" height="2000" loading="lazy">
           <span class="zoom-hint"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5M11 8v6M8 11h6"/></svg>点击放大</span>
         </button>
-        <figcaption class="shotcap"><span class="f">图 03</span><span>席位池 — 8 个池的占用条与到期日</span></figcaption>
+        <figcaption class="shotcap"><span class="f">图 03</span><span>席位池 — 12 个池的占用条与到期日</span></figcaption>
       </figure>
       <div class="feats">
         <div class="feat">
           <span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20M6 15h4"/></svg></span>
-          <div><h5>闲置折算为年费</h5><p>顶部横幅把 20 个空位折算为 ¥4,200，让「闲置」成为可感知的成本信号。</p></div>
+          <div><h5>闲置折算为年费</h5><p>顶部横幅按版本折算闲置成本：20 个空位中 1 个是商业版，对应年费 ¥4,200，让「闲置」成为可感知的成本信号。</p></div>
         </div>
         <div class="feat">
           <span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>
@@ -2169,7 +2170,7 @@ body.shotbox-open{overflow:hidden}
       <div class="feats">
         <div class="feat">
           <span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21.2 15.9A10 10 0 118.1 2.8"/><path d="M22 12A10 10 0 0012 2v10z"/></svg></span>
-          <div><h5>结论随图呈现</h5><p>60% 利用率配一句结论「续费可维持现有规模」。</p></div>
+          <div><h5>结论随图呈现</h5><p>67% 利用率配一句结论「续费可维持现有规模」。</p></div>
         </div>
         <div class="feat">
           <span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg></span>
@@ -2284,10 +2285,10 @@ body.shotbox-open{overflow:hidden}
       <div class="slabel"><i></i>字阶 · 6 级</div>
       <p class="ndesc">只有六级，且<b>层级由字号与字重共同承担</b>——数字用 800 字重加 −.04em 紧字距，正文回到 400。后台里真正需要被一眼看到的只有数字，所以标题反而克制：区块卡标题只给到 13.5px。</p>
       <div class="tscale">
-        <div class="ts"><div class="k"><b>Metric</b><s>40 / 800 · 工作台首屏</s></div><div class="v fig" style="font-size:40px;font-weight:800;color:var(--brand)">30 / 50 席 · 60%</div></div>
+        <div class="ts"><div class="k"><b>Metric</b><s>40 / 800 · 工作台首屏</s></div><div class="v fig" style="font-size:40px;font-weight:800;color:var(--brand)">41 / 61 席 · 67%</div></div>
         <div class="ts"><div class="k"><b>Figure</b><s>34 / 800 · 指标卡数字</s></div><div class="v fig" style="font-size:34px;font-weight:800">¥ 13,600</div></div>
         <div class="ts"><div class="k"><b>Title</b><s>26 / 800 · 页面标题</s></div><div class="v" style="font-size:26px;font-weight:800;letter-spacing:-.035em;line-height:1.12">席位池</div></div>
-        <div class="ts"><div class="k"><b>Section</b><s>20 / 700 · 区块标题</s></div><div class="v" style="font-size:20px;font-weight:700;letter-spacing:-.02em">席位池 · 共 8 个</div></div>
+        <div class="ts"><div class="k"><b>Section</b><s>20 / 700 · 区块标题</s></div><div class="v" style="font-size:20px;font-weight:700;letter-spacing:-.02em">席位池 · 共 12 个</div></div>
         <div class="ts"><div class="k"><b>Body</b><s>14 / 400 · 正文</s></div><div class="v" style="font-size:14px;font-weight:400;line-height:1.7">当前有 20 个空闲席位，其中商业版闲置对应年费约 ¥4,200。</div></div>
         <div class="ts"><div class="k"><b>Caption</b><s>12 / 400 · 辅助说明</s></div><div class="v" style="font-size:12px;font-weight:400;color:var(--ink-4);line-height:1.6">数据范围：全企业（云构设计院）· 近 14 天</div></div>
       </div>
@@ -2314,7 +2315,7 @@ body.shotbox-open{overflow:hidden}
           <div class="sp-hdr">
             <div>
               <div class="ti">席位池</div>
-              <div class="sb">8 个席位池 · 50 个席位 · 60% 已分配</div>
+              <div class="sb">12 个席位池 · 61 个席位 · 67% 已分配</div>
             </div>
             <div class="mid">
               <div class="sp-fld srch">
@@ -2415,6 +2416,7 @@ body.shotbox-open{overflow:hidden}
                   <span class="sp-num" style="font-size:20px">¥ 13,600</span>
                 </div>
               </div>
+              <p style="font-size:11.5px;color:var(--a-warn);margin-top:10px">⚠ 通过后需下单付费扩容</p>
               <div class="steps" style="margin-top:14px">
                 <span class="n" style="background:var(--a-ok-lt)">✓</span><span class="lb" style="font-size:12px">部门</span>
                 <span class="ln"></span>
@@ -2426,10 +2428,9 @@ body.shotbox-open{overflow:hidden}
                 <span class="sp-btn ghost">驳回</span>
                 <span class="sp-btn pri">通过</span>
               </div>
-              <p style="font-size:11.5px;color:var(--a-warn);margin-top:9px;text-align:right">通过后需下单付费扩容</p>
             </div>
           </div>
-          <p class="sp-note" style="margin-top:14px">余量条、预估金额与审批链收敛进卡内，<b>操作后果标注在按钮旁</b>——决策依据与操作入口同屏，零跳转。</p>
+          <p class="sp-note" style="margin-top:14px">余量条复用全站共享的 <b>.meter</b>，填充色统一走 poolHealth 阈值（≥100% 转橙）。<b>一张卡可叠两重上限</b>：模块目标池，与免费版才受限的企业免费额度；无分母的行不画条子，改用文字说明状态而不留空槽。预估金额与操作后果紧随其下——决策依据与操作入口同屏，零跳转。</p>
         </div>
 
         <!-- ── 05 Modal ──────────────────────────────────────────────── -->
@@ -2551,7 +2552,7 @@ body.shotbox-open{overflow:hidden}
             </div>
             <p class="sp-num" style="font-size:34px;margin-top:16px">20</p>
             <div class="foot">
-              <p>约 ¥4,200 沉没成本</p>
+              <p>其中商业版年费 ¥4,200</p>
               <span style="color:var(--a-tx4)"><svg class="sp-i" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="15" height="15"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></span>
             </div>
           </div>
@@ -2584,9 +2585,9 @@ body.shotbox-open{overflow:hidden}
               <svg width="96" height="96" aria-hidden="true">
                 <circle cx="48" cy="48" r="43.5" fill="none" stroke="var(--a-su3)" stroke-width="9"/>
                 <circle cx="48" cy="48" r="43.5" fill="none" stroke="var(--a-sig)" stroke-width="9"
-                  stroke-linecap="round" stroke-dasharray="273.32" stroke-dashoffset="109.33"/>
+                  stroke-linecap="round" stroke-dasharray="273.32" stroke-dashoffset="90.20"/>
               </svg>
-              <span class="val">60%</span>
+              <span class="val">67%</span>
             </div>
             <figcaption style="font-size:12px;color:var(--a-tx3)">席位利用率</figcaption>
             </figure>
@@ -2797,7 +2798,7 @@ body.shotbox-open{overflow:hidden}
         <p>申请理由、关联项目、席位余量、成本预估四类决策信息统一收进卡内，无需跳转其他页面补齐上下文。</p>
         <ul class="fstep-pts">
           <li><i style="background:var(--brand)"></i><span><b>理由原文不截断</b> — 完整业务背景才是审批的实质依据</span></li>
-          <li><i style="background:var(--amber)"></i><span><b>后果标在按钮旁</b> — 标注「需付费扩容」，预估 ¥13,600</span></li>
+          <li><i style="background:var(--amber)"></i><span><b>后果标在余量框下方</b> — 标注「需付费扩容」，预估 ¥13,600</span></li>
         </ul>
         <div class="fstep-next">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
@@ -2806,9 +2807,9 @@ body.shotbox-open{overflow:hidden}
       </div>
       <figure>
         <button class="frame" type="button" data-zoom="public/portfolio/admin-approvals.webp"
-          data-fig="步骤 03" data-cap="审批中心研判 — 申请理由、审批链与成本预估同卡呈现，按钮旁写明后果。"
+          data-fig="步骤 03" data-cap="审批中心研判 — 申请理由、目标池余量条与成本预估同卡呈现，余量框下方写明操作后果。"
           aria-label="放大查看审批中心">
-          <img src="public/portfolio/admin-approvals.webp" alt="审批中心：卡内含申请理由原文、审批链标签与成本预估" width="3200" height="2000" loading="lazy">
+          <img src="public/portfolio/admin-approvals.webp" alt="审批中心：卡内含申请理由原文、审批环节标签、两重余量条与成本预估" width="3200" height="3400" loading="lazy">
           <span class="zoom-hint"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5M11 8v6M8 11h6"/></svg>点击放大</span>
         </button>
       </figure>
@@ -2824,7 +2825,7 @@ body.shotbox-open{overflow:hidden}
         <p>付费扩容前先排除内部调剂的可能。八个池的占用条并列排布，一屏内即可完成空位有无的判断。</p>
         <ul class="fstep-pts">
           <li><i style="background:var(--red)"></i><span><b>商业版池 5/5 已满</b> — 无空位可回收，判定为付费扩容</span></li>
-          <li><i style="background:var(--amber)"></i><span><b>闲置折算成本</b> — 20 个空闲席位 ≈ 年费 ¥4,200</span></li>
+          <li><i style="background:var(--amber)"></i><span><b>闲置折算成本</b> — 20 个空闲席位中 1 个商业版，年费 ¥4,200</span></li>
         </ul>
         <div class="fstep-next">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
@@ -2835,7 +2836,7 @@ body.shotbox-open{overflow:hidden}
         <button class="frame" type="button" data-zoom="public/portfolio/admin-seats.webp"
           data-fig="步骤 04" data-cap="席位池核对余量 — 占用条同时编码占用率、健康度与行动建议，确认无可回收空位。"
           aria-label="放大查看席位池">
-          <img src="public/portfolio/admin-seats.webp" alt="席位池页面：8 个池的占用条、利用率与状态徽章" width="3200" height="2000" loading="lazy">
+          <img src="public/portfolio/admin-seats.webp" alt="席位池页面：12 个池的占用条、利用率与状态徽章" width="3200" height="2000" loading="lazy">
           <span class="zoom-hint"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5M11 8v6M8 11h6"/></svg>点击放大</span>
         </button>
       </figure>
@@ -2959,7 +2960,7 @@ body.shotbox-open{overflow:hidden}
           <div class="slabel"><i></i>目标指标与验证方式</div>
           <h3>四项目标，<br>各自写明怎么验</h3>
         </div>
-        <p>以上为<b>方案评审阶段基于流程模型推算的目标值，尚未经上线验证</b>。上线后计划通过埋点采集任务时长与审批时效，再与目标值逐项校对。</p>
+        <p>系统已上线，但<b>尚未接入埋点，以上为设计阶段基于流程模型推算的目标值，暂无上线后的实测回测</b>。后续计划通过埋点采集任务时长与审批时效，再与目标值逐项校对。</p>
       </div>
 
       <div class="gauges">
@@ -2987,7 +2988,7 @@ body.shotbox-open{overflow:hidden}
             <div class="val" style="font-size:20px">¥4,200</div>
           </div>
           <div class="lb">年度可回收成本</div>
-          <div class="fr"><s>20 席闲置</s><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>续费时直接缩减</div>
+          <div class="fr"><s>商业版闲置 1 席</s><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>续费时直接缩减</div>
           <div class="vf">验证方式 — 闲置席位识别与回收</div>
         </div>
         <div class="gauge reveal d4">
@@ -3045,7 +3046,7 @@ body.shotbox-open{overflow:hidden}
         <div>
           <div class="n">02</div>
           <h5>损失厌恶</h5>
-          <p>「20 个空位」无法触发行动，「≈ ¥4,200」立刻引起重视。原理是<strong>损失厌恶</strong>——把抽象配额换算为具象成本，无效数据才能变为有效行动。</p>
+          <p>「闲置 20 席」无法触发行动，折算出的「¥4,200/年」立刻引起重视。原理是<strong>损失厌恶</strong>——把抽象配额换算为具象成本，无效数据才能变为有效行动。</p>
         </div>
         <div>
           <div class="n">03</div>

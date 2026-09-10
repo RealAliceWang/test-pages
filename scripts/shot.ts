@@ -14,7 +14,7 @@ const OUT = process.argv[2] ?? '.review/current';
 // Identity name -> routes worth reviewing under that role.
 const PLAN: { name: string; routes: [string, string][] }[] = [
   {
-    name: '王振华',
+    name: '李振华',
     routes: [
       ['/', 'admin-workbench'],
       ['/seats', 'admin-seats'],
