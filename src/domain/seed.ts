@@ -446,6 +446,44 @@ export const applications: Application[] = [
     ],
     createdAt: '2026-03-15 10:18',
   },
+
+  /* ---- Three more live requests aimed at pools that still have room, so the
+     inbox is not uniformly "池已满". a-13/a-14 land inside the free grants and
+     cost nothing; a-15 is the case the seat model exists to catch — the pool
+     has a spare seat, just not enough of them, so a request that looks like a
+     SEAT still resolves to PURCHASE. */
+  {
+    id: 'a-13', code: 'AP20260331008', orgId: 'org-1', deptId: 'dept-1', applicantId: 'm-15',
+    moduleId: '2', kind: 'SEAT', seats: 1,
+    reason: '无锡金融中心二期需并行做模态与稳定性验算，本人工位尚未开通基本分析。',
+    projectName: '无锡金融中心二期', status: '待部门审批',
+    steps: [
+      { role: 'DEPT_ADMIN', label: '部门审批', action: '待审批' },
+    ],
+    createdAt: '2026-03-31 10:05',
+  },
+  {
+    id: 'a-14', code: 'AP20260331009', orgId: 'org-1', deptId: 'dept-1', applicantId: 'm-18',
+    moduleId: '1', kind: 'SEAT', seats: 1,
+    reason: '转入结构一所整体建模岗，需要建筑结构模块承接常规项目的建模与计算。',
+    projectName: '苏州园区研发楼', status: '待部门审批',
+    steps: [
+      { role: 'DEPT_ADMIN', label: '部门审批', action: '待审批' },
+    ],
+    createdAt: '2026-03-31 10:40',
+  },
+  {
+    // 吴建国 is a department admin, so stepsFor drops the 部门审批 rung he
+    // would otherwise sign himself — this one starts at 企业审批.
+    id: 'a-15', code: 'AP20260330010', orgId: 'org-1', deptId: 'dept-3', applicantId: 'm-9',
+    moduleId: '21', kind: 'PURCHASE', seats: 2,
+    reason: '深化部承接合肥政务中心 BIM 交付，需两个席位与设计院 Revit 模型互通，池内仅余 1 席。',
+    projectName: '合肥政务中心', status: '待企业审批',
+    steps: [
+      { role: 'ORG_ADMIN', label: '企业审批', action: '待审批' },
+    ],
+    createdAt: '2026-03-30 16:15',
+  },
 ];
 
 // ---------------------------------------------------------------- orders
@@ -511,10 +549,13 @@ export const orders: Order[] = [
 export const auditLogs: AuditLog[] = [
   { id: 'log-1',  orgId: 'org-1', actorId: 'm-3',  actorName: '张思远', actorRole: 'MEMBER',     action: '提交申请',     target: 'AP20260331001', detail: '申请「高级分析」免费额度 1 个席位',            createdAt: '2026-03-31 09:20', ip: '192.168.100.42' },
   { id: 'log-2',  orgId: 'org-1', actorId: 'm-14', actorName: '徐磊',   actorRole: 'MEMBER',     action: '提交申请',     target: 'AP20260331007', detail: '申请「多高层」免费额度 1 个席位',              createdAt: '2026-03-31 08:55', ip: '192.168.100.61' },
+  { id: 'log-16', orgId: 'org-1', actorId: 'm-18', actorName: '崔敏',   actorRole: 'MEMBER',     action: '提交申请',     target: 'AP20260331009', detail: '申请「建筑结构」池内席位 1 个',                createdAt: '2026-03-31 10:40', ip: '192.168.100.73' },
+  { id: 'log-17', orgId: 'org-1', actorId: 'm-15', actorName: '许倩',   actorRole: 'MEMBER',     action: '提交申请',     target: 'AP20260331008', detail: '申请「基本分析」池内席位 1 个',                createdAt: '2026-03-31 10:05', ip: '192.168.100.55' },
   { id: 'log-3',  orgId: 'org-1', actorId: 'm-1',  actorName: '李振华', actorRole: 'ORG_ADMIN',  action: '企业审批通过', target: 'AP20260329003', detail: '同意为「建筑结构（商业版）」扩容 1 个席位',    createdAt: '2026-03-30 09:15', ip: '192.168.100.10' },
   { id: 'log-4',  orgId: 'org-1', actorId: 'm-1',  actorName: '李振华', actorRole: 'ORG_ADMIN',  action: '支付订单',     target: 'ORD20260328004', detail: '对公转账支付 ¥16,400，等待厂商确认到账',       createdAt: '2026-03-30 10:12', ip: '192.168.100.10' },
   { id: 'log-5',  orgId: 'org-1', actorId: 'm-2',  actorName: '李明',   actorRole: 'DEPT_ADMIN', action: '部门审批通过', target: 'AP20260330002', detail: '同意上报「网架网壳（商业版）」采购申请',      createdAt: '2026-03-30 15:10', ip: '192.168.100.17' },
   { id: 'log-6',  orgId: 'org-1', actorId: 'm-1',  actorName: '李振华', actorRole: 'ORG_ADMIN',  action: '创建订单',     target: 'ORD20260330005', detail: '为「基础设计（商业版）」采购 2 个席位',        createdAt: '2026-03-30 17:45', ip: '192.168.100.10' },
+  { id: 'log-18', orgId: 'org-1', actorId: 'm-9',  actorName: '吴建国', actorRole: 'DEPT_ADMIN', action: '提交申请',     target: 'AP20260330010', detail: '申请「多高层（商业版）」扩容 2 个席位',        createdAt: '2026-03-30 16:15', ip: '192.168.100.28' },
   { id: 'log-7',  orgId: 'org-1', actorId: 'm-6',  actorName: '赵国栋', actorRole: 'DEPT_ADMIN', action: '部门审批通过', target: 'AP20260329003', detail: '同意上报「建筑结构（商业版）」采购申请',      createdAt: '2026-03-29 16:40', ip: '192.168.100.23' },
   { id: 'log-8',  orgId: 'org-1', actorId: 'm-6',  actorName: '赵国栋', actorRole: 'DEPT_ADMIN', action: '分配席位',     target: '周敏',           detail: '从「基本分析」池分配 1 个席位给周敏',          createdAt: '2026-03-28 10:05', ip: '192.168.100.23' },
   { id: 'log-9',  orgId: 'org-1', actorId: 'm-1',  actorName: '李振华', actorRole: 'ORG_ADMIN',  action: '邀请成员',     target: '刘颖',           detail: '邀请刘颖加入结构一所，待激活',                createdAt: '2026-03-28 09:10', ip: '192.168.100.10' },
