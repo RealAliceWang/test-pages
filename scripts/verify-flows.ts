@@ -212,6 +212,14 @@ dispatch({ type: 'SUBMIT_APPLICATION', moduleId: '9', seats: 1, reason: '楼梯�
 const withdrawApp = latestApp();
 dispatch({ type: 'WITHDRAW_APPLICATION', applicationId: withdrawApp.id });
 check('撤销后状态', state.applications.find((a) => a.id === withdrawApp.id)!.status, '已撤销');
+// Withdrawing leaves the unsigned steps in place so the trail still shows how
+// far the request got. Checking status alone once let a withdrawn request sit
+// in every eligible approver's queue with live 通过 / 驳回 buttons.
+check(
+  '撤销后离开审批人待办',
+  state.members.some((m) => inboxOf(state, m).some((a) => a.id === withdrawApp.id)),
+  false,
+);
 
 // ---------------------------------------------------------------- 5. 离职释放
 

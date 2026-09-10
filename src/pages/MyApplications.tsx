@@ -6,14 +6,13 @@ import TabFilter from '../components/common/TabFilter';
 import StatusBadge from '../components/common/StatusBadge';
 import { moduleIconMap } from '../assets/moduleIcons';
 import { moduleLabel } from '../domain/format';
-import { deptOf, isWithdrawable, kindLabels, moduleOf, useApp } from '../store';
+import { deptOf, isSettled, isWithdrawable, kindLabels, moduleOf, useApp } from '../store';
 import type { Application, ApprovalStep } from '../domain/types';
 
 const filters = ['全部', '进行中', '已完成', '已驳回/撤销'] as const;
 
-function isLive(a: Application) {
-  return !['已完成', '已驳回', '已撤销'].includes(a.status);
-}
+/** Still moving through the chain — the complement of the store's isSettled. */
+const isLive = (a: Application) => !isSettled(a);
 
 function StepRow({ step, index, last }: { step: ApprovalStep; index: number; last: boolean }) {
   const done = step.action === '通过';

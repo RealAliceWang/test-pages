@@ -246,9 +246,42 @@ export function stepAfterApproval(
   );
 }
 
+/**
+ * An application that has reached the end of its life, whatever the outcome.
+ *
+ * Status is the authority here, not the step list: withdrawing leaves the
+ * unsigned steps in place on purpose, so the trail still shows how far the
+ * request had travelled when its applicant pulled it back.
+ *
+ * Exhaustive by design — a newly added status must be classified here rather
+ * than defaulting into somebody's task queue.
+ */
+export function isSettled(app: Application): boolean {
+  switch (app.status) {
+    case '已完成':
+    case '已驳回':
+    case '已撤销':
+      return true;
+    case '待部门审批':
+    case '待企业审批':
+    case '待厂商审批':
+    case '待采购':
+    case '已下单':
+      return false;
+    default: {
+      const exhaustive: never = app.status;
+      return exhaustive;
+    }
+  }
+}
+
 /** Applications this member is expected to act on right now. */
 export function inboxOf(state: AppState, member: Member): Application[] {
   return state.applications.filter((app) => {
+    // Settled first. A withdrawn request keeps its 待审批 steps, so testing
+    // pendingStep alone would park it in every eligible approver's queue —
+    // with live 通过 / 驳回 buttons on something already called off.
+    if (isSettled(app)) return false;
     const step = pendingStep(app);
     if (!step) return false;
     return eligibleSigners(state, app, step).some((m) => m.id === member.id);

@@ -12,7 +12,7 @@ import WorkQueue from './workbench/WorkQueue';
 import ActivityChart from './workbench/ActivityChart';
 import {
   allocatedSeats, assignmentsOfMember, daysBetween, daysLeftOf, inboxOf,
-  isPoolExpiring, moduleOf, useApp,
+  isPoolExpiring, isSettled, moduleOf, useApp,
 } from '../store';
 import { can, canAny } from '../domain/permissions';
 import { roleLabels } from '../domain/types';
@@ -26,7 +26,7 @@ export default function Workbench() {
 
   const inbox = inboxOf(state, me);
   const myApps = state.applications.filter((a) => a.applicantId === me.id);
-  const myLiveApps = myApps.filter((a) => !['已完成', '已驳回', '已撤销'].includes(a.status));
+  const myLiveApps = myApps.filter((a) => !isSettled(a));
   const mySeats = assignmentsOfMember(state, me.id).filter((a) => a.status === '生效中');
 
   const orgPools = state.seatPools.filter((p) => p.orgId === me.orgId);

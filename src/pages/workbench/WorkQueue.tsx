@@ -5,7 +5,7 @@ import TabFilter from '../../components/common/TabFilter';
 import StatusBadge from '../../components/common/StatusBadge';
 import { moduleIconMap } from '../../assets/moduleIcons';
 import {
-  allocatedSeats, deptOf, kindLabels, memberOf, moduleOf, pendingStep, isStandIn, useApp,
+  allocatedSeats, deptOf, isSettled, kindLabels, memberOf, moduleOf, pendingStep, isStandIn, useApp,
 } from '../../store';
 import { moduleLabel } from '../../domain/format';
 import { METER_FILL, poolHealth } from '../../domain/poolHealth';
@@ -32,9 +32,8 @@ export default function WorkQueue({ items, pools, ownView }: WorkQueueProps) {
   const { state, me } = useApp();
   const [tab, setTab] = useState(0);
 
-  const settled = (a: Application) => ['已完成', '已驳回', '已撤销'].includes(a.status);
   const list =
-    tab === 1 ? items.filter((a) => !settled(a)) : tab === 2 ? items.filter(settled) : items;
+    tab === 1 ? items.filter((a) => !isSettled(a)) : tab === 2 ? items.filter(isSettled) : items;
 
   const target = ownView ? '/applications' : '/approvals';
 
@@ -72,7 +71,7 @@ export default function WorkQueue({ items, pools, ownView }: WorkQueueProps) {
             const dept = deptOf(state, app.deptId);
             const step = pendingStep(app);
             const standIn = step ? isStandIn(me, step) : false;
-            const done = settled(app);
+            const done = isSettled(app);
 
             // Own submissions still land on the generic list — /applications
             // has no focus/highlight support — but approvals to act on carry
