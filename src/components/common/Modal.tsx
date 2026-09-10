@@ -6,7 +6,10 @@ import type { ReactNode } from 'react';
 interface ModalProps {
   open: boolean;
   onClose: () => void;
-  title?: string;
+  /** Always required for the dialog's accessible name, even when `header`
+      supplies the visible title markup — it is only read by `aria-label`
+      in that case, never rendered in the DOM. */
+  title: string;
   header?: ReactNode;
   children: ReactNode;
   width?: number;
@@ -94,7 +97,7 @@ export default function Modal({ open, onClose, title, header, children, width = 
       <div
         ref={dialogRef}
         tabIndex={-1}
-        className="relative bg-surface rounded-xl overflow-hidden rise outline-none"
+        className="relative bg-surface rounded-md overflow-hidden rise outline-none"
         style={{ width, maxHeight: '85vh', boxShadow: 'var(--shadow-float)' }}
       >
         <div className="flex items-center justify-between px-6 py-[16px] border-b border-hairline">

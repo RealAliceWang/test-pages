@@ -24,7 +24,7 @@ export default function ActivityChart({ data, focusIndex, focusLabel }: Activity
 
   return (
     <div className="flex items-end justify-between gap-2 h-full min-h-[172px]" role="img"
-      aria-label={`近 7 天活跃度，峰值出现在${data[focus]?.label}`}>
+      aria-label={`近 7 天活跃度，峰值出现在${data[focus]?.label}。逐日数据：${data.map((d) => `${d.label} ${d.value} 次`).join('、')}`}>
       {data.map((d, i) => {
         const active = i === focus;
         /* Floor at 12% so a zero day still shows a stub rather than vanishing. */

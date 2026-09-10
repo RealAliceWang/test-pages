@@ -248,6 +248,11 @@ export interface AuditLog {
   actorRole: Role;
   action: AuditAction;
   target: string;
+  /** Member id of the target, when the target is a member — lets scope
+   *  filtering match on a stable id instead of a free-text name. Left
+   *  undefined when the target is not a member (an order, a module, an
+   *  organization, ...). */
+  targetId?: string;
   detail: string;
   createdAt: string;
   ip: string;

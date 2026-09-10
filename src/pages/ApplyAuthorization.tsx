@@ -47,11 +47,11 @@ export default function ApplyAuthorization() {
     return (
       <div>
         <Header title="申请授权" subtitle="模块不存在" />
-        <div className="p-6">
+        <div className="px-7 pb-7">
           <div className="panel py-16 text-center">
             <p className="text-[15px] text-text-muted">未找到该模块</p>
             <button onClick={() => navigate('/modules')}
-              className="mt-4 h-[38px] px-5 rounded-full text-[13.5px] font-semibold text-primary bg-primary-bg cursor-pointer">
+              className="btn-soft mt-4 h-[38px] px-5 text-[13.5px] font-semibold cursor-pointer">
               返回模块中心
             </button>
           </div>
@@ -101,7 +101,7 @@ export default function ApplyAuthorization() {
     return (
       <div>
         <Header title="申请授权" subtitle={`${moduleLabel(mod)} · ${mod.code}`} />
-        <div className="p-6">
+        <div className="px-7 pb-7">
           <div className="panel px-10 py-12 max-w-[560px] mx-auto text-center">
             <div className="w-[46px] h-[46px] rounded-full bg-primary-bg text-primary flex items-center justify-center mx-auto">
               <KeyRound size={22} />
@@ -176,8 +176,8 @@ export default function ApplyAuthorization() {
         </div>
 
         {step === 0 && (
-          <div className="grid grid-cols-3 gap-4 items-start">
-            <div className="col-span-2 flex flex-col gap-4">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 items-start">
+            <div className="xl:col-span-2 flex flex-col gap-4">
               {/* Which branch this request will take */}
               <div className="panel p-6">
                 <div className={`rounded-sm px-4 py-[14px] ${branch.bg} flex items-start gap-3`}>
@@ -280,8 +280,8 @@ export default function ApplyAuthorization() {
         )}
 
         {step === 1 && (
-          <div className="grid grid-cols-3 gap-4 items-start">
-            <div className="col-span-2 panel p-6">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 items-start">
+            <div className="xl:col-span-2 panel p-6">
               <p className="text-[15px] font-bold text-text mb-4">确认申请信息</p>
 
               <div className="border border-border rounded-sm divide-y divide-divider">

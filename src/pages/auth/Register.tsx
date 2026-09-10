@@ -33,10 +33,15 @@ export default function Register() {
 
   if (state.authed) return <Navigate to="/" replace />;
 
-  /* The reducer wrote the new member — swap the form for the outcome panel. */
-  const created = submittedEmail
-    ? state.members.find((m) => m.email.toLowerCase() === submittedEmail.toLowerCase())
-    : undefined;
+  /* The reducer's flash says whether REGISTER_MEMBER actually created a
+     member or rejected the attempt (e.g. duplicate email within the org) —
+     only swap to the outcome panel on a reported success. Inferring success
+     from "does a member with this email exist" is wrong: a rejected attempt
+     still matches the pre-existing member that caused the conflict. */
+  const created =
+    submittedEmail && state.flash?.kind === 'success'
+      ? state.members.find((m) => m.email.toLowerCase() === submittedEmail.toLowerCase())
+      : undefined;
   if (created) {
     return (
       <AuthShell>
@@ -84,7 +89,7 @@ export default function Register() {
 
       <div className="mt-6 grid grid-cols-2 gap-4">
         <label className="block">
-          <span className={label}>企业</span>
+          <span className={label}>企业<span className="text-danger ml-[2px]">*</span></span>
           <span className="relative block">
             {/* Unpicked selects read as placeholders, exactly like empty inputs. */}
             <select
@@ -99,7 +104,7 @@ export default function Register() {
           </span>
         </label>
         <label className="block">
-          <span className={label}>部门</span>
+          <span className={label}>部门<span className="text-danger ml-[2px]">*</span></span>
           <span className="relative block">
             <select
               className={`${input} pr-9 appearance-none cursor-pointer ${deptId ? '' : 'text-text-placeholder'}`}
@@ -115,31 +120,37 @@ export default function Register() {
         </label>
 
         <label className="block">
-          <span className={label}>姓名</span>
-          <input className={input} placeholder="真实姓名" value={name} onChange={(e) => setName(e.target.value)} />
+          <span className={label}>姓名<span className="text-danger ml-[2px]">*</span></span>
+          <input className={input} placeholder="真实姓名" value={name} onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && submit()} autoComplete="name" />
         </label>
         <label className="block">
           <span className={label}>职称（选填）</span>
-          <input className={input} placeholder="如 结构工程师" value={title} onChange={(e) => setTitle(e.target.value)} />
+          <input className={input} placeholder="如 结构工程师" value={title} onChange={(e) => setTitle(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && submit()} autoComplete="organization-title" />
         </label>
 
         <label className="block col-span-2">
-          <span className={label}>邮箱</span>
-          <input className={input} placeholder="用于接收激活通知，也可作为登录账号" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <span className={label}>邮箱<span className="text-danger ml-[2px]">*</span></span>
+          <input className={input} placeholder="用于接收激活通知，也可作为登录账号" value={email} onChange={(e) => setEmail(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && submit()} autoComplete="email" />
         </label>
         <label className="block col-span-2">
           <span className={label}>手机号（选填）</span>
-          <input className={input} placeholder="选填" value={phone} onChange={(e) => setPhone(e.target.value)} />
+          <input className={input} placeholder="选填" value={phone} onChange={(e) => setPhone(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && submit()} autoComplete="tel" />
         </label>
 
         <label className="block">
-          <span className={label}>密码</span>
-          <input type="password" className={input} placeholder="至少 6 位" value={password} onChange={(e) => setPassword(e.target.value)} />
+          <span className={label}>密码<span className="text-danger ml-[2px]">*</span></span>
+          <input type="password" className={input} placeholder="至少 6 位" value={password} onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && submit()} autoComplete="new-password" />
         </label>
         <label className="block">
-          <span className={label}>确认密码</span>
+          <span className={label}>确认密码<span className="text-danger ml-[2px]">*</span></span>
           <input type="password" className={input} placeholder="再输一次" value={confirm}
-            onChange={(e) => setConfirm(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submit()} />
+            onChange={(e) => setConfirm(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submit()}
+            autoComplete="new-password" />
         </label>
       </div>
 

@@ -1,11 +1,9 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
-  Building2,
   ChevronDown,
   Info,
   MoreVertical,
-  Shield,
   TriangleAlert,
   UserCheck,
   UserCog,
@@ -54,7 +52,7 @@ const columns = [
 ];
 
 const inputCls =
-  'w-full h-[32px] px-3 text-[14px] text-text field placeholder:text-text-placeholder focus:border-primary focus:ring-2 focus:ring-primary/10 focus:outline-none transition-all';
+  'w-full h-[32px] px-3 text-[14px] text-text field placeholder:text-text-placeholder focus:border-primary focus:outline-none transition-all';
 const btnGhost = 'btn-ghost h-[38px] px-5 text-[13.5px] font-semibold cursor-pointer';
 const btnPrimary =
   'btn-primary h-[38px] px-5 text-[13.5px] font-semibold cursor-pointer disabled:cursor-not-allowed';
@@ -119,23 +117,7 @@ function Field({ label, required, children }: { label: string; required?: boolea
 }
 
 function RoleTag({ role }: { role: Role }) {
-  if (role === 'ORG_ADMIN') {
-    return (
-      <span className="inline-flex items-center gap-1 rounded-sm bg-primary-bg px-2 py-[2px] text-[13px] font-medium text-primary whitespace-nowrap">
-        <Shield size={12} />
-        {roleLabels[role]}
-      </span>
-    );
-  }
-  if (role === 'DEPT_ADMIN') {
-    return (
-      <span className="inline-flex items-center gap-1 rounded-sm bg-warning-bg px-2 py-[2px] text-[13px] font-medium text-warning whitespace-nowrap">
-        <Building2 size={12} />
-        {roleLabels[role]}
-      </span>
-    );
-  }
-  return <span className="text-[14px] text-text-secondary whitespace-nowrap">{roleLabels[role]}</span>;
+  return <StatusBadge status={roleLabels[role]} tone="neutral" />;
 }
 
 interface MenuItemProps {
@@ -323,7 +305,7 @@ export default function Members() {
       onClick={openInvite}
       className="btn-primary flex items-center gap-[6px] h-[38px] px-5 text-[13.5px] font-semibold cursor-pointer disabled:cursor-not-allowed"
     >
-      <UserPlus size={15} />
+      <UserPlus size={14} />
       邀请成员
     </button>
   );
@@ -478,7 +460,7 @@ export default function Members() {
                               type="button"
                               aria-label={`${m.name} 的操作`}
                               onClick={() => setMenu(menu === m.id ? null : m.id)}
-                              className="w-8 h-8 flex items-center justify-center rounded-full cursor-pointer hover:bg-surface-hover transition-colors"
+                              className="w-9 h-9 flex items-center justify-center rounded-full cursor-pointer hover:bg-surface-hover transition-colors"
                             >
                               <MoreVertical size={14} className="text-text-muted" />
                             </button>
@@ -703,7 +685,7 @@ export default function Members() {
                   rows={2}
                   placeholder="如：成员离职、违反数据安全规范等，便于日后审计追溯"
                   onChange={(e) => setDisableReason(e.target.value)}
-                  className="w-full px-3 py-[8px] text-[14px] text-text field placeholder:text-text-placeholder focus:border-primary focus:ring-2 focus:ring-primary/10 focus:outline-none transition-all resize-none leading-relaxed"
+                  className="w-full px-3 py-[8px] text-[14px] text-text field placeholder:text-text-placeholder focus:border-primary focus:outline-none transition-all resize-none leading-relaxed"
                 />
               </Field>
             </div>

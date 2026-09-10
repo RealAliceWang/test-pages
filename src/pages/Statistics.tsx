@@ -43,7 +43,7 @@ import {
 } from '../store';
 import { can, scopeOf } from '../domain/permissions';
 import { METER_FILL, poolHealth } from '../domain/poolHealth';
-import { daysLeftLabel } from '../domain/format';
+import { daysLeftLabel, moduleLabel } from '../domain/format';
 import { usageHistory } from '../domain/seed';
 import { chart, chartSeries, chartTooltip } from '../theme';
 import MetricCard, { type Metric } from '../components/common/MetricCard';
@@ -231,7 +231,7 @@ export default function Statistics() {
       .map(([moduleId, seats]) => {
         const mod = moduleOf(state, moduleId);
         // Free and commercial editions share a module name, so it must be shown.
-        return { name: `${mod?.name ?? moduleId}·${mod?.edition === '商业版' ? '商业' : '免费'}`, seats };
+        return { name: mod ? moduleLabel(mod) : moduleId, seats };
       })
       .sort((a, b) => b.seats - a.seats)
       .slice(0, 8);
@@ -315,7 +315,7 @@ export default function Statistics() {
         {/* Bento: the utilisation dial is the page's thesis, so it gets its own
             tall cell rather than being flattened into the metric row. */}
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 items-stretch">
-          <div className="xl:col-span-4 panel px-6 py-6 flex items-center gap-6">
+          <div className="xl:col-span-4 xl:order-1 panel px-6 py-6 flex items-center gap-6">
             <RingProgress value={utilization} size={124} thickness={12} caption="席位利用率" />
             <div className="min-w-0">
               <p className="eyebrow">席位利用率</p>
@@ -331,7 +331,7 @@ export default function Statistics() {
             </div>
           </div>
 
-          <div className="xl:col-span-8 grid grid-cols-2 gap-5 stagger">
+          <div className="xl:col-span-8 xl:order-2 grid grid-cols-2 gap-5 stagger">
             {cards.map((c) => (
               <MetricCard key={c.label} metric={c} />
             ))}
@@ -499,7 +499,7 @@ export default function Statistics() {
 
         {/* Utilization detail */}
         <div className="panel">
-          <div className="px-5 pt-5 pb-4">
+          <div className="px-6 py-[18px] border-b border-hairline">
             <div className="flex items-baseline justify-between">
               <h3 className="text-[13.5px] font-bold text-text tracking-[-0.01em]">席位利用率明细</h3>
               <span className="text-[13px] text-text-muted">共 {poolRows.length} 个席位池 · 按利用率升序</span>
@@ -551,13 +551,13 @@ export default function Statistics() {
                       <td className="px-5 py-3 whitespace-nowrap">
                         <StatusBadge status={r.edition} />
                       </td>
-                      <td className="px-5 py-3 text-right text-text tabular-nums">{r.total}</td>
-                      <td className="px-5 py-3 text-right text-text-secondary tabular-nums">{r.alloc}</td>
+                      <td className="px-5 py-3 text-right text-text num">{r.total}</td>
+                      <td className="px-5 py-3 text-right text-text-secondary num">{r.alloc}</td>
                       {scope === 'dept' && (
-                        <td className="px-5 py-3 text-right text-text tabular-nums">{r.held}</td>
+                        <td className="px-5 py-3 text-right text-text num">{r.held}</td>
                       )}
                       <td
-                        className={`px-5 py-3 text-right tabular-nums ${r.spare > 0 ? 'text-warning' : 'text-text-muted'}`}
+                        className={`px-5 py-3 text-right num ${r.spare > 0 ? 'text-warning' : 'text-text-muted'}`}
                       >
                         {r.spare}
                       </td>
@@ -577,7 +577,7 @@ export default function Statistics() {
                         </div>
                       </td>
                       <td className="px-5 py-3 whitespace-nowrap">
-                        <span className="text-text-secondary tabular-nums">{r.expireDate}</span>
+                        <span className="text-text-secondary num">{r.expireDate}</span>
                         {r.daysLeft < 0 ? (
                           <span className="text-[13px] text-danger ml-2">已过期</span>
                         ) : r.daysLeft <= POOL_EXPIRING_DAYS ? (

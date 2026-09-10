@@ -14,15 +14,14 @@ import {
   spareSeats, useApp,
 } from '../store';
 import { VENDOR_ORG_ID } from '../domain/seed';
-import { daysLeftLabel } from '../domain/format';
+import { daysLeftLabel, moduleLabel } from '../domain/format';
 import { METER_FILL, POOL_EXPIRING_DAYS, poolHealth } from '../domain/poolHealth';
 import type { Organization, SeatPool } from '../domain/types';
 
 /** A pool of one customer org, enriched with everything the row renders. */
 interface PoolRow {
   pool: SeatPool;
-  moduleName: string;
-  edition: string;
+  moduleLine: string;
   allocated: number;
   spare: number;
   restDays: number;
@@ -86,8 +85,7 @@ export default function VendorOrgs() {
             const expired = isExpired(state, pool);
             return {
               pool,
-              moduleName: mod?.name ?? pool.moduleId,
-              edition: mod?.edition ?? '—',
+              moduleLine: mod ? moduleLabel(mod) : pool.moduleId,
               allocated: allocatedSeats(state, pool.id),
               spare: spareSeats(state, pool),
               restDays,
@@ -132,6 +130,10 @@ export default function VendorOrgs() {
   }, [rows, state.seatPools, state.orders]);
 
   const unverified = rows.filter((r) => !r.org.verified);
+  const unverifiedPreview =
+    unverified.length > 3
+      ? `${unverified.slice(0, 3).map((r) => r.org.shortName).join('、')} 等 ${unverified.length} 家`
+      : unverified.map((r) => r.org.shortName).join('、');
 
   const list = rows.filter((r) => {
     const s = statusTabs[tab];
@@ -206,7 +208,7 @@ export default function VendorOrgs() {
           <div className="bg-warning-bg border border-warning/30 rounded-md px-4 py-3 flex items-start gap-3">
             <ShieldAlert size={16} className="text-warning shrink-0 mt-[2px]" />
             <p className="text-[14px] text-warning leading-[22px]">
-              {unverified.map((r) => r.org.shortName).join('、')} 尚未完成营业执照认证。
+              {unverifiedPreview} 尚未完成营业执照认证。
               <span className="text-text-secondary">
                 未认证企业只能领用厂商赠予的免费额度，不能采购商业版模块，请先完成资质审核再开放采购。
               </span>
@@ -260,7 +262,7 @@ export default function VendorOrgs() {
                         onClick={() => setExpanded(open ? null : r.org.id)}
                         aria-label={open ? '收起席位明细' : '展开席位明细'}
                         aria-expanded={open}
-                        className="w-7 h-7 flex items-center justify-center rounded-sm cursor-pointer hover:bg-surface-hover transition-colors"
+                        className="w-7 h-7 flex items-center justify-center rounded-full cursor-pointer hover:bg-surface-hover transition-colors"
                       >
                         <ChevronDown
                           size={14}
@@ -360,7 +362,7 @@ export default function VendorOrgs() {
                             <table className="data-table w-full">
                               <thead>
                                 <tr className="border-b border-hairline">
-                                  {['模块', '版本', '总席位', '已分配', '空闲', '来源', '到期日'].map((h) => (
+                                  {['模块', '总席位', '已分配', '空闲', '来源', '到期日'].map((h) => (
                                     <th key={h} className="text-left text-[12px] font-normal text-text-muted px-4 py-[9px] whitespace-nowrap">
                                       {h}
                                     </th>
@@ -370,8 +372,7 @@ export default function VendorOrgs() {
                               <tbody>
                                 {r.pools.map((p, j) => (
                                   <tr key={p.pool.id} style={{ borderTop: j ? '1px solid var(--color-divider)' : 'none' }}>
-                                    <td className="px-4 py-[10px] text-[14px] text-text whitespace-nowrap">{p.moduleName}</td>
-                                    <td className="px-4 py-[10px] text-[13px] text-text-secondary whitespace-nowrap">{p.edition}</td>
+                                    <td className="px-4 py-[10px] text-[14px] text-text whitespace-nowrap">{p.moduleLine}</td>
                                     <td className="px-4 py-[10px] text-[14px] text-text">{p.pool.total}</td>
                                     <td className="px-4 py-[10px] text-[14px] text-text">{p.allocated}</td>
                                     <td className={`px-4 py-[10px] text-[14px] ${p.spare === 0 ? 'text-warning' : 'text-text'}`}>

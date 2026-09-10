@@ -87,6 +87,9 @@
   --color-surface-secondary: #F4F6F8;
   --color-surface-hover: #EBEEF2;
   --color-border: #E4E7EC;
+  /* A touch darker than --color-border, for controls that need more definition
+     than a hairline border on their own (e.g. a switch track in its off state). */
+  --color-border-strong: #D3D7DE;
   --color-divider: #F0F1F4;
   --color-hairline: rgba(10, 12, 16, 0.05);
 
@@ -99,6 +102,20 @@
   --color-feature: #2A63F0;
   --color-feature-deep: #1A46C4;
   --color-feature-soft: #C5DDFF;
+
+  /* ── Auth backdrop glass ──────────────────────────────────────────────────
+     Used only by the /login and /register fluid-glass backdrop (AuthShell).
+     Solid base tones; every usage derives its alpha with
+     `color-mix(in srgb, var(--color-auth-glass-*) N%, transparent)` instead of
+     a one-off rgba() literal, so the palette stays in one place. Tones that
+     already exist as brand tokens (signal, primary, signal-soft,
+     success-soft) are reused directly rather than duplicated here. */
+  --color-auth-glass-highlight: #FFFFFF;
+  --color-auth-glass-mist: #DBEFFE;
+  --color-auth-glass-shadow: #1D4ED8;
+  --color-auth-glass-current-sky: #60A5FA;
+  --color-auth-glass-current-mint: #6EE7B7;
+  --color-auth-glass-current-blue: #3B82F6;
 
   /* ── Radius: pill-first. Cards are generous, controls are fully rounded. ── */
   --radius-xs: 10px;
@@ -448,16 +465,6 @@
 
   .data-table tbody tr {
     transition: background 160ms var(--ease-fluid);
-  }
-
-  /* ---- Brand ----
-     The shipped wordmark is a white-on-transparent PNG drawn for the old dark
-     navy rail, where it read as the brand. On the light shell it disappeared
-     entirely. Recolouring keeps the official asset and its proportions rather
-     than substituting a redrawn mark; brightness(0) preserves the alpha and
-     paints the glyphs ink. */
-  .brand-mark {
-    filter: brightness(0);
   }
 
   /* ---- Typography helpers ---- */

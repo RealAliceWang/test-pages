@@ -1,4 +1,4 @@
-import { Search } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 
 interface SearchBarProps {
   placeholder?: string;
@@ -18,8 +18,19 @@ export default function SearchBar({ placeholder, value, onChange }: SearchBarPro
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="field w-full h-[38px] pl-[35px] pr-4 text-[13.5px] placeholder:text-text-placeholder focus:outline-none"
+        aria-label="搜索"
+        className={`field w-full h-[38px] pl-[35px] ${value ? 'pr-9' : 'pr-4'} text-[13.5px] placeholder:text-text-placeholder focus:outline-none`}
       />
+      {value && (
+        <button
+          type="button"
+          onClick={() => onChange('')}
+          aria-label="清空"
+          className="btn-icon absolute right-[3px] top-1/2 -translate-y-1/2 w-7 h-7 cursor-pointer"
+        >
+          <X size={14} />
+        </button>
+      )}
     </div>
   );
 }

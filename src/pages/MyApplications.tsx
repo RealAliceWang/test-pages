@@ -6,10 +6,10 @@ import TabFilter from '../components/common/TabFilter';
 import StatusBadge from '../components/common/StatusBadge';
 import { moduleIconMap } from '../assets/moduleIcons';
 import { moduleLabel } from '../domain/format';
-import { deptOf, kindLabels, moduleOf, useApp } from '../store';
+import { deptOf, isWithdrawable, kindLabels, moduleOf, useApp } from '../store';
 import type { Application, ApprovalStep } from '../domain/types';
 
-const filters = ['全部', '进行中', '已完成', '已驳回'] as const;
+const filters = ['全部', '进行中', '已完成', '已驳回/撤销'] as const;
 
 function isLive(a: Application) {
   return !['已完成', '已驳回', '已撤销'].includes(a.status);
@@ -96,21 +96,32 @@ export default function MyApplications() {
             const mod = moduleOf(state, app.moduleId);
             const dept = deptOf(state, app.deptId);
             const expanded = open === app.id;
-            // Only withdrawable while nobody has acted yet.
-            const withdrawable = app.status === '待部门审批';
+            const withdrawable = isWithdrawable(app, me.role);
             const order = app.orderId ? state.orders.find((o) => o.id === app.orderId) : undefined;
+            const appLabel = mod ? moduleLabel(mod) : '未知模块';
 
             return (
               <div key={app.id} className="panel overflow-hidden">
-                <div className="px-5 py-4 flex items-center gap-4 cursor-pointer hover:bg-surface-secondary transition-colors"
-                  onClick={() => setOpen(expanded ? null : app.id)}>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  aria-expanded={expanded}
+                  aria-label={expanded ? `收起「${appLabel}」申请详情` : `展开「${appLabel}」申请详情`}
+                  className="px-5 py-4 flex items-center gap-4 cursor-pointer hover:bg-surface-secondary transition-colors"
+                  onClick={() => setOpen(expanded ? null : app.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setOpen(expanded ? null : app.id);
+                    }
+                  }}>
                   <img src={moduleIconMap[mod?.icon ?? 'building'] || moduleIconMap.building} alt=""
                     className="w-[40px] h-[40px] object-contain shrink-0" />
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <p className="text-[15px] font-medium text-text truncate">
-                        {mod ? moduleLabel(mod) : '未知模块'}
+                        {appLabel}
                       </p>
                       <span className="text-[12px] px-[6px] py-[1px] rounded-sm bg-surface-hover text-text-muted shrink-0">
                         {kindLabels[app.kind]}

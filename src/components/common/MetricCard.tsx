@@ -1,7 +1,6 @@
 import type { CSSProperties } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { ArrowUpRight } from 'lucide-react';
-import { glassIconFor } from '../icons/glassMap';
 
 /** The four accent tones a metric may carry. Anything outside this set is a bug. */
 export type MetricTone = 'neutral' | 'accent' | 'positive' | 'attention';
@@ -15,34 +14,29 @@ export type MetricTone = 'neutral' | 'accent' | 'positive' | 'attention';
  * so a row is not a fixed four-colour rotation. Neutral takes violet rather
  * than grey purely so the fourth hue holds its own next to the other three.
  *
- * Three roles per tone:
- *   tint  — the card's pale wash, and the plinth behind a fallback glyph
- *   solid — the drawn icon's body, dark enough to hold its shape on that wash
- *   on    — a bare lucide stroke sitting on the plinth, needing 4.5:1 there
+ * Two roles per tone:
+ *   tint — the card's pale wash, and the plinth behind the icon
+ *   on   — the lucide stroke sitting on the plinth, needing 4.5:1 there
  *
- * All three reference the shared tokens in index.css (the -light tier carries
- * the wash, the text tier carries the glyph) so a palette change lands here
+ * Both reference the shared tokens in index.css (the -light tier carries the
+ * wash, the text tier carries the glyph) so a palette change lands here
  * automatically.
  */
-const tones: Record<MetricTone, { tint: string; solid: string; on: string }> = {
+const tones: Record<MetricTone, { tint: string; on: string }> = {
   neutral: {
     tint: 'var(--color-violet-light)',
-    solid: 'var(--color-violet)',
     on: 'var(--color-violet)',
   },
   accent: {
     tint: 'var(--color-signal)',
-    solid: 'var(--color-signal-deep)',
     on: 'var(--color-signal-deep)',
   },
   positive: {
     tint: 'var(--color-success-light)',
-    solid: 'var(--color-success)',
     on: 'var(--color-success)',
   },
   attention: {
     tint: 'var(--color-warning-light)',
-    solid: 'var(--color-warning)',
     on: 'var(--color-warning)',
   },
 };
@@ -72,24 +66,13 @@ interface MetricCardProps {
 export default function MetricCard({ metric, onGo }: MetricCardProps) {
   const tone = tones[metric.tone ?? 'neutral'];
   const style = { '--metric-tint': tone.tint } as CSSProperties;
-  /* Called, not mounted as <Glass/>: these are plain shape functions rather
-     than stateful components, and rendering one by identity would trip the
-     "component created during render" rule for no benefit.
-     They carry their own frosted plate, so they need the saturated hue rather
-     than the dark glyph colour a bare lucide stroke takes. */
-  const glass = glassIconFor(metric.icon)?.({
-    className: 'w-[40px] h-[40px] shrink-0',
-    style: { color: tone.solid },
-  });
 
   const body = (
     <>
       <div className="flex items-center gap-2.5">
-        {glass ?? (
-          <span className="metric-icon w-[40px] h-[40px] rounded-[13px] flex items-center justify-center shrink-0">
-            <metric.icon size={18} strokeWidth={2.3} style={{ color: tone.on }} />
-          </span>
-        )}
+        <span className="metric-icon w-[40px] h-[40px] rounded-full flex items-center justify-center shrink-0">
+          <metric.icon size={18} strokeWidth={2.3} style={{ color: tone.on }} />
+        </span>
         <p className="eyebrow truncate">{metric.label}</p>
       </div>
 

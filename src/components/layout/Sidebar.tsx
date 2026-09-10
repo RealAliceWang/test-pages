@@ -1,5 +1,9 @@
 import { NavLink } from 'react-router-dom';
 import { PanelLeftClose, PanelLeftOpen, Settings } from 'lucide-react';
+// Ships ink-on-transparent. The vendor's original is white-on-transparent for
+// the old dark navy rail and goes invisible on this light shell, so don't swap
+// it back in without recolouring the asset itself — a CSS filter here would be
+// dropped by design-tool captures of the rendered page.
 import logoUrl from '../../../logo.png';
 import { navFor } from '../../domain/navigation';
 import { inboxOf, useApp } from '../../store';
@@ -13,9 +17,11 @@ interface SidebarProps {
 /**
  * Navigation rail living inside the app shell.
  *
- * Collapsed is the default posture: a narrow column of icon-only pills on the
+ * Expanded is the default posture (see Layout.tsx's initial `collapsed`
+ * state). Collapsing narrows the rail to a column of icon-only pills on the
  * shell tint, with the active item as a solid ink circle. Labels appear on
- * hover as tooltips, so the rail stays narrow without becoming unguessable.
+ * hover as tooltips, so the collapsed rail stays narrow without becoming
+ * unguessable.
  */
 export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const { state, me, myOrg } = useApp();
@@ -32,16 +38,16 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       <div className={`shrink-0 pt-6 pb-5 ${collapsed ? 'px-0' : 'px-5'}`}>
         {collapsed ? (
           <div className="flex flex-col items-center gap-4">
-            <img src={logoUrl} alt="3D3S" className="brand-mark h-[24px] object-contain" />
-            <button onClick={onToggle} aria-label="展开侧边栏" className="btn-icon w-8 h-8 cursor-pointer">
+            <img src={logoUrl} alt="3D3S" className="h-[24px] object-contain" />
+            <button onClick={onToggle} aria-label="展开侧边栏" className="btn-icon w-9 h-9 cursor-pointer">
               <PanelLeftOpen size={15} />
             </button>
           </div>
         ) : (
           <>
             <div className="flex items-center justify-between">
-              <img src={logoUrl} alt="3D3S" className="brand-mark h-[30px] object-contain" />
-              <button onClick={onToggle} aria-label="收起侧边栏" className="btn-icon w-8 h-8 cursor-pointer">
+              <img src={logoUrl} alt="3D3S" className="h-[30px] object-contain" />
+              <button onClick={onToggle} aria-label="收起侧边栏" className="btn-icon w-9 h-9 cursor-pointer">
                 <PanelLeftClose size={15} />
               </button>
             </div>
@@ -97,7 +103,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
                         {badge > 0 && (
                           <span
-                            className={`shrink-0 min-w-[19px] h-[19px] px-1.5 rounded-full bg-danger text-white text-[12px] font-bold flex items-center justify-center ${
+                            className={`shrink-0 min-w-[19px] h-[19px] px-1.5 rounded-full bg-warning text-white text-[12px] font-bold flex items-center justify-center ${
                               collapsed ? 'absolute top-0 right-0 ring-2 ring-shell' : ''
                             }`}
                           >

@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Check, ChevronDown, LogOut, Repeat2, Search } from 'lucide-react';
+import { BadgeCheck, Bell, Check, CheckSquare, ChevronDown, CreditCard, LogOut, Repeat2, ShoppingCart } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { deptOf, orgOf, todoCountOf, useApp } from '../../store';
+import SearchBar from '../common/SearchBar';
+import { deptOf, inboxOf, orgOf, todoCountOf, useApp } from '../../store';
 import { DEMO_ORG_ID, VENDOR_ORG_ID } from '../../domain/seed';
 import { can } from '../../domain/permissions';
 import { roleLabels, type Role } from '../../domain/types';
@@ -21,21 +22,31 @@ const switchableRoles: Role[] = ['MEMBER', 'DEPT_ADMIN', 'ORG_ADMIN', 'VENDOR_OP
 export default function Header({ title, subtitle, actions, search }: HeaderProps) {
   const { state, me, myOrg, myDept, dispatch } = useApp();
   const [open, setOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
   const [query, setQuery] = useState('');
   const ref = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const notifRef = useRef<HTMLDivElement>(null);
+  const notifTriggerRef = useRef<HTMLButtonElement>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     const onDown = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false);
     };
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape' || !open) return;
-      setOpen(false);
-      // Return focus to the control that opened the panel, so keyboard users
-      // are never dropped back onto the page body.
-      triggerRef.current?.focus();
+      if (e.key !== 'Escape') return;
+      if (open) {
+        setOpen(false);
+        // Return focus to the control that opened the panel, so keyboard users
+        // are never dropped back onto the page body.
+        triggerRef.current?.focus();
+      }
+      if (notifOpen) {
+        setNotifOpen(false);
+        notifTriggerRef.current?.focus();
+      }
     };
     document.addEventListener('mousedown', onDown);
     document.addEventListener('keydown', onKeyDown);
@@ -43,9 +54,24 @@ export default function Header({ title, subtitle, actions, search }: HeaderProps
       document.removeEventListener('mousedown', onDown);
       document.removeEventListener('keydown', onKeyDown);
     };
-  }, [open]);
+  }, [open, notifOpen]);
 
   const todo = todoCountOf(state, me);
+  const inbox = inboxOf(state, me);
+  /* The same categories todoCountOf aggregates, broken back out so the panel
+     can name each one and link to where it gets actioned, instead of just
+     showing an opaque total. */
+  const unpaidOrders =
+    me.role === 'ORG_ADMIN' ? state.orders.filter((o) => o.orgId === me.orgId && o.status === '待支付') : [];
+  const toPurchase =
+    me.role === 'ORG_ADMIN' ? state.applications.filter((a) => a.orgId === me.orgId && a.status === '待采购') : [];
+  const toConfirm = me.role === 'VENDOR_OPS' ? state.orders.filter((o) => o.status === '待厂商确认') : [];
+  const todoItems = [
+    { key: 'approvals', label: '待我审批', count: inbox.length, icon: CheckSquare, to: '/approvals' },
+    { key: 'unpaid', label: '待支付订单', count: unpaidOrders.length, icon: CreditCard, to: '/orders' },
+    { key: 'purchase', label: '待下单采购', count: toPurchase.length, icon: ShoppingCart, to: '/orders' },
+    { key: 'confirm', label: '待确认到账', count: toConfirm.length, icon: BadgeCheck, to: '/orders' },
+  ].filter((item) => item.count > 0);
 
   // One representative account per role so every perspective is reachable.
   // Pinned to the demo customer and the vendor, so seat holders seeded for the
@@ -70,7 +96,7 @@ export default function Header({ title, subtitle, actions, search }: HeaderProps
   };
 
   return (
-    <header className="app-bar shrink-0 px-7 pt-6 pb-4 flex items-center justify-between gap-5">
+    <header className="app-bar relative z-20 shrink-0 px-7 pt-6 pb-4 flex items-center justify-between gap-5">
       <div className="min-w-0">
         <h1 className="text-[26px] font-extrabold text-text leading-[1.12] tracking-[-0.035em]">{title}</h1>
         <p className="text-[13px] text-text-muted leading-tight mt-[5px] truncate">{subtitle}</p>
@@ -78,20 +104,7 @@ export default function Header({ title, subtitle, actions, search }: HeaderProps
 
       {search && can(me.role, 'module:browse') && (
         <form onSubmit={submitSearch} className="hidden lg:block flex-1 max-w-[420px]" role="search">
-          <div className="relative group">
-            <Search
-              size={15}
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-text-placeholder group-focus-within:text-primary transition-colors pointer-events-none"
-            />
-            <input
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="搜索模块…"
-              aria-label="搜索模块"
-              className="w-full h-11 pl-11 pr-4 rounded-full bg-surface text-[13.5px] placeholder:text-text-placeholder border border-border focus:border-primary focus:shadow-[0_0_0_3px_var(--color-primary-ring)] focus:outline-none transition-all"
-            />
-          </div>
+          <SearchBar value={query} onChange={setQuery} placeholder="搜索模块…" />
         </form>
       )}
 
@@ -100,15 +113,47 @@ export default function Header({ title, subtitle, actions, search }: HeaderProps
 
         {/* Controls sit on the shell tint, so they carry a white fill and a
             hairline to read as controls rather than dissolving into it. */}
-        <button aria-label={`待办 ${todo} 项`} title={`待办 ${todo} 项`}
-          className="relative w-11 h-11 rounded-full bg-surface border border-border text-text-secondary flex items-center justify-center cursor-pointer transition-colors hover:text-text">
-          <Bell size={18} />
-          {todo > 0 && (
-            <span className="absolute top-[6px] right-[6px] min-w-[17px] h-[17px] px-[4px] rounded-full bg-danger text-white text-[12px] font-bold flex items-center justify-center ring-2 ring-white">
-              {todo}
-            </span>
+        <div className="relative" ref={notifRef}>
+          <button ref={notifTriggerRef} onClick={() => setNotifOpen(!notifOpen)}
+            aria-label={`待办 ${todo} 项`} title={`待办 ${todo} 项`}
+            aria-haspopup="menu"
+            aria-expanded={notifOpen}
+            className="relative w-11 h-11 rounded-full bg-surface border border-border text-text-secondary flex items-center justify-center cursor-pointer transition-colors hover:text-text">
+            <Bell size={18} />
+            {todo > 0 && (
+              <span className="absolute top-[6px] right-[6px] min-w-[17px] h-[17px] px-[4px] rounded-full bg-warning text-white text-[12px] font-bold flex items-center justify-center ring-2 ring-white">
+                {todo}
+              </span>
+            )}
+          </button>
+
+          {notifOpen && (
+            <div className="panel-floating absolute right-0 top-full mt-2 w-[300px] z-50 overflow-hidden rise">
+              <div className="px-4 py-[13px] border-b border-hairline">
+                <p className="text-[14px] font-bold text-text">待办事项</p>
+                <p className="text-[13px] text-text-muted mt-[3px]">
+                  {todo > 0 ? `共 ${todo} 项待处理` : '暂无待办'}
+                </p>
+              </div>
+
+              {todoItems.length > 0 && (
+                <div className="p-2 flex flex-col gap-0.5">
+                  {todoItems.map((item) => (
+                    <button key={item.key}
+                      onClick={() => { setNotifOpen(false); navigate(item.to); }}
+                      className="w-full flex items-center gap-3 px-2.5 py-2 rounded-md text-left transition-colors cursor-pointer hover:bg-surface-hover">
+                      <span className="w-8 h-8 rounded-full bg-surface-secondary text-text-secondary flex items-center justify-center shrink-0">
+                        <item.icon size={15} />
+                      </span>
+                      <span className="min-w-0 flex-1 text-[13.5px] font-semibold text-text truncate">{item.label}</span>
+                      <span className="num text-[13px] font-bold text-text-secondary shrink-0">{item.count}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
-        </button>
+        </div>
 
         <div className="relative" ref={ref}>
           {/* The whole identity control is one pill, matching button language. */}
@@ -159,7 +204,7 @@ export default function Header({ title, subtitle, actions, search }: HeaderProps
                     return (
                       <button key={m.id}
                         onClick={() => { dispatch({ type: 'SWITCH_IDENTITY', memberId: m.id }); setOpen(false); }}
-                        className={`w-full flex items-center gap-3 px-2.5 py-2 rounded-lg text-left transition-colors cursor-pointer ${
+                        className={`w-full flex items-center gap-3 px-2.5 py-2 rounded-md text-left transition-colors cursor-pointer ${
                           active ? 'bg-primary-bg' : 'hover:bg-surface'
                         }`}>
                         <div className="w-[30px] h-[30px] rounded-full flex items-center justify-center text-white text-[13px] font-semibold shrink-0"
@@ -187,7 +232,7 @@ export default function Header({ title, subtitle, actions, search }: HeaderProps
               <div className="px-2 py-2 border-t border-hairline bg-surface">
                 <button
                   onClick={() => { setOpen(false); dispatch({ type: 'LOGOUT' }); }}
-                  className="w-full flex items-center gap-2.5 px-2.5 h-[38px] rounded-lg text-left text-[13.5px] font-semibold text-danger hover:bg-danger-bg transition-colors cursor-pointer"
+                  className="w-full flex items-center gap-2.5 px-2.5 h-[38px] rounded-md text-left text-[13.5px] font-semibold text-danger hover:bg-danger-bg transition-colors cursor-pointer"
                 >
                   <LogOut size={15} strokeWidth={2.2} className="shrink-0" />
                   退出登录

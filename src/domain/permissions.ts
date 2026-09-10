@@ -20,7 +20,6 @@ export type Permission =
   | 'order:manage'
   | 'order:confirm'
   // analytics, widening scope
-  | 'stats:own'
   | 'stats:dept'
   | 'stats:org'
   | 'stats:platform'
@@ -33,7 +32,7 @@ export type Permission =
   | 'vendor:catalog';
 
 const rolePermissions: Record<Role, Permission[]> = {
-  MEMBER: ['module:browse', 'application:create', 'assignment:view-own', 'stats:own'],
+  MEMBER: ['module:browse', 'application:create', 'assignment:view-own'],
 
   DEPT_ADMIN: [
     'module:browse',
@@ -42,7 +41,6 @@ const rolePermissions: Record<Role, Permission[]> = {
     'approval:dept',
     'seat:view-dept',
     'member:view-dept',
-    'stats:own',
     'stats:dept',
     'audit:dept',
   ],
@@ -59,7 +57,6 @@ const rolePermissions: Record<Role, Permission[]> = {
     'member:manage',
     'order:view',
     'order:manage',
-    'stats:own',
     'stats:dept',
     'stats:org',
     'audit:dept',

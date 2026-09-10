@@ -50,6 +50,9 @@ const groups: ActionGroup[] = ['审批类', '席位类', '订单类', '成员类
 
 const allActions = Object.keys(groupOf) as AuditAction[];
 
+// Audit logs grow without bound; render a page at a time instead of the full list.
+const PAGE_SIZE = 20;
+
 /* Action chips are categorical, not stateful — semantic status colors would
    read as five different alert levels. A single neutral pill lets the text
    carry the classification. */
@@ -102,6 +105,7 @@ export default function AuditLogs() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [expanded, setExpanded] = useState<string[]>([]);
+  const [shown, setShown] = useState(PAGE_SIZE);
 
   const activeGroup = groupIndex === 0 ? null : groups[groupIndex - 1];
 
@@ -154,17 +158,21 @@ export default function AuditLogs() {
     });
   }, [logs, activeGroup, action, actorId, dateFrom, dateTo, query]);
 
+  // Audit logs grow without bound; only the current page is grouped into days.
+  const paged = useMemo(() => filtered.slice(0, shown), [filtered, shown]);
+  const rest = filtered.length - paged.length;
+
   // visibleAudit is already newest-first, so insertion order keeps days sorted.
   const days = useMemo(() => {
     const map = new Map<string, AuditLog[]>();
-    filtered.forEach((l) => {
+    paged.forEach((l) => {
       const date = l.createdAt.slice(0, 10);
       const bucket = map.get(date);
       if (bucket) bucket.push(l);
       else map.set(date, [l]);
     });
     return [...map.entries()];
-  }, [filtered]);
+  }, [paged]);
 
   const tabs = [
     { label: `全部 ${logs.length}` },
@@ -183,6 +191,12 @@ export default function AuditLogs() {
       : { icon: Globe, value: filtered.length, label: '当前筛选结果', hint: filterActive ? '已应用筛选条件' : '未筛选，展示全部', tone: 'attention' },
   ];
 
+  // Every filter change restarts paging, otherwise the list keeps a stale window.
+  const resetPaging = <T,>(set: (v: T) => void) => (v: T) => {
+    set(v);
+    setShown(PAGE_SIZE);
+  };
+
   const reset = () => {
     setGroupIndex(0);
     setAction('');
@@ -190,6 +204,7 @@ export default function AuditLogs() {
     setQuery('');
     setDateFrom('');
     setDateTo('');
+    setShown(PAGE_SIZE);
   };
 
   const toggle = (id: string) =>
@@ -212,8 +227,6 @@ export default function AuditLogs() {
     URL.revokeObjectURL(url);
   };
 
-  const lastId = filtered.length > 0 ? filtered[filtered.length - 1].id : '';
-
   return (
     <div>
       <Header
@@ -221,7 +234,7 @@ export default function AuditLogs() {
         subtitle={`数据范围：${scopeLabel} · 共 ${logs.length} 条记录`}
         actions={
           <div className="flex items-center gap-2">
-            <span className="text-[13px] text-text-secondary bg-surface-secondary rounded-sm px-2.5 py-1">
+            <span className="text-[13px] text-text-secondary bg-surface-secondary rounded-full px-2.5 py-1">
               {scope === 'platform' ? '厂商运营视角' : scope === 'org' ? '企业管理员视角' : '部门管理员视角'}
             </span>
             <button
@@ -251,10 +264,11 @@ export default function AuditLogs() {
             onChange={(i) => {
               setGroupIndex(i);
               setAction('');
+              setShown(PAGE_SIZE);
             }}
           />
           <div className="flex flex-wrap items-center gap-3">
-            <FilterSelect label="操作类型" value={action} onChange={setAction}>
+            <FilterSelect label="操作类型" value={action} onChange={resetPaging(setAction)}>
               <option value="">{activeGroup ? `${activeGroup}全部操作` : '全部操作类型'}</option>
               {actionOptions.map((a) => (
                 <option key={a} value={a}>
@@ -263,7 +277,7 @@ export default function AuditLogs() {
               ))}
             </FilterSelect>
 
-            <FilterSelect label="操作人" value={actorId} onChange={setActorId}>
+            <FilterSelect label="操作人" value={actorId} onChange={resetPaging(setActorId)}>
               <option value="">全部操作人</option>
               {actors.map((a) => (
                 <option key={a.id} value={a.id}>
@@ -278,7 +292,7 @@ export default function AuditLogs() {
                 aria-label="起始日期"
                 value={dateFrom}
                 max={dateTo || undefined}
-                onChange={(e) => setDateFrom(e.target.value)}
+                onChange={(e) => resetPaging(setDateFrom)(e.target.value)}
                 className={`h-[32px] px-3 text-[14px] field [&::-webkit-calendar-picker-indicator]:opacity-50 ${
                   dateFrom ? 'text-text' : 'text-text-placeholder'
                 }`}
@@ -289,7 +303,7 @@ export default function AuditLogs() {
                 aria-label="结束日期"
                 value={dateTo}
                 min={dateFrom || undefined}
-                onChange={(e) => setDateTo(e.target.value)}
+                onChange={(e) => resetPaging(setDateTo)(e.target.value)}
                 className={`h-[32px] px-3 text-[14px] field [&::-webkit-calendar-picker-indicator]:opacity-50 ${
                   dateTo ? 'text-text' : 'text-text-placeholder'
                 }`}
@@ -306,13 +320,13 @@ export default function AuditLogs() {
                 aria-label="搜索操作对象或详情"
                 placeholder="搜索操作对象或详情"
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(e) => resetPaging(setQuery)(e.target.value)}
                 className="field w-full h-[32px] pl-[35px] pr-4 text-[14px] text-text placeholder:text-text-placeholder"
               />
             </div>
 
             <span className="text-[13px] text-text-muted">
-              命中 <span className="text-text tabular-nums">{filtered.length}</span> / {logs.length} 条
+              命中 <span className="text-text num">{filtered.length}</span> / {logs.length} 条
             </span>
 
             {filterActive && (
@@ -354,14 +368,14 @@ export default function AuditLogs() {
               return (
                 <div key={date} className="flex flex-col gap-3">
                   <div className="flex items-center gap-3">
-                    <span className="text-[14px] font-medium text-text tabular-nums">{date}</span>
+                    <span className="text-[14px] font-medium text-text num">{date}</span>
                     <span className="text-[13px] text-text-muted">{weekdayOf(date)}</span>
                     {relative && <StatusBadge status={relative} tone="info" />}
                     <div className="flex-1 h-px bg-border" />
-                    <span className="text-[13px] text-text-muted tabular-nums">{items.length} 条</span>
+                    <span className="text-[13px] text-text-muted num">{items.length} 条</span>
                   </div>
 
-                  {items.map((log) => {
+                  {items.map((log, index) => {
                     const group = groupOf[log.action];
                     const actor = memberOf(state, log.actorId);
                     const isPlatform = log.orgId === null;
@@ -369,7 +383,7 @@ export default function AuditLogs() {
                     const longDetail = log.detail.length > 26;
                     return (
                       <div key={log.id} className="flex gap-3">
-                        <span className="w-[42px] shrink-0 text-[13px] text-text-muted tabular-nums pt-[11px]">
+                        <span className="w-[42px] shrink-0 text-[13px] text-text-muted num pt-[11px]">
                           {log.createdAt.slice(11)}
                         </span>
 
@@ -380,7 +394,9 @@ export default function AuditLogs() {
                           >
                             {log.actorName.charAt(0)}
                           </div>
-                          {log.id !== lastId && <div className="flex-1 w-px bg-border mt-2 min-h-[12px]" />}
+                          {index !== items.length - 1 && (
+                            <div className="flex-1 w-px bg-border mt-2 min-h-[12px]" />
+                          )}
                         </div>
 
                         <div
@@ -393,16 +409,12 @@ export default function AuditLogs() {
                               <span className="text-[14px] text-text">{log.actorName}</span>
                               <StatusBadge status={roleLabels[log.actorRole]} tone="neutral" />
                               <span className={actionChipClass}>{log.action}</span>
-                              {isPlatform && (
-                                <span className="text-[12px] text-primary bg-primary-bg rounded-sm px-1.5 py-[1px] inline-flex items-center gap-1 whitespace-nowrap">
-                                  <Globe size={11} /> 平台操作
-                                </span>
-                              )}
+                              {isPlatform && <StatusBadge status="平台操作" tone="info" />}
                             </div>
                             <button
                               onClick={() => toggle(log.id)}
                               aria-expanded={open}
-                              className="shrink-0 text-[13px] text-text-muted cursor-pointer inline-flex items-center gap-1 hover:text-primary transition-colors"
+                              className="shrink-0 h-9 -my-2 text-[13px] text-text-muted cursor-pointer inline-flex items-center gap-1 hover:text-primary transition-colors"
                             >
                               {open ? '收起' : '详情'}
                               <ChevronDown
@@ -426,7 +438,7 @@ export default function AuditLogs() {
                           </p>
 
                           <div className="mt-2 flex items-center gap-3 text-[12px] text-text-muted">
-                            <span className="tabular-nums">IP {log.ip}</span>
+                            <span className="num">IP {log.ip}</span>
                             <span>{group}</span>
                           </div>
 
@@ -438,7 +450,7 @@ export default function AuditLogs() {
                             >
                               <div>
                                 <p className="text-[12px] text-text-muted">完整时间</p>
-                                <p className="text-[13px] text-text-secondary mt-[3px] tabular-nums">
+                                <p className="text-[13px] text-text-secondary mt-[3px] num">
                                   {log.createdAt}
                                 </p>
                               </div>
@@ -460,7 +472,7 @@ export default function AuditLogs() {
                               </div>
                               <div>
                                 <p className="text-[12px] text-text-muted">登录 IP</p>
-                                <p className="text-[13px] text-text-secondary mt-[3px] tabular-nums">{log.ip}</p>
+                                <p className="text-[13px] text-text-secondary mt-[3px] num">{log.ip}</p>
                               </div>
                             </div>
                           )}
@@ -471,6 +483,20 @@ export default function AuditLogs() {
                 </div>
               );
             })}
+
+            {rest > 0 && (
+              <div className="border-t border-hairline pt-4 flex items-center justify-center gap-3">
+                <span className="text-[13px] text-text-muted">
+                  已显示 {paged.length} / {filtered.length}
+                </span>
+                <button
+                  onClick={() => setShown(shown + PAGE_SIZE)}
+                  className="btn-soft h-[34px] px-5 text-[13px] font-semibold cursor-pointer"
+                >
+                  加载更多（剩余 {rest}）
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -13,16 +13,20 @@ export default function Toggle({ enabled, onChange, ariaLabel }: ToggleProps) {
       role="switch"
       aria-checked={enabled}
       aria-label={ariaLabel}
-      className={`relative w-[44px] h-[26px] rounded-full cursor-pointer transition-colors duration-300 shrink-0 ${
-        enabled ? 'bg-ink' : 'bg-[#D3D7DE]'
-      }`}
+      className="relative w-[44px] h-[36px] flex items-center justify-center cursor-pointer shrink-0"
     >
       <span
-        className={`absolute top-[3px] left-[3px] w-[20px] h-[20px] bg-white rounded-full transition-transform duration-300 ${
-          enabled ? 'translate-x-[18px]' : ''
+        className={`relative w-[44px] h-[26px] rounded-full transition-colors duration-300 ${
+          enabled ? 'bg-ink' : 'bg-border-strong'
         }`}
-        style={{ transitionTimingFunction: 'var(--ease-fluid)' }}
-      />
+      >
+        <span
+          className={`absolute top-[3px] left-[3px] w-[20px] h-[20px] bg-white rounded-full transition-transform duration-300 ${
+            enabled ? 'translate-x-[18px]' : ''
+          }`}
+          style={{ transitionTimingFunction: 'var(--ease-fluid)' }}
+        />
+      </span>
     </button>
   );
 }

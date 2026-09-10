@@ -1,4 +1,4 @@
-type Tone = 'info' | 'success' | 'warning' | 'danger' | 'neutral' | 'orange';
+type Tone = 'info' | 'success' | 'warning' | 'danger' | 'neutral' | 'orange' | 'violet';
 
 /** Flat tinted chip. The ring was doing nothing at this size but add noise. */
 const tones: Record<Tone, string> = {
@@ -8,6 +8,7 @@ const tones: Record<Tone, string> = {
   danger: 'bg-danger-bg text-danger',
   neutral: 'bg-surface-hover text-text-muted',
   orange: 'bg-orange-bg text-orange',
+  violet: 'bg-violet-bg text-violet',
 };
 
 const dots: Record<Tone, string> = {
@@ -17,6 +18,7 @@ const dots: Record<Tone, string> = {
   danger: 'bg-danger-light',
   neutral: 'bg-text-placeholder',
   orange: 'bg-orange-light',
+  violet: 'bg-violet-light',
 };
 
 const map: Record<string, Tone> = {

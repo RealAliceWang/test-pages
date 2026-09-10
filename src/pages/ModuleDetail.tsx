@@ -8,6 +8,8 @@ import StatusBadge from '../components/common/StatusBadge';
 import { moduleDetails } from '../data/mock';
 import { moduleIconMap } from '../assets/moduleIcons';
 import { can } from '../domain/permissions';
+import { moduleLabel } from '../domain/format';
+import { METER_FILL, poolHealth } from '../domain/poolHealth';
 import {
   allocatedSeats,
   assignmentsOfMember,
@@ -18,6 +20,7 @@ import {
   kindLabels,
   moduleOf,
   poolOf,
+  seatStatusOf,
   spareSeats,
   useApp,
 } from '../store';
@@ -37,12 +40,14 @@ export default function ModuleDetail() {
       <div>
         <Header title="模块详情" subtitle="查看模块功能介绍与企业授权状态" />
         <div className="p-6 flex flex-col items-center justify-center py-24">
-          <Layers size={48} className="mx-auto mb-4 text-text-placeholder" />
-          <p className="text-[16px] text-text-muted mb-2">未找到该模块</p>
-          <p className="text-[14px] text-text-placeholder mb-6">请检查模块编号是否正确</p>
+          <span className="w-[44px] h-[44px] rounded-full bg-surface-hover flex items-center justify-center mb-4">
+            <Layers size={20} className="text-text-muted" />
+          </span>
+          <p className="text-[13px] text-text-muted">未找到该模块</p>
+          <p className="text-[13px] text-text-placeholder mt-2 mb-6">请检查模块编号是否正确</p>
           <button
             onClick={() => navigate('/modules')}
-            className="h-[36px] px-4  text-[14px] font-semibold btn-primary text-white cursor-pointer"
+            className="h-[38px] px-4 text-[13.5px] font-semibold btn-primary text-white cursor-pointer"
           >
             返回模块中心
           </button>
@@ -59,7 +64,8 @@ export default function ModuleDetail() {
   const poolStatus = !pool ? '未开通' : poolExpired ? '已过期' : spare > 0 ? '席位充足' : '席位已满';
 
   const mySeat = assignmentsOfMember(state, me.id).find((a) => a.moduleId === mod.id);
-  const held = Boolean(mySeat) && mySeat?.status === '生效中' && !poolExpired;
+  const mySeatStatus = mySeat ? seatStatusOf(state, mySeat) : undefined;
+  const held = mySeatStatus !== undefined && mySeatStatus !== '已过期';
 
   // Vendor operators browse the catalog but never consume seats themselves.
   const canApply = can(me.role, 'application:create');
@@ -71,14 +77,14 @@ export default function ModuleDetail() {
       disabled
       className="btn-soft h-[38px] px-5 text-[13.5px] font-semibold text-text-muted inline-flex items-center gap-1.5 cursor-not-allowed"
     >
-      <UserCheck size={15} /> 已持有席位
+      <UserCheck size={14} /> 已持有席位
     </button>
   ) : canApply ? (
     <button
       onClick={() => navigate(`/apply/${mod.id}`)}
       className="btn-primary h-[38px] px-5 text-[13.5px] font-semibold inline-flex items-center gap-1 cursor-pointer"
     >
-      {mySeat ? '申请续期' : '申请授权'} <ChevronRight size={15} strokeWidth={2.5} />
+      {mySeat ? '申请续期' : '申请授权'} <ChevronRight size={14} strokeWidth={2.5} />
     </button>
   ) : null;
 
@@ -93,7 +99,7 @@ export default function ModuleDetail() {
             模块中心
           </button>
           <ChevronRight size={14} />
-          <span className="text-text font-medium">{mod.name}</span>
+          <span className="text-text font-medium">{moduleLabel(mod)}</span>
         </nav>
 
         {/* Module header */}
@@ -110,8 +116,8 @@ export default function ModuleDetail() {
                 </div>
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <h2 className="text-[13.5px] font-bold text-text tracking-[-0.01em]">{mod.name}</h2>
-                    <StatusBadge status={mod.edition} tone={mod.edition === '商业版' ? 'warning' : 'info'} />
+                    <h2 className="text-[13.5px] font-bold text-text tracking-[-0.01em]">{moduleLabel(mod)}</h2>
+                    <StatusBadge status={mod.edition} />
                     {!mod.listed && <StatusBadge status="已下架" />}
                   </div>
                   <p className="text-[14px] text-text-muted mb-2">
@@ -189,7 +195,7 @@ export default function ModuleDetail() {
             </div>
           ) : pool ? (
             <>
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="panel-inset px-4 py-3">
                   <p className="text-[13px] text-text-muted">已分配席位</p>
                   <p className="text-[20px] font-bold text-text mt-1 leading-none">
@@ -199,12 +205,10 @@ export default function ModuleDetail() {
                   {/* Shared meter, so allocation reads the same here as in the
                       catalogue and the seat pool page. */}
                   <div className="meter mt-2.5">
-                    <span
-                      style={{
-                        width: `${Math.min(100, Math.round((allocated / pool.total) * 100))}%`,
-                        background: spare > 0 ? 'var(--color-signal)' : 'var(--color-warning-light)',
-                      }}
-                    />
+                    {(() => {
+                      const pct = pool.total ? Math.round((allocated / pool.total) * 100) : 0;
+                      return <span style={{ width: `${Math.min(100, pct)}%`, background: METER_FILL[poolHealth(pct)] }} />;
+                    })()}
                   </div>
                 </div>
                 <div className="panel-inset px-4 py-3">
@@ -238,7 +242,7 @@ export default function ModuleDetail() {
                 <span className="text-[13px] text-text-secondary">我的席位</span>
                 {mySeat ? (
                   <>
-                    <StatusBadge status={poolExpired ? '已过期' : mySeat.status} />
+                    <StatusBadge status={seatStatusOf(state, mySeat)} />
                     <span className="text-[13px] text-text-muted">
                       {mySeat.assignedAt} 起持有，已使用 {mySeat.usedDays} 天
                     </span>
@@ -337,9 +341,11 @@ export default function ModuleDetail() {
         {/* Fallback when the catalog entry has no long-form content yet */}
         {!detail && (
           <div className="panel py-16 text-center">
-            <BookOpen size={48} className="mx-auto mb-4 text-text-placeholder" />
-            <p className="text-[16px] text-text-muted mb-2">暂无详细介绍</p>
-            <p className="text-[14px] text-text-placeholder">该模块的详细功能说明正在完善中，敬请期待</p>
+            <span className="w-[44px] h-[44px] rounded-full bg-surface-hover flex items-center justify-center mx-auto mb-4">
+              <BookOpen size={20} className="text-text-muted" />
+            </span>
+            <p className="text-[13px] text-text-muted">暂无详细介绍</p>
+            <p className="text-[13px] text-text-placeholder mt-2">该模块的详细功能说明正在完善中，敬请期待</p>
           </div>
         )}
 
@@ -347,7 +353,7 @@ export default function ModuleDetail() {
         <div className="panel px-5 py-3 flex items-center justify-between">
           <button
             onClick={() => navigate('/modules')}
-            className="h-[34px] px-4 text-[14px] font-semibold text-text-secondary bg-surface-hover rounded-full inline-flex items-center gap-[6px] hover:brightness-95 transition-all cursor-pointer"
+            className="h-[38px] px-4 text-[13.5px] font-semibold text-text-secondary bg-surface-hover rounded-full inline-flex items-center gap-[6px] hover:brightness-95 transition-all cursor-pointer"
           >
             <ChevronLeft size={14} /> 返回模块中心
           </button>

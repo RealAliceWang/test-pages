@@ -35,8 +35,12 @@ export default function SectionCard({
   const act = onAction ?? (to ? () => navigate(to) : undefined);
 
   return (
-    <section className={`panel flex flex-col ${bare ? '' : 'p-5'} ${className}`}>
-      <header className={`flex items-center justify-between gap-3 ${bare ? 'px-5 pt-5 pb-3' : 'mb-4'}`}>
+    <section className={`panel flex flex-col ${className}`}>
+      <header
+        className={`flex items-center justify-between gap-3 ${
+          bare ? 'px-5 pt-5 pb-3' : 'px-6 py-[18px] border-b border-hairline'
+        }`}
+      >
         <h2 className="text-[13.5px] font-bold text-text tracking-[-0.01em]">{title}</h2>
         {/* Muted, not placeholder: the link must clear text contrast on its
             own. Negative margins keep the ≥32px hit area from inflating the
@@ -51,7 +55,7 @@ export default function SectionCard({
           </button>
         )}
       </header>
-      {children}
+      <div className={`flex-1 flex flex-col ${bare ? '' : 'p-5'}`}>{children}</div>
     </section>
   );
 }

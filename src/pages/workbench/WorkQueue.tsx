@@ -133,6 +133,15 @@ export default function WorkQueue({ items, pools, ownView }: WorkQueueProps) {
               <p className="text-[13px] text-text-muted">
                 {tab === 2 ? '暂无已完成的记录' : '当前没有待处理的事项'}
               </p>
+              {/* An empty queue still owes the reader a next step: clearing the
+                  filter when only this tab is empty, otherwise the action that
+                  actually follows from having nothing to approve. */}
+              <button
+                onClick={() => (tab === 2 ? setTab(0) : navigate(ownView ? '/modules' : '/statistics'))}
+                className="btn-soft mt-4 h-[32px] px-4 text-[13px] font-semibold cursor-pointer"
+              >
+                {tab === 2 ? '返回全部' : ownView ? '去模块中心申请' : '查看用量趋势'}
+              </button>
             </div>
           )}
         </div>

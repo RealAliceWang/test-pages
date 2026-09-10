@@ -1,6 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Check, CheckSquare, Inbox, KeyRound, ShoppingCart, TriangleAlert, X } from 'lucide-react';
+import {
+  Check, CheckSquare, Gift, Inbox, KeyRound, ShoppingCart, TriangleAlert, X,
+  type LucideIcon,
+} from 'lucide-react';
 import Header from '../components/layout/Header';
 import TabFilter from '../components/common/TabFilter';
 import SearchBar from '../components/common/SearchBar';
@@ -8,12 +11,48 @@ import StatusBadge from '../components/common/StatusBadge';
 import Modal from '../components/common/Modal';
 import { moduleIconMap } from '../assets/moduleIcons';
 import {
-  allocatedSeats, deptOf, eligibleSigners, inboxOf, isExpired, isStandIn, kindLabels,
-  memberOf, moduleOf, orgOf, pendingStep, poolOf, spareSeats, stepAfterApproval, useApp,
-  visibleApplications,
+  allocatedSeats, deptOf, eligibleSigners, grantedFreeSeats, inboxOf, isExpired, isStandIn,
+  kindLabels, memberOf, moduleOf, orgOf, pendingStep, poolOf, spareSeats, stepAfterApproval,
+  useApp, visibleApplications,
 } from '../store';
 import { roleLabels, type Application } from '../domain/types';
 import { moduleLabel } from '../domain/format';
+import { METER_FILL, poolHealth } from '../domain/poolHealth';
+
+interface MeterRowProps {
+  icon: LucideIcon;
+  label: string;
+  /** Right-hand figure, already coloured by the caller's own rules. */
+  value: ReactNode;
+  /**
+   * Omitted when there is nothing to draw. Several approval contexts have a
+   * figure but no denominator — an un-opened module, a lapsed pool — and a
+   * ratio that cannot be drawn must not leave an empty track behind.
+   */
+  ratio?: { used: number; total: number };
+}
+
+/** One "label — figure — bar" row inside an approval card's evidence block. */
+function MeterRow({ icon: Icon, label, value, ratio }: MeterRowProps) {
+  const drawable = ratio && ratio.total > 0;
+  const pct = drawable ? Math.min(100, Math.round((ratio.used / ratio.total) * 100)) : 0;
+
+  return (
+    <div>
+      <div className="flex items-center justify-between gap-3 text-[13px]">
+        <span className="inline-flex items-center gap-[6px] text-text-muted shrink-0">
+          <Icon size={13} /> {label}
+        </span>
+        {value}
+      </div>
+      {drawable && (
+        <div className="meter mt-[9px]">
+          <span style={{ width: `${pct}%`, background: METER_FILL[poolHealth(pct)] }} />
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function Approvals() {
   const navigate = useNavigate();
@@ -143,10 +182,21 @@ export default function Approvals() {
             const dept = deptOf(state, app.deptId);
             const org = orgOf(state, app.orgId);
             const pool = poolOf(state, app.orgId, app.moduleId);
-            const spare = pool && !isExpired(state, pool) ? spareSeats(state, pool) : 0;
+            const lapsed = pool ? isExpired(state, pool) : false;
+            // A lapsed pool holds seats nobody can use, so it must not be
+            // counted as capacity — only a live pool has a usable denominator.
+            const live = pool && !lapsed ? pool : undefined;
+            const used = live ? allocatedSeats(state, live.id) : 0;
+            const spare = live ? spareSeats(state, live) : 0;
+            // Free-edition seats are capped per organisation rather than per
+            // module, so a 免费额度扩容 request has a denominator even when the
+            // module itself has no pool yet — and it is the figure the vendor
+            // actually rules on.
+            const freeQuota = org?.freeSeatQuota ?? 0;
+            const freeUsed = grantedFreeSeats(state, app.orgId);
             const step = pendingStep(app);
             const isMine = inboxIds.has(app.id);
-            const amount = mod && mod.unitPrice > 0 ? mod.unitPrice * app.seats : 0;
+            const amount = mod && app.kind === 'PURCHASE' ? mod.unitPrice * app.seats : 0;
 
             return (
               <div
@@ -163,18 +213,15 @@ export default function Approvals() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <p className="text-[13.5px] font-bold text-text tracking-[-0.01em]">
-                        {mod?.name}
-                        {mod?.edition === '商业版' && <span className="text-text-muted font-normal">（商业版）</span>}
+                        {mod ? moduleLabel(mod) : '—'}
                       </p>
+                      {mod && <StatusBadge status={mod.edition} />}
                       <span className="text-[12px] px-[6px] py-[1px] rounded-sm bg-surface-hover text-text-muted">
                         {kindLabels[app.kind]}
                       </span>
                       <StatusBadge status={app.status} />
                       {step && isStandIn(me, step) && (
                         <span className="text-[12px] font-medium text-warning bg-warning-bg rounded-full px-2 py-0.5">代部门审批</span>
-                      )}
-                      {amount > 0 && (
-                        <span className="text-[13px] text-orange">预估 ¥{amount.toLocaleString()}</span>
                       )}
                     </div>
 
@@ -185,7 +232,7 @@ export default function Approvals() {
 
                     <div className="flex items-center gap-3 mt-3">
                       <div className="w-[28px] h-[28px] rounded-full flex items-center justify-center text-white text-[12px] shrink-0"
-                        style={{ background: applicant?.avatarColor ?? '#CBD5E1' }}>
+                        style={{ background: applicant?.avatarColor ?? 'var(--color-text-placeholder)' }}>
                         {applicant?.name.charAt(0) ?? '—'}
                       </div>
                       <p className="text-[13px] text-text-secondary">
@@ -199,24 +246,82 @@ export default function Approvals() {
                       {app.reason}
                     </p>
 
-                    {/* Context the approver actually needs to decide */}
-                    <div className="flex items-center gap-5 mt-3 text-[13px]">
-                      <span className="inline-flex items-center gap-[6px] text-text-muted">
-                        <KeyRound size={13} />
-                        {pool && !isExpired(state, pool)
-                          ? `企业席位 ${allocatedSeats(state, pool.id)}/${pool.total}，空闲 ${spare}`
-                          : '企业尚未开通该模块'}
-                      </span>
+                    {/* Everything the decision rests on, as one block, so the
+                        approver never leaves the card to price a decision. Two
+                        different ceilings apply and a request can sit under
+                        both: the module's own pool, and — for free editions —
+                        the organisation-wide quota the vendor grants. A full
+                        module pool is the *reason* an escalating request exists,
+                        so the free-quota row is what says whether it can be met.
+
+                        Width is capped because a full-bleed meter across the
+                        card body reads as a page-wide alert stripe rather than
+                        one pool's state. */}
+                    <div className="mt-3 px-4 py-[13px] bg-surface-secondary rounded-sm max-w-[440px] flex flex-col gap-[13px]">
+                      <MeterRow
+                        icon={KeyRound}
+                        label="目标池余量"
+                        ratio={live ? { used, total: live.total } : undefined}
+                        value={live ? (
+                          <span className={`font-semibold tabular-nums ${spare === 0 ? 'text-warning' : 'text-text'}`}>
+                            {used} / {live.total}
+                            <span className="font-medium ml-1">{spare === 0 ? '已满' : `空闲 ${spare}`}</span>
+                          </span>
+                        ) : lapsed && pool ? (
+                          <span className="font-semibold text-warning">席位已于 {pool.expireDate} 到期</span>
+                        ) : (
+                          <span className="text-text-muted">企业尚未开通该模块</span>
+                        )}
+                      />
+
+                      {/* Only free-edition requests draw on the granted quota;
+                          a paid purchase is bounded by budget, which this
+                          system does not model — so it gets no second bar. */}
+                      {app.kind === 'QUOTA' && (
+                        <MeterRow
+                          icon={Gift}
+                          label="企业免费额度"
+                          ratio={{ used: freeUsed, total: freeQuota }}
+                          value={
+                            <span className="font-semibold tabular-nums text-text">
+                              {freeUsed} / {freeQuota}
+                              <span className="font-medium ml-1">
+                                还可申领 {Math.max(0, freeQuota - freeUsed)}
+                              </span>
+                            </span>
+                          }
+                        />
+                      )}
+
+                      {amount > 0 && (
+                        <div className="flex items-baseline justify-between gap-3">
+                          <span className="text-[13px] text-text-muted">扩容预估</span>
+                          <span className="display-num text-[19px] text-text">¥ {amount.toLocaleString()}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* The conclusion the numbers above lead to, stated before the
+                        approver commits rather than after. A full meter is the
+                        reason an escalating request exists, not a blocker, so the
+                        two branches that escalate name that cause out loud —
+                        otherwise「池已满」next to a live 通过 button reads as a
+                        contradiction. Only claimed when a live pool proves it;
+                        an un-opened module has no余量 to be out of. */}
+                    <div className="mt-[10px] text-[13px]">
                       {app.kind === 'SEAT' && (
                         <span className="text-success">池内有余量，通过后立即分配，不产生费用</span>
                       )}
                       {app.kind === 'PURCHASE' && (
                         <span className="text-orange inline-flex items-center gap-[6px]">
-                          <TriangleAlert size={13} /> 通过后需下单付费扩容
+                          <TriangleAlert size={13} />
+                          {live && spare === 0 ? '池内无余量，通过后需下单付费扩容' : '通过后需下单付费扩容'}
                         </span>
                       )}
                       {app.kind === 'QUOTA' && (
-                        <span className="text-primary">通过后由厂商核定免费额度</span>
+                        <span className="text-primary">
+                          {live && spare === 0 ? '池内无余量，通过后由厂商核定免费额度' : '通过后由厂商核定免费额度'}
+                        </span>
                       )}
                     </div>
 
@@ -343,7 +448,7 @@ export default function Approvals() {
               <textarea value={comment} rows={3}
                 placeholder={acting.approve ? '可填写补充说明（选填）' : '请说明驳回原因，便于申请人调整'}
                 onChange={(e) => setComment(e.target.value)}
-                className="w-full px-3 py-[10px] text-[14px] field placeholder:text-text-placeholder focus:border-primary focus:ring-2 focus:ring-primary/10 focus:outline-none transition-all resize-none leading-relaxed" />
+                className="w-full px-3 py-[10px] text-[14px] field placeholder:text-text-placeholder resize-none leading-relaxed" />
             </div>
 
             <div className="flex items-center justify-end gap-3">

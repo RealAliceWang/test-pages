@@ -11,14 +11,14 @@ import type { MetricTone } from '../components/common/MetricCard';
 import RingProgress from '../components/common/RingProgress';
 import StatusBadge from '../components/common/StatusBadge';
 import { daysLeftLabel, moduleLabel } from '../domain/format';
-import { POOL_EXPIRING_DAYS } from '../domain/poolHealth';
+import { METER_FILL, POOL_EXPIRING_DAYS, poolHealth } from '../domain/poolHealth';
 import { can } from '../domain/permissions';
 import { roleLabels } from '../domain/types';
 import {
   addDays,
   assignmentsOfMember,
+  currentDeptManager,
   daysBetween,
-  memberOf,
   moduleOf,
   poolOf,
   seatStatusOf,
@@ -92,7 +92,13 @@ function Field({ label, icon, iconCls, children, hint }: FieldProps) {
         <div className="mt-1 flex items-center gap-2 flex-wrap">
           {children}
           {hint && (
-            <span title={hint} className="w-[20px] h-[20px] rounded-sm flex items-center justify-center bg-surface-secondary">
+            <span
+              tabIndex={0}
+              role="img"
+              aria-label={hint}
+              title={hint}
+              className="w-[20px] h-[20px] rounded-sm flex items-center justify-center bg-surface-secondary"
+            >
               <Pencil size={11} className="text-text-muted" />
             </span>
           )}
@@ -105,18 +111,22 @@ function Field({ label, icon, iconCls, children, hint }: FieldProps) {
 export default function Profile() {
   const { state, me, myOrg, myDept } = useApp();
 
-  const manager = myDept ? memberOf(state, myDept.managerId) : undefined;
+  const manager = myDept ? currentDeptManager(state, myDept.id) : undefined;
 
   const seats = useMemo(
     () =>
       assignmentsOfMember(state, me.id).flatMap((a) => {
         const module = moduleOf(state, a.moduleId);
+        /* A retired pool (lapsed and never renewed) no longer resolves, but
+           the grant is still part of the member's history — render it as a
+           fully-elapsed term instead of dropping the row (see MyModules.tsx). */
         const pool = poolOf(state, a.orgId, a.moduleId);
-        if (!module || !pool) return [];
-
-        const total = Math.max(1, daysBetween(pool.startDate, pool.expireDate));
-        const remain = daysBetween(state.now, pool.expireDate);
+        if (!module) return [];
         const status = seatStatusOf(state, a);
+        if (!pool && status !== '已过期') return [];
+
+        const total = pool ? Math.max(1, daysBetween(pool.startDate, pool.expireDate)) : module.duration;
+        const remain = pool ? daysBetween(state.now, pool.expireDate) : 0;
         const expired = status === '已过期';
 
         return [
@@ -191,10 +201,10 @@ export default function Profile() {
                   as a hard clip or hugs it like a double border. */}
               <defs>
                 <linearGradient id="ink-contour-vfade" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0" stopColor="#000" />
-                  <stop offset="0.1" stopColor="#fff" />
-                  <stop offset="0.88" stopColor="#fff" />
-                  <stop offset="1" stopColor="#000" />
+                  <stop offset="0" stopColor="var(--color-text)" />
+                  <stop offset="0.1" stopColor="var(--color-surface)" />
+                  <stop offset="0.88" stopColor="var(--color-surface)" />
+                  <stop offset="1" stopColor="var(--color-text)" />
                 </linearGradient>
                 <mask id="ink-contour-mask">
                   <rect width="760" height="150" fill="url(#ink-contour-vfade)" />
@@ -203,13 +213,18 @@ export default function Profile() {
               <g mask="url(#ink-contour-mask)">
                 {CONTOUR_LINES.map(({ d, accent }, i) => (
                   <path key={i} d={d} fill="none" strokeWidth="1"
-                    stroke={accent ? 'rgba(125,211,252,0.22)' : 'rgba(255,255,255,0.045)'} />
+                    stroke={
+                      accent
+                        ? 'color-mix(in srgb, var(--color-signal) 22%, transparent)'
+                        : 'color-mix(in srgb, var(--color-surface) 4.5%, transparent)'
+                    } />
                 ))}
                 {/* two survey markers, sitting exactly on their contour */}
                 {CONTOUR_DOTS.map(({ x, y }) => (
                   <g key={x}>
-                    <circle cx={x} cy={y} r="2.4" fill="#7DD3FC" opacity="0.9" />
-                    <circle cx={x} cy={y} r="7" fill="none" stroke="rgba(125,211,252,0.3)" strokeWidth="1" />
+                    <circle cx={x} cy={y} r="2.4" fill="var(--color-signal)" opacity="0.9" />
+                    <circle cx={x} cy={y} r="7" fill="none"
+                      stroke="color-mix(in srgb, var(--color-signal) 30%, transparent)" strokeWidth="1" />
                   </g>
                 ))}
               </g>
@@ -237,7 +252,7 @@ export default function Profile() {
             </div>
           </div>
 
-          <div className="px-6 py-5 grid grid-cols-3 gap-6">
+          <div className="px-6 py-5 grid grid-cols-1 sm:grid-cols-3 gap-6">
             <Field label="工号" icon={<Hash size={20} className="text-primary" />} iconCls="bg-primary-bg">
               <p className="text-[14px] text-text">{me.employeeNo}</p>
             </Field>
@@ -251,10 +266,10 @@ export default function Profile() {
         </div>
 
         {/* Organization and contact */}
-        <div className="grid grid-cols-5 gap-4">
-          <div className="col-span-3 panel px-6 py-5">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+          <div className="lg:col-span-3 panel px-6 py-5">
             <h2 className="text-[13.5px] font-bold text-text tracking-[-0.01em] mb-5">组织归属</h2>
-            <div className="grid grid-cols-2 gap-x-6 gap-y-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
               <Field label="所属企业" icon={<Building2 size={20} className="text-primary" />} iconCls="bg-primary-bg">
                 <p className="text-[14px] text-text leading-[20px]">{myOrg.name}</p>
                 <StatusBadge status={myOrg.verified ? '已认证' : '未认证'} />
@@ -277,7 +292,7 @@ export default function Profile() {
                   </Field>
                 </>
               ) : (
-                <div className="col-span-2 rounded-md bg-surface-secondary px-4 py-3 text-[13px] text-text-secondary leading-[20px]">
+                <div className="sm:col-span-2 rounded-md bg-surface-secondary px-4 py-3 text-[13px] text-text-secondary leading-[20px]">
                   当前账号为厂商侧运营账号，直属厂商，不隶属于任何客户企业部门。
                 </div>
               )}
@@ -291,7 +306,7 @@ export default function Profile() {
             </div>
           </div>
 
-          <div className="col-span-2 panel px-6 py-5">
+          <div className="lg:col-span-2 panel px-6 py-5">
             <h2 className="text-[13.5px] font-bold text-text tracking-[-0.01em] mb-5">联系方式</h2>
             <div className="flex flex-col gap-5">
               <Field
@@ -320,8 +335,8 @@ export default function Profile() {
         </div>
 
         {/* Seats, security and login history */}
-        <div className="grid grid-cols-5 gap-4">
-          <div className="col-span-3 panel px-6 py-5">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+          <div className="lg:col-span-3 panel px-6 py-5">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-[13.5px] font-bold text-text tracking-[-0.01em]">
                 我的授权概览
@@ -337,7 +352,7 @@ export default function Profile() {
               )}
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {seatStats.map((s) => (
                 <div key={s.status} className="panel-inset px-4 py-4">
                   <div className="flex items-center gap-3">
@@ -390,13 +405,7 @@ export default function Profile() {
                             style={{
                               width: `${s.pct}%`,
                               background:
-                                s.status === '已过期'
-                                  ? 'var(--color-text-placeholder)'
-                                  : s.status === '已暂停'
-                                    ? 'var(--color-danger-light)'
-                                    : s.status === '即将到期'
-                                    ? 'var(--color-warning-light)'
-                                    : 'var(--color-signal)',
+                                s.status === '已过期' ? 'var(--color-text-placeholder)' : METER_FILL[poolHealth(s.pct)],
                             }}
                           />
                         </div>
@@ -408,7 +417,7 @@ export default function Profile() {
             </div>
           </div>
 
-          <div className="col-span-2 flex flex-col gap-4">
+          <div className="lg:col-span-2 flex flex-col gap-4">
             <div className="panel px-6 py-5">
               <h2 className="text-[13.5px] font-bold text-text tracking-[-0.01em] mb-4">账户安全</h2>
               <div className="flex items-center gap-4 mb-4">
@@ -474,9 +483,7 @@ export default function Profile() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="text-[13px] font-medium text-text">{log.device}</span>
-                          {log.current && (
-                            <span className="text-[12px] px-1.5 py-[1px] rounded-sm bg-success-bg text-success">当前</span>
-                          )}
+                          {log.current && <StatusBadge status="当前" tone="success" />}
                         </div>
                         <div className="flex items-center gap-3 mt-0.5 text-[12px] text-text-muted">
                           <span>{log.time}</span>

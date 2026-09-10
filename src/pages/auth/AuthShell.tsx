@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react';
+import { TriangleAlert, X } from 'lucide-react';
 import { useApp } from '../../store';
 
 /* ---- The fluid-glass backdrop ------------------------------------------
@@ -19,9 +20,9 @@ function GlassOrb({ size, className, style }: { size: number; className?: string
         width: size,
         height: size,
         background:
-          'radial-gradient(circle at 30% 26%, rgba(255,255,255,.95) 0%, rgba(219,239,254,.75) 16%, rgba(125,211,252,.4) 46%, rgba(47,107,255,.2) 74%, rgba(255,255,255,.06) 100%)',
+          'radial-gradient(circle at 30% 26%, color-mix(in srgb, var(--color-auth-glass-highlight) 95%, transparent) 0%, color-mix(in srgb, var(--color-auth-glass-mist) 75%, transparent) 16%, color-mix(in srgb, var(--color-signal) 40%, transparent) 46%, color-mix(in srgb, var(--color-primary) 20%, transparent) 74%, color-mix(in srgb, var(--color-auth-glass-highlight) 6%, transparent) 100%)',
         boxShadow:
-          'inset -14px -16px 34px rgba(29,78,216,.2), inset 8px 10px 22px rgba(255,255,255,.75), 0 26px 50px -18px rgba(47,107,255,.35)',
+          'inset -14px -16px 34px color-mix(in srgb, var(--color-auth-glass-shadow) 20%, transparent), inset 8px 10px 22px color-mix(in srgb, var(--color-auth-glass-highlight) 75%, transparent), 0 26px 50px -18px color-mix(in srgb, var(--color-primary) 35%, transparent)',
         ...style,
       }}
     />
@@ -33,7 +34,7 @@ const scene = (
     {/* Soft ambient fields keeping the left half airy and lit */}
     <div
       className="absolute -top-48 -left-40 w-[560px] h-[560px] rounded-full blur-3xl opacity-70"
-      style={{ background: 'radial-gradient(circle at 35% 30%, rgba(186,230,253,.8), rgba(47,107,255,.2) 55%, transparent 78%)' }}
+      style={{ background: 'radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--color-signal-soft) 80%, transparent), color-mix(in srgb, var(--color-primary) 20%, transparent) 55%, transparent 78%)' }}
     />
 
     {/* ---- Hero subject, right side ---- */}
@@ -47,15 +48,15 @@ const scene = (
       style={{
         '--blob-dur': '30s',
         '--blob-rot': '8deg',
-        background: 'radial-gradient(circle at 30% 30%, rgba(186,230,253,.5), rgba(47,107,255,.16) 60%, transparent 86%)',
+        background: 'radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--color-signal-soft) 50%, transparent), color-mix(in srgb, var(--color-primary) 16%, transparent) 60%, transparent 86%)',
       } as CSSProperties}
     >
       <div className="absolute -left-12 top-[16%] w-[120%] h-[150px] rotate-[-16deg] blur-lg"
-        style={{ background: 'linear-gradient(90deg, rgba(96,165,250,.55), rgba(96,165,250,.12))' }} />
+        style={{ background: 'linear-gradient(90deg, color-mix(in srgb, var(--color-auth-glass-current-sky) 55%, transparent), color-mix(in srgb, var(--color-auth-glass-current-sky) 12%, transparent))' }} />
       <div className="absolute -left-16 top-[44%] w-[125%] h-[130px] rotate-[-16deg] blur-lg"
-        style={{ background: 'linear-gradient(90deg, rgba(110,231,183,.5), rgba(110,231,183,.1))' }} />
+        style={{ background: 'linear-gradient(90deg, color-mix(in srgb, var(--color-auth-glass-current-mint) 50%, transparent), color-mix(in srgb, var(--color-auth-glass-current-mint) 10%, transparent))' }} />
       <div className="absolute -left-12 top-[70%] w-[120%] h-[150px] rotate-[-16deg] blur-lg"
-        style={{ background: 'linear-gradient(90deg, rgba(59,130,246,.42), rgba(59,130,246,.08))' }} />
+        style={{ background: 'linear-gradient(90deg, color-mix(in srgb, var(--color-auth-glass-current-blue) 42%, transparent), color-mix(in srgb, var(--color-auth-glass-current-blue) 8%, transparent))' }} />
     </div>
     {/* Mint under-current escaping past the hero's lower edge */}
     <div
@@ -63,7 +64,7 @@ const scene = (
       style={{
         '--blob-dur': '26s',
         '--blob-rot': '-10deg',
-        background: 'radial-gradient(circle at 40% 40%, rgba(167,243,208,.8), rgba(125,211,252,.35) 60%, transparent 82%)',
+        background: 'radial-gradient(circle at 40% 40%, color-mix(in srgb, var(--color-success-soft) 80%, transparent), color-mix(in srgb, var(--color-signal) 35%, transparent) 60%, transparent 82%)',
       } as CSSProperties}
     />
     {/* Front flow: the frosted-glass body itself. Crisp 2px rim + a crescent
@@ -74,24 +75,24 @@ const scene = (
       style={{
         '--blob-dur': '20s',
         '--blob-rot': '-4deg',
-        border: '2px solid rgba(255,255,255,.65)',
+        border: '2px solid color-mix(in srgb, var(--color-auth-glass-highlight) 65%, transparent)',
         background:
-          'linear-gradient(142deg, rgba(255,255,255,.62) 0%, rgba(219,239,254,.4) 38%, rgba(125,211,252,.28) 68%, rgba(47,107,255,.16) 100%)',
+          'linear-gradient(142deg, color-mix(in srgb, var(--color-auth-glass-highlight) 62%, transparent) 0%, color-mix(in srgb, var(--color-auth-glass-mist) 40%, transparent) 38%, color-mix(in srgb, var(--color-signal) 28%, transparent) 68%, color-mix(in srgb, var(--color-primary) 16%, transparent) 100%)',
         backdropFilter: 'blur(18px) saturate(1.35)',
         WebkitBackdropFilter: 'blur(18px) saturate(1.35)',
         boxShadow:
-          'inset 8px 10px 24px rgba(255,255,255,.7), inset -14px -16px 30px rgba(29,78,216,.15), 0 48px 90px -36px rgba(29,78,216,.35)',
+          'inset 8px 10px 24px color-mix(in srgb, var(--color-auth-glass-highlight) 70%, transparent), inset -14px -16px 30px color-mix(in srgb, var(--color-auth-glass-shadow) 15%, transparent), 0 48px 90px -36px color-mix(in srgb, var(--color-auth-glass-shadow) 35%, transparent)',
       } as CSSProperties}
     >
       <div
         className="absolute left-[6%] top-[3%] w-[68%] h-[24%] rounded-[50%] blur-[26px] opacity-60"
-        style={{ background: 'radial-gradient(closest-side, rgba(255,255,255,.95), transparent)' }}
+        style={{ background: 'radial-gradient(closest-side, color-mix(in srgb, var(--color-auth-glass-highlight) 95%, transparent), transparent)' }}
       />
     </div>
     {/* Grounding shadow under the subject */}
     <div
       className="absolute right-[4%] bottom-[7%] w-[440px] h-[64px] rounded-[50%] blur-2xl"
-      style={{ background: 'radial-gradient(closest-side, rgba(29,78,216,.16), transparent)' }}
+      style={{ background: 'radial-gradient(closest-side, color-mix(in srgb, var(--color-auth-glass-shadow) 16%, transparent), transparent)' }}
     />
 
     {/* A droplet that broke away from the flow, on the sight line between
@@ -101,12 +102,12 @@ const scene = (
       className="auth-drift absolute left-[47%] top-[55%] w-[72px] h-[70px] rounded-[52%_48%_50%_50%/50%_52%_48%_52%]"
       style={{
         '--drift-dur': '12s',
-        border: '1px solid rgba(255,255,255,.7)',
+        border: '1px solid color-mix(in srgb, var(--color-auth-glass-highlight) 70%, transparent)',
         background:
-          'linear-gradient(150deg, rgba(255,255,255,.75), rgba(125,211,252,.45) 58%, rgba(47,107,255,.2) 100%)',
+          'linear-gradient(150deg, color-mix(in srgb, var(--color-auth-glass-highlight) 75%, transparent), color-mix(in srgb, var(--color-signal) 45%, transparent) 58%, color-mix(in srgb, var(--color-primary) 20%, transparent) 100%)',
         backdropFilter: 'blur(10px)',
         WebkitBackdropFilter: 'blur(10px)',
-        boxShadow: 'inset 4px 5px 12px rgba(255,255,255,.75), inset -6px -8px 16px rgba(29,78,216,.14), 0 20px 36px -14px rgba(29,78,216,.3)',
+        boxShadow: 'inset 4px 5px 12px color-mix(in srgb, var(--color-auth-glass-highlight) 75%, transparent), inset -6px -8px 16px color-mix(in srgb, var(--color-auth-glass-shadow) 14%, transparent), 0 20px 36px -14px color-mix(in srgb, var(--color-auth-glass-shadow) 30%, transparent)',
       } as CSSProperties}
     >
       <div className="absolute left-[20%] top-[14%] w-[11px] h-[9px] rounded-full bg-white opacity-70"
@@ -131,43 +132,52 @@ export default function AuthShell({ width = 440, children }: { width?: number; c
   const flash = state.flash;
 
   return (
-    <div className="app-shell relative min-h-screen overflow-hidden">
-      {scene}
+    <div className="h-dvh">
+      <div className="app-shell relative h-full overflow-hidden">
+        {scene}
 
-      {/* Wide screens: the card keeps to the left and the subject owns the
-          right; below xl the card recentres over the same scene. */}
-      <div className="relative z-10 min-h-screen flex items-center justify-center xl:justify-start xl:pl-[11%] p-6">
-        <div className="w-full" style={{ maxWidth: width }}>
-          {/* Brand above the panel — a single stacked lockup. Two segments with
-              a divider read like a 登录/注册 tab pair in this position, so the
-              product name sits under the logotype instead of beside it. */}
-          <div className="flex flex-col items-center gap-1 mb-6 select-none">
-            <span className="text-[26px] font-extrabold tracking-[-0.035em] text-text leading-none">3D3S</span>
-            <span className="text-[13px] text-text-muted tracking-[0.22em] ml-[0.22em]">云授权系统</span>
-          </div>
+        {/* Wide screens: the card keeps to the left and the subject owns the
+            right; below xl the card recentres over the same scene. Content
+            scrolls inside this column rather than the window if it ever
+            outgrows the viewport. */}
+        <div className="relative z-10 h-full flex items-center justify-center xl:justify-start xl:pl-[11%] p-6 overflow-y-auto">
+          <div className="w-full" style={{ maxWidth: width }}>
+            {/* Brand above the panel — a single stacked lockup. Two segments with
+                a divider read like a 登录/注册 tab pair in this position, so the
+                product name sits under the logotype instead of beside it. */}
+            <div className="flex flex-col items-center gap-1 mb-6 select-none">
+              <span className="text-[26px] font-extrabold tracking-[-0.035em] text-text leading-none">3D3S</span>
+              <span className="text-[13px] text-text-muted tracking-[0.22em] ml-[0.22em]">云授权系统</span>
+            </div>
 
-          {/* Frosted card: translucent enough that the stray droplet and the
-              ambient colour read through its surface. */}
-          <div
-            className="auth-card panel px-8 py-8 border border-white/60"
-            style={{
-              background: 'rgba(255,255,255,.62)',
-              backdropFilter: 'blur(24px) saturate(1.4)',
-              WebkitBackdropFilter: 'blur(24px) saturate(1.4)',
-              boxShadow: '0 32px 64px -24px rgba(29,78,216,.22), inset 0 1px 0 rgba(255,255,255,.9)',
-            }}
-          >
-            {flash && flash.kind === 'error' && (
-              <div
-                role="alert"
-                className="mb-5 px-4 py-3 rounded-sm bg-danger-bg text-danger text-[13px] font-medium leading-relaxed cursor-pointer"
-                onClick={() => dispatch({ type: 'DISMISS_FLASH' })}
-                title="点击关闭"
-              >
-                {flash.text}
-              </div>
-            )}
-            {children}
+            {/* Frosted card: translucent enough that the stray droplet and the
+                ambient colour read through its surface. */}
+            <div
+              className="auth-card panel px-6 py-6 border border-white/60"
+              style={{
+                background: 'color-mix(in srgb, var(--color-auth-glass-highlight) 62%, transparent)',
+                backdropFilter: 'blur(24px) saturate(1.4)',
+                WebkitBackdropFilter: 'blur(24px) saturate(1.4)',
+                boxShadow:
+                  '0 32px 64px -24px color-mix(in srgb, var(--color-auth-glass-shadow) 22%, transparent), inset 0 1px 0 color-mix(in srgb, var(--color-auth-glass-highlight) 90%, transparent)',
+              }}
+            >
+              {flash && flash.kind === 'error' && (
+                <div role="alert" className="mb-5 px-4 py-3 rounded-md bg-danger-bg flex items-start gap-3">
+                  <TriangleAlert size={16} className="text-danger shrink-0 mt-[2px]" />
+                  <p className="flex-1 text-danger text-[13px] font-medium leading-relaxed">{flash.text}</p>
+                  <button
+                    type="button"
+                    onClick={() => dispatch({ type: 'DISMISS_FLASH' })}
+                    aria-label="关闭"
+                    className="btn-icon w-9 h-9 -my-1 -mr-1 shrink-0 cursor-pointer"
+                  >
+                    <X size={14} strokeWidth={2.2} />
+                  </button>
+                </div>
+              )}
+              {children}
+            </div>
           </div>
         </div>
       </div>

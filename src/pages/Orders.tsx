@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import {
   BadgeCheck, Clock, CreditCard, Receipt, ShoppingCart, Wallet,
 } from 'lucide-react';
@@ -17,6 +17,7 @@ import {
 import type { Application, Order, PayMethod, Remittance } from '../domain/types';
 
 const filters = ['全部', '待支付', '待厂商确认', '退款中', '已完成', '已取消'] as const;
+const PAGE_SIZE = 12;
 
 /**
  * Deterministic mock QR so the checkout reads like a real cashier page.
@@ -63,6 +64,7 @@ export default function Orders() {
 
   const [tab, setTab] = useState(0);
   const [search, setSearch] = useState('');
+  const [shown, setShown] = useState(PAGE_SIZE);
   const [placing, setPlacing] = useState<Application | null>(null);
   const [seats, setSeats] = useState(1);
   const [payMethod, setPayMethod] = useState<PayMethod>('在线支付');
@@ -99,6 +101,14 @@ export default function Orders() {
     const org = orgOf(state, o.orgId);
     return o.orderNo.includes(search) || (mod?.name.includes(search) ?? false) || (org?.shortName.includes(search) ?? false);
   });
+  const page = list.slice(0, shown);
+  const rest = list.length - page.length;
+
+  // Every filter change restarts paging, otherwise the list keeps a stale window.
+  const resetPaging = <T,>(set: (v: T) => void) => (v: T) => {
+    set(v);
+    setShown(PAGE_SIZE);
+  };
 
   const paidAmount = orders.filter((o) => o.status === '已完成').reduce((s, o) => s + o.amount, 0);
   const unpaidAmount = orders.filter((o) => o.status === '待支付').reduce((s, o) => s + o.amount, 0);
@@ -160,7 +170,7 @@ export default function Orders() {
                       ¥{((mod?.unitPrice ?? 0) * app.seats).toLocaleString()}
                     </span>
                     <button onClick={() => { setPlacing(app); setSeats(app.seats); setPayMethod('在线支付'); }}
-                      className="btn-primary h-[32px] px-4 text-[13px] font-semibold cursor-pointer shrink-0">
+                      className="btn-outline h-[32px] px-4 text-[13px] font-semibold cursor-pointer shrink-0">
                       立即下单
                     </button>
                   </div>
@@ -171,9 +181,9 @@ export default function Orders() {
         )}
 
         <div className="panel px-5 py-3 flex items-center justify-between gap-4">
-          <TabFilter tabs={filters.map((f) => ({ label: f }))} activeIndex={tab} onChange={setTab} />
+          <TabFilter tabs={filters.map((f) => ({ label: f }))} activeIndex={tab} onChange={resetPaging(setTab)} />
           <div className="w-[240px]">
-            <SearchBar placeholder={isVendor ? '搜索订单号、模块或企业...' : '搜索订单号或模块...'} value={search} onChange={setSearch} />
+            <SearchBar placeholder={isVendor ? '搜索订单号、模块或企业...' : '搜索订单号或模块...'} value={search} onChange={resetPaging(setSearch)} />
           </div>
         </div>
 
@@ -190,7 +200,7 @@ export default function Orders() {
               </tr>
             </thead>
             <tbody>
-              {list.map((o, i) => {
+              {page.map((o, i) => {
                 const mod = moduleOf(state, o.moduleId);
                 const org = orgOf(state, o.orgId);
                 const buyer = memberOf(state, o.createdById);
@@ -207,7 +217,7 @@ export default function Orders() {
                         <td className="px-5 py-[14px] text-[14px] text-text-secondary">{org?.shortName ?? '—'}</td>
                         <td className="px-5 py-[14px] text-[14px] text-text-secondary">
                           {mod ? moduleLabel(mod) : '—'}
-                          <span className="text-text-muted"> · {o.seats} 席</span>
+                          <span className="num text-text-muted"> · {o.seats} 席</span>
                         </td>
                       </>
                     ) : (
@@ -215,10 +225,10 @@ export default function Orders() {
                         <td className="px-5 py-[14px]">
                           <p className="text-[14px] text-text-secondary">{mod ? moduleLabel(mod) : '—'}</p>
                         </td>
-                        <td className="px-5 py-[14px] text-[14px] text-text text-center">{o.seats}</td>
+                        <td className="px-5 py-[14px] text-[14px] text-text text-center num">{o.seats}</td>
                       </>
                     )}
-                    <td className="px-5 py-[14px] text-[14px] font-medium text-text whitespace-nowrap">
+                    <td className="px-5 py-[14px] text-[14px] font-medium text-text whitespace-nowrap num">
                       ¥{o.amount.toLocaleString()}
                     </td>
                     <td className="px-5 py-[14px] text-[14px] text-text-secondary whitespace-nowrap">{o.payMethod}</td>
@@ -230,7 +240,7 @@ export default function Orders() {
                         {canManage && o.status === '待支付' && (
                           <>
                             <button onClick={() => setPaying(o)}
-                              className="btn-primary h-[32px] px-3.5 text-[13px] font-semibold cursor-pointer whitespace-nowrap">
+                              className="btn-outline h-[32px] px-3.5 text-[13px] font-semibold cursor-pointer whitespace-nowrap">
                               支付
                             </button>
                             <button onClick={() => setCancelling(o)}
@@ -263,6 +273,9 @@ export default function Orders() {
                             确认退款
                           </button>
                         )}
+                        {canConfirm && o.status === '待支付' && (
+                          <span className="text-[13px] text-text-placeholder">—</span>
+                        )}
                         {!canManage && !canConfirm && <span className="text-[13px] text-text-placeholder">—</span>}
                         {canManage && o.status === '退款中' && (
                           <span className="text-[13px] text-text-muted whitespace-nowrap">等待厂商退款</span>
@@ -284,6 +297,20 @@ export default function Orders() {
                 <Receipt size={20} className="text-text-placeholder" />
               </div>
               <p className="text-[13px] text-text-muted">没有{sel === '全部' ? '' : sel}订单</p>
+            </div>
+          )}
+
+          {rest > 0 && (
+            <div className="px-5 py-4 border-t border-hairline flex items-center justify-center gap-3">
+              <span className="text-[13px] text-text-muted">
+                已显示 {page.length} / {list.length}
+              </span>
+              <button
+                onClick={() => setShown(shown + PAGE_SIZE)}
+                className="btn-soft h-[34px] px-5 text-[13px] font-semibold cursor-pointer"
+              >
+                加载更多（剩余 {rest}）
+              </button>
             </div>
           )}
         </div>
@@ -324,15 +351,21 @@ export default function Orders() {
 
               <div>
                 <label className="block text-[13px] font-medium text-text-secondary mb-2">支付方式</label>
-                <div className="flex items-center gap-2">
-                  {(['在线支付', '对公转账'] as PayMethod[]).map((p) => (
-                    <button key={p} onClick={() => setPayMethod(p)}
-                      className={`h-[32px] px-4 rounded-full text-[13px] font-semibold transition-colors cursor-pointer ${
-                        payMethod === p ? 'bg-primary-bg text-primary' : 'bg-surface-hover text-text-secondary hover:bg-border'
-                      }`}>
-                      {p}
-                    </button>
-                  ))}
+                {/* Same track-and-pill mechanic as TabFilter and the wallet
+                    switch below: selection reads via shadow, not color. */}
+                <div className="inline-flex items-center gap-1 p-[4px] rounded-full bg-surface-secondary"
+                  role="tablist" aria-label="选择支付方式">
+                  {(['在线支付', '对公转账'] as PayMethod[]).map((p) => {
+                    const on = payMethod === p;
+                    return (
+                      <button key={p} role="tab" aria-selected={on} onClick={() => setPayMethod(p)}
+                        className={`h-[32px] px-4 rounded-full text-[13px] font-semibold transition-colors cursor-pointer ${
+                          on ? 'bg-surface text-text shadow-[var(--shadow-elevated)]' : 'text-text-muted hover:text-text-secondary'
+                        }`}>
+                        {p}
+                      </button>
+                    );
+                  })}
                 </div>
                 <p className="text-[12px] text-text-placeholder mt-2">
                   {payMethod === '在线支付'
@@ -410,17 +443,22 @@ export default function Orders() {
                 {/* The cashier. Each wallet issues its own code (direct
                     integration, not an aggregate code), so the marks below
                     the QR are a real switch: pick a wallet, get its code.
-                    Wallet dots use third-party brand colours — the one place
-                    the palette rules step aside for brand marks. */}
+                    Wallet dots are third-party brand marks, kept out of the
+                    shared token file (this page can't touch it right now)
+                    and instead routed through locally-scoped CSS custom
+                    properties rather than literals at the point of use. */}
                 <div className="flex flex-col items-center gap-3 py-5 rounded-md bg-surface-secondary">
                   <div className="p-3 bg-surface rounded-sm border border-border">
                     <FakeQr seed={`${paying.orderNo}:${wallet}`} />
                   </div>
-                  {/* Segmented control on a visible track, so the unselected
-                      wallet still reads as a clickable option rather than a
-                      static badge. */}
-                  <div className="flex items-center gap-1 p-1 rounded-full bg-surface-hover"
-                    role="tablist" aria-label="选择支付钱包">
+                  {/* Same track-and-pill mechanic as TabFilter and the
+                      payment-method switch above; the track stays on
+                      surface-hover (rather than TabFilter's surface-secondary)
+                      because it sits inside a surface-secondary panel and
+                      needs the extra contrast to read as a control. */}
+                  <div className="flex items-center gap-1 p-[4px] rounded-full bg-surface-hover"
+                    role="tablist" aria-label="选择支付钱包"
+                    style={{ '--color-wechat': '#07C160', '--color-alipay': '#1677FF' } as CSSProperties}>
                     {(['微信支付', '支付宝'] as const).map((w) => {
                       const on = wallet === w;
                       return (
@@ -429,12 +467,12 @@ export default function Orders() {
                           role="tab"
                           aria-selected={on}
                           onClick={() => setWallet(w)}
-                          className={`inline-flex items-center gap-1.5 h-[30px] px-3.5 rounded-full text-[13px] font-semibold cursor-pointer transition-colors ${
-                            on ? 'bg-surface text-text shadow-sm' : 'text-text-muted hover:text-text-secondary'
+                          className={`inline-flex items-center gap-1.5 h-[32px] px-3.5 rounded-full text-[13px] font-semibold cursor-pointer transition-colors ${
+                            on ? 'bg-surface text-text shadow-[var(--shadow-elevated)]' : 'text-text-muted hover:text-text-secondary'
                           }`}
                         >
                           <span className="w-[8px] h-[8px] rounded-full"
-                            style={{ background: w === '微信支付' ? '#07C160' : '#1677FF' }} />
+                            style={{ background: w === '微信支付' ? 'var(--color-wechat)' : 'var(--color-alipay)' }} />
                           {w}
                         </button>
                       );
@@ -492,7 +530,7 @@ export default function Orders() {
                       </span>
                       <button
                         onClick={() => { navigator.clipboard?.writeText(row.value); setCopied(row.label); }}
-                        className="shrink-0 ml-3 text-[12px] font-medium text-primary hover:underline cursor-pointer">
+                        className="shrink-0 ml-3 inline-flex items-center h-[36px] px-1 text-[12px] font-medium text-primary hover:underline cursor-pointer">
                         {copied === row.label ? '已复制' : '复制'}
                       </button>
                     </div>

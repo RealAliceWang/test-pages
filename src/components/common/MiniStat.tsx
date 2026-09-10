@@ -1,4 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
+import { METER_FILL, poolHealth } from '../../domain/poolHealth';
 
 export interface MiniStatProps {
   label: string;
@@ -11,7 +12,11 @@ export interface MiniStatProps {
   hint?: string;
   icon?: LucideIcon;
   onClick?: () => void;
-  /** Amber fill instead of the signal blue, for ratios that need attention. */
+  /**
+   * Flags the ratio as needing attention: the fraction and percentage text
+   * turn amber. The `.meter` fill itself always follows `poolHealth(pct)`
+   * (see src/domain/poolHealth.ts) and is never driven by this flag.
+   */
   warn?: boolean;
 }
 
@@ -33,6 +38,11 @@ export default function MiniStat({
   warn,
 }: MiniStatProps) {
   const pct = total > 0 ? Math.min(100, Math.round((current / total) * 100)) : 0;
+  const health = poolHealth(pct);
+  // Over-capacity (current > total) is an objective fact about the ratio and
+  // must escalate the same way poolHealth's `full` bucket does everywhere
+  // else — it can't depend solely on the caller-supplied `warn` flag.
+  const attention = warn || health === 'full';
 
   const body = (
     <>
@@ -44,7 +54,7 @@ export default function MiniStat({
       {/* Figure and meter travel together; only the label and hint are pinned
           to the tile's edges, so a stretched tile still reads as one block. */}
       <div>
-        <p className="display-num text-[27px] text-text">
+        <p className={`display-num text-[27px] ${attention ? 'text-warning' : 'text-text'}`}>
           {current}
           {total > 0 && <span className="text-text-placeholder">/{total}</span>}
           {unit && <span className="text-[13px] font-semibold text-text-muted ml-1">{unit}</span>}
@@ -56,11 +66,15 @@ export default function MiniStat({
               <span
                 style={{
                   width: `${pct}%`,
-                  background: warn ? 'var(--color-warning-light)' : 'var(--color-signal)',
+                  background: METER_FILL[health],
                 }}
               />
             </div>
-            <span className="num text-[12px] font-bold text-text-muted shrink-0">{pct}%</span>
+            <span
+              className={`num text-[12px] font-bold shrink-0 ${attention ? 'text-warning' : 'text-text-muted'}`}
+            >
+              {pct}%
+            </span>
           </div>
         )}
       </div>

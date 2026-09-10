@@ -1,4 +1,5 @@
-import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { HashRouter, MemoryRouter, Navigate, Route, Routes } from 'react-router-dom';
+import type { ReactNode } from 'react';
 import Layout from './components/layout/Layout';
 import RequirePermission from './components/common/RequirePermission';
 import RequireAuth from './components/common/RequireAuth';
@@ -22,10 +23,32 @@ import Profile from './pages/Profile';
 import VendorOrgs from './pages/VendorOrgs';
 import VendorCatalog from './pages/VendorCatalog';
 
+declare global {
+  interface Window {
+    __CAPTURE_ROUTE__?: string;
+  }
+}
+
+/**
+ * HashRouter everywhere except the Figma capture entry.
+ *
+ * The capture script requires the hash to start with `#figmacapture`, which a
+ * HashRouter would parse as a route. On that entry the route arrives via
+ * `window.__CAPTURE_ROUTE__` instead, so a MemoryRouter seeded with it leaves
+ * the hash untouched for the capture script.
+ */
+function Router({ children }: { children: ReactNode }) {
+  const captureRoute = typeof window !== 'undefined' ? window.__CAPTURE_ROUTE__ : undefined;
+  if (captureRoute) {
+    return <MemoryRouter initialEntries={[captureRoute]}>{children}</MemoryRouter>;
+  }
+  return <HashRouter>{children}</HashRouter>;
+}
+
 export default function App() {
   return (
     <AppProvider>
-      <HashRouter>
+      <Router>
         <Routes>
           {/* Auth pages live outside the shell — no sidebar, no task rail. */}
           <Route path="/login" element={<Login />} />
@@ -80,7 +103,7 @@ export default function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
-      </HashRouter>
+      </Router>
     </AppProvider>
   );
 }

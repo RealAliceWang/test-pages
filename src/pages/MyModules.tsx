@@ -231,7 +231,7 @@ export default function MyModules() {
                       e.stopPropagation();
                       navigate(`/apply/${r.module.id}`);
                     }}
-                    className="w-full h-[32px] rounded-full text-[13px] font-semibold text-primary bg-primary-bg inline-flex items-center justify-center gap-1.5 hover:brightness-95 transition-all cursor-pointer"
+                    className="btn-outline w-full h-[32px] text-[13px] font-semibold inline-flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     <RefreshCw size={14} /> 申请续期
                   </button>

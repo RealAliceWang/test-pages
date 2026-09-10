@@ -1,5 +1,6 @@
 import * as seed from '../domain/seed';
 import { can, scopeOf, type Permission } from '../domain/permissions';
+import { POOL_EXPIRING_DAYS } from '../domain/poolHealth';
 import { roleLabels } from '../domain/types';
 import type {
   Application,
@@ -125,11 +126,25 @@ export function departmentsOfOrg(state: AppState, orgId: string): Department[] {
 }
 
 /**
+ * Who actually runs a department right now. Department.managerId is a static
+ * seed-time value that role/department changes never keep in sync, so this
+ * derives the answer live from the members list instead — the same way
+ * roleFitsStep decides who may approve on a department's behalf.
+ */
+export function currentDeptManager(state: AppState, deptId: string): Member | undefined {
+  return state.members.find((m) => m.deptId === deptId && m.role === 'DEPT_ADMIN');
+}
+
+/**
  * Two different warning windows on purpose: an administrator needs lead time to
  * raise a purchase order, while a member only needs to know in time to ask for a
- * renewal. Both live here so the pages cannot drift apart.
+ * renewal. POOL_EXPIRING_DAYS is owned by domain/poolHealth.ts — the single
+ * authority for pool utilisation thresholds — and re-exported from here only
+ * so existing `from '../store'` imports keep working; it must never be
+ * redefined locally. SEAT_EXPIRING_DAYS stays here since it only concerns an
+ * individual seat assignment.
  */
-export const POOL_EXPIRING_DAYS = 30;
+export { POOL_EXPIRING_DAYS };
 export const SEAT_EXPIRING_DAYS = 15;
 
 /** Seats currently held from a pool. Derived so it can never drift. */
@@ -139,6 +154,18 @@ export function allocatedSeats(state: AppState, poolId: string): number {
 
 export function spareSeats(state: AppState, pool: SeatPool): number {
   return Math.max(0, pool.total - allocatedSeats(state, pool.id));
+}
+
+/**
+ * Free-edition seats an organisation already holds, across every vendor-gifted
+ * pool. This is the figure `Organization.freeSeatQuota` caps, so anything that
+ * rules on free quota — a quota edit, or a 免费额度扩容 approval — has to
+ * measure against the same number.
+ */
+export function grantedFreeSeats(state: AppState, orgId: string): number {
+  return state.seatPools
+    .filter((p) => p.orgId === orgId && p.source === '厂商赠予')
+    .reduce((sum, p) => sum + allocatedSeats(state, p.id), 0);
 }
 
 export function isExpired(state: AppState, pool: SeatPool): boolean {
@@ -273,11 +300,16 @@ export function visibleAudit(state: AppState, member: Member): AuditLog[] {
     const ids = new Set(peers.map((m) => m.id));
     const names = new Set(peers.map((m) => m.name));
     // Department admins see actions they or their people did, and actions
-    // that named one of those people as the target (e.g. an org admin
-    // assigning a seat to someone in the department).
-    return sorted.filter(
-      (l) => l.orgId === member.orgId && (ids.has(l.actorId) || names.has(l.target)),
-    );
+    // that targeted one of those people (e.g. an org admin assigning a seat
+    // to someone in the department). Prefer the stable targetId when a log
+    // carries one — falling back to the free-text name only for older/other
+    // logs whose target is not a member at all (an order, a module, ...).
+    return sorted.filter((l) => {
+      if (l.orgId !== member.orgId) return false;
+      if (ids.has(l.actorId)) return true;
+      if (l.targetId) return ids.has(l.targetId);
+      return names.has(l.target);
+    });
   }
   return [];
 }
@@ -347,6 +379,21 @@ function statusForStep(step: ApprovalStep): ApplicationStatus {
   if (step.role === 'DEPT_ADMIN') return '待部门审批';
   if (step.role === 'ORG_ADMIN') return '待企业审批';
   return '待厂商审批';
+}
+
+/**
+ * An application may only be withdrawn while nobody has acted on it yet —
+ * i.e. its status still equals the status its very first approval step would
+ * have set. Chains vary by kind and by the applicant's own role (a
+ * department admin's own request starts one rung higher, since they cannot
+ * approve themselves), so "still at the first step" cannot be a single fixed
+ * status — it has to be recomputed from stepsFor the same way the chain
+ * itself was built at submission time.
+ */
+export function isWithdrawable(app: Application, applicantRole: Role): boolean {
+  const steps = stepsFor(app.kind, applicantRole);
+  if (steps.length === 0) return false;
+  return app.status === statusForStep(steps[0]);
 }
 
 /**
@@ -500,7 +547,7 @@ function ipFor(state: AppState, actor: Member): string {
   return `192.168.100.${100 + (n % 150)}`;
 }
 
-function log(ctx: Ctx, action: AuditAction, target: string, detail: string) {
+function log(ctx: Ctx, action: AuditAction, target: string, detail: string, targetId?: string) {
   ctx.seq += 1;
   ctx.logs.push({
     id: `log-n${ctx.seq}`,
@@ -510,6 +557,7 @@ function log(ctx: Ctx, action: AuditAction, target: string, detail: string) {
     actorRole: ctx.actor.role,
     action,
     target,
+    targetId,
     detail,
     createdAt: ctx.now,
     ip: ipFor(ctx.state, ctx.actor),
@@ -793,7 +841,7 @@ export function reducer(state: AppState, action: Action): AppState {
          the applicant — the org admin reads it before deciding to activate. */
       const ctx: Ctx = { state, actor: member, now, logs: [], seq };
       log(ctx, '注册申请', member.name,
-        `自助注册申请加入${org.shortName} · ${dept.name}（${member.title}），账号待企业管理员激活`);
+        `自助注册申请加入${org.shortName} · ${dept.name}（${member.title}），账号待企业管理员激活`, member.id);
       return commit(state, ctx, { members: [...state.members, member] }, {
         kind: 'success',
         text: `注册申请已提交，工号 ${employeeNo}，等待企业管理员激活`,
@@ -810,6 +858,9 @@ export function reducer(state: AppState, action: Action): AppState {
       if (blocked) return blocked;
       const mod = moduleOf(state, action.moduleId);
       if (!mod || !actor.deptId) return state;
+      if (!mod.listed) {
+        return { ...state, flash: { kind: 'error', text: `「${mod.name}」已下架，无法发起新申请` } };
+      }
 
       const kind = decideKind(state, actor.orgId, action.moduleId, action.seats);
       const steps = stepsFor(kind, actor.role);
@@ -860,6 +911,8 @@ export function reducer(state: AppState, action: Action): AppState {
       if (app.applicantId !== state.currentMemberId) {
         return { ...state, flash: { kind: 'error', text: '只能撤销自己提交的申请' } };
       }
+      const applicant = memberOf(state, app.applicantId);
+      if (!applicant || !isWithdrawable(app, applicant.role)) return state;
       const ctx = makeCtx(state);
       log(ctx, '撤销申请', app.code, '申请人主动撤销');
       return commit(
@@ -886,6 +939,8 @@ export function reducer(state: AppState, action: Action): AppState {
       if (action.approve) {
         const blocked = rejectIfPaused(state, app.orgId);
         if (blocked) return blocked;
+      } else if (!action.comment || !action.comment.trim()) {
+        return { ...state, flash: { kind: 'error', text: '驳回申请必须填写理由' } };
       }
 
       const ctx = makeCtx(state);
@@ -919,7 +974,7 @@ export function reducer(state: AppState, action: Action): AppState {
       const withComment = (text: string) => (action.comment ? `${text}；意见：${action.comment}` : text);
 
       if (!action.approve) {
-        log(ctx, auditAction, app.code, `驳回「${mod.name}」申请：${action.comment || '未填写理由'}`);
+        log(ctx, auditAction, app.code, `驳回「${mod.name}」申请：${action.comment}`);
         return commit(
           state,
           ctx,
@@ -954,31 +1009,55 @@ export function reducer(state: AppState, action: Action): AppState {
       if (app.kind === 'SEAT') {
         const pool = poolOf(state, app.orgId, app.moduleId);
         if (!pool) return state;
-        // The pool may have filled up between submission and approval.
-        if (spareSeats(state, pool) < 1) {
+        // The pool may have filled up between submission and approval. A
+        // batch request is all-or-nothing: partial fulfilment would silently
+        // strand the rest of the seats the applicant thinks they got.
+        const spare = spareSeats(state, pool);
+        if (spare < app.seats) {
           return {
             ...state,
             flash: {
               kind: 'error',
-              text: `「${mod.name}」席位已被占满，无法直接分配。请先扩容后再审批，或驳回本申请。`,
+              text: `「${mod.name}」席位不足（剩 ${spare} 个，需要 ${app.seats} 个），无法直接分配。请先扩容后再审批，或驳回本申请。`,
             },
           };
         }
-        ctx.seq += 1;
-        const assign: Assignment = {
-          id: `as-n${ctx.seq}`,
-          poolId: pool.id,
-          orgId: app.orgId,
-          moduleId: app.moduleId,
-          memberId: app.applicantId,
-          assignedById: actor.id,
-          assignedAt: ctx.now.slice(0, 10),
-          status: '生效中',
-          usedDays: 0,
-          lastUsed: '—',
-        };
-        log(ctx, auditAction, app.code, withComment(`${standIn}同意并从池内分配「${mod.name}」1 个席位`));
-        log(ctx, '分配席位', applicant?.name ?? app.applicantId, `「${mod.name}」席位已分配给${applicant?.name ?? ''}`);
+        // The applicant may already hold this module's licence from another
+        // path (e.g. a manual assignment made while this request was
+        // pending) — do not double it up.
+        if (liveAssignmentsOfMember(state, app.applicantId).some((a) => a.moduleId === app.moduleId)) {
+          return {
+            ...state,
+            flash: {
+              kind: 'error',
+              text: `${applicant?.name ?? '申请人'}已持有「${mod.name}」的生效授权，无需重复分配`,
+            },
+          };
+        }
+        const newAssigns: Assignment[] = [];
+        for (let i = 0; i < app.seats; i += 1) {
+          ctx.seq += 1;
+          newAssigns.push({
+            id: `as-n${ctx.seq}`,
+            poolId: pool.id,
+            orgId: app.orgId,
+            moduleId: app.moduleId,
+            memberId: app.applicantId,
+            assignedById: actor.id,
+            assignedAt: ctx.now.slice(0, 10),
+            status: '生效中',
+            usedDays: 0,
+            lastUsed: '—',
+          });
+        }
+        log(ctx, auditAction, app.code, withComment(`${standIn}同意并从池内分配「${mod.name}」${app.seats} 个席位`));
+        log(
+          ctx,
+          '分配席位',
+          applicant?.name ?? app.applicantId,
+          `「${mod.name}」${app.seats} 个席位已分配给${applicant?.name ?? ''}`,
+          applicant?.id,
+        );
         return commit(
           state,
           ctx,
@@ -986,9 +1065,9 @@ export function reducer(state: AppState, action: Action): AppState {
             applications: state.applications.map((a) =>
               a.id === app.id ? { ...a, steps, status: '已完成' as const } : a,
             ),
-            assignments: [assign, ...state.assignments],
+            assignments: [...newAssigns, ...state.assignments],
           },
-          { kind: 'success', text: `${app.code} 已通过，席位已分配给${applicant?.name ?? '申请人'}` },
+          { kind: 'success', text: `${app.code} 已通过，${app.seats} 个席位已分配给${applicant?.name ?? '申请人'}` },
         );
       }
 
@@ -1015,7 +1094,13 @@ export function reducer(state: AppState, action: Action): AppState {
         assignTo: app.applicantId,
       });
       log(ctx, auditAction, app.code, withComment(`批准「${mod.name}」免费额度 ${app.seats} 个席位`));
-      log(ctx, '分配席位', applicant?.name ?? app.applicantId, `额度到账后自动分配「${mod.name}」席位`);
+      log(
+        ctx,
+        '分配席位',
+        applicant?.name ?? app.applicantId,
+        `额度到账后自动分配「${mod.name}」席位`,
+        applicant?.id,
+      );
       return commit(
         state,
         ctx,
@@ -1040,13 +1125,24 @@ export function reducer(state: AppState, action: Action): AppState {
       if (target.orgId !== pool.orgId) {
         return { ...state, flash: { kind: 'error', text: '该成员不属于本企业，无法分配席位' } };
       }
+      if (target.status === '待激活') {
+        return {
+          ...state,
+          flash: { kind: 'error', text: `${target.name}的账号尚未激活，无法分配席位` },
+        };
+      }
       if (target.status === '已停用') {
         return {
           ...state,
           flash: { kind: 'error', text: `${target.name}的账号已停用，请先恢复后再分配席位` },
         };
       }
-      if (assignmentsOfMember(state, target.id).some((a) => a.moduleId === pool.moduleId)) {
+      if (isExpired(state, pool)) {
+        return { ...state, flash: { kind: 'error', text: '该席位池已过期，无法分配，请先续费' } };
+      }
+      // Only a currently-live assignment counts as "holding" the module — an
+      // expired, never-reclaimed historical record must not block a fresh one.
+      if (liveAssignmentsOfMember(state, target.id).some((a) => a.moduleId === pool.moduleId)) {
         return {
           ...state,
           flash: { kind: 'error', text: `${target.name}已持有该模块席位，无需重复分配` },
@@ -1070,7 +1166,7 @@ export function reducer(state: AppState, action: Action): AppState {
         usedDays: 0,
         lastUsed: '—',
       };
-      log(ctx, '分配席位', target.name, `从「${mod.name}」池分配 1 个席位给${target.name}`);
+      log(ctx, '分配席位', target.name, `从「${mod.name}」池分配 1 个席位给${target.name}`, target.id);
       return commit(state, ctx, { assignments: [assign, ...state.assignments] }, {
         kind: 'success',
         text: `已将「${mod.name}」席位分配给${target.name}`,
@@ -1084,7 +1180,7 @@ export function reducer(state: AppState, action: Action): AppState {
       const mod = moduleOf(state, assign.moduleId)!;
       const target = memberOf(state, assign.memberId);
       const reasonSuffix = action.reason ? `；原因：${action.reason}` : '';
-      log(ctx, '回收席位', target?.name ?? assign.memberId, `回收${target?.name ?? ''}的「${mod.name}」席位，已释放回池${reasonSuffix}`);
+      log(ctx, '回收席位', target?.name ?? assign.memberId, `回收${target?.name ?? ''}的「${mod.name}」席位，已释放回池${reasonSuffix}`, target?.id);
       return commit(
         state,
         ctx,
@@ -1123,7 +1219,17 @@ export function reducer(state: AppState, action: Action): AppState {
       // Renewing downwards is allowed, but not past the seats already in use.
       if (action.renewPoolId) {
         const pool = state.seatPools.find((p) => p.id === action.renewPoolId);
-        const inUse = pool ? allocatedSeats(state, pool.id) : 0;
+        // A renewal must stay inside the actor's own company and the module
+        // being ordered — without this, any org admin could pass another
+        // company's poolId and pay to expand/extend a stranger's pool while
+        // the order itself is booked under their own org.
+        if (!pool || pool.orgId !== ctx.actor.orgId || pool.moduleId !== action.moduleId) {
+          return {
+            ...state,
+            flash: { kind: 'error', text: '只能续费本企业该模块下的席位池' },
+          };
+        }
+        const inUse = allocatedSeats(state, pool.id);
         if (action.seats < inUse) {
           return {
             ...state,
@@ -1236,6 +1342,8 @@ export function reducer(state: AppState, action: Action): AppState {
     case 'CONFIRM_ORDER': {
       const order = state.orders.find((o) => o.id === action.orderId);
       if (!order || order.status !== '待厂商确认') return state;
+      const blocked = rejectIfPaused(state, order.orgId);
+      if (blocked) return blocked;
       const ctx = makeCtx(state);
       const mod = moduleOf(state, order.moduleId)!;
       const org = orgOf(state, order.orgId);
@@ -1358,7 +1466,7 @@ export function reducer(state: AppState, action: Action): AppState {
         avatarColor: ['#2563EB', '#16A34A', '#F97316', '#8B5CF6', '#14B8A6'][ctx.seq % 5],
       };
       const dept = deptOf(state, action.deptId);
-      log(ctx, '邀请成员', action.name, `邀请${action.name}加入${dept?.name ?? ''}，角色为${action.role === 'DEPT_ADMIN' ? '部门管理员' : '普通成员'}`);
+      log(ctx, '邀请成员', action.name, `邀请${action.name}加入${dept?.name ?? ''}，角色为${action.role === 'DEPT_ADMIN' ? '部门管理员' : '普通成员'}`, member.id);
       return commit(state, ctx, { members: [...state.members, member] }, {
         kind: 'success',
         text: `已向${action.name}发送邀请，待其激活账号`,
@@ -1384,7 +1492,8 @@ export function reducer(state: AppState, action: Action): AppState {
       log(ctx, disabling ? '停用成员' : '启用成员', target.name,
         disabling
           ? `停用${target.name}，同时回收其 ${freed.length} 个席位${reasonSuffix}`
-          : `启用${target.name}${reasonSuffix}`);
+          : `启用${target.name}${reasonSuffix}`,
+        target.id);
 
       return commit(
         state,
@@ -1427,7 +1536,7 @@ export function reducer(state: AppState, action: Action): AppState {
         }
       }
       const ctx = makeCtx(state);
-      log(ctx, '变更角色', target.name, `${target.name}的角色由${target.role === 'DEPT_ADMIN' ? '部门管理员' : target.role === 'ORG_ADMIN' ? '企业管理员' : '普通成员'}变更为${action.role === 'DEPT_ADMIN' ? '部门管理员' : action.role === 'ORG_ADMIN' ? '企业管理员' : '普通成员'}`);
+      log(ctx, '变更角色', target.name, `${target.name}的角色由${target.role === 'DEPT_ADMIN' ? '部门管理员' : target.role === 'ORG_ADMIN' ? '企业管理员' : '普通成员'}变更为${action.role === 'DEPT_ADMIN' ? '部门管理员' : action.role === 'ORG_ADMIN' ? '企业管理员' : '普通成员'}`, target.id);
       return commit(
         state,
         ctx,
@@ -1444,7 +1553,7 @@ export function reducer(state: AppState, action: Action): AppState {
         return { ...state, flash: { kind: 'error', text: '只能调整到本企业的部门' } };
       }
       const ctx = makeCtx(state);
-      log(ctx, '变更部门', target.name, `${target.name}调整至${dept.name}`);
+      log(ctx, '变更部门', target.name, `${target.name}调整至${dept.name}`, target.id);
       return commit(
         state,
         ctx,
@@ -1483,9 +1592,7 @@ export function reducer(state: AppState, action: Action): AppState {
       const org = orgOf(state, action.orgId);
       if (!org) return state;
       // Granted seats are already in use, so the quota cannot drop below them.
-      const usedFree = state.seatPools
-        .filter((p) => p.orgId === org.id && p.source === '厂商赠予')
-        .reduce((sum, p) => sum + allocatedSeats(state, p.id), 0);
+      const usedFree = grantedFreeSeats(state, org.id);
       if (action.quota < usedFree) {
         return {
           ...state,

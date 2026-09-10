@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
-  ArrowDown, ArrowUp, Boxes, CircleCheck, Clock, Coins, Cpu, Crown,
+  ArrowDown, ArrowUp, Boxes, ChevronDown, CircleCheck, Clock, Coins, Cpu, Crown,
   Lock, PackageX, Tag, TriangleAlert, Users,
 } from 'lucide-react';
 import Header from '../components/layout/Header';
@@ -28,7 +28,7 @@ const listedOptions = ['全部状态', '已上架', '已下架'] as const;
 const PAGE_SIZE = 12;
 
 const selectCls =
-  'h-[32px] px-2 text-[14px] text-text-secondary field outline-none focus:border-primary transition-colors cursor-pointer';
+  'h-[32px] pl-2 pr-6 text-[14px] text-text-secondary field appearance-none outline-none focus:border-primary transition-colors cursor-pointer';
 const numberInputCls = 'field w-full h-[40px] px-4 text-[15px] text-text';
 
 const columns = ['模块', '分类', '版本', '授权期限', '节点数', '单价', '已售席位', '开通企业', '上架状态', '操作'];
@@ -163,27 +163,39 @@ export default function VendorCatalog() {
               activeIndex={tab}
               onChange={resetPaging(setTab)}
             />
-            <select
-              aria-label="模块分类"
-              value={category}
-              onChange={(e) => resetPaging(setCategory)(Number(e.target.value))}
-              className={selectCls}
-            >
-              <option value={0}>全部分类</option>
-              {categories.map((c, i) => (
-                <option key={c} value={i + 1}>{c}</option>
-              ))}
-            </select>
-            <select
-              aria-label="上架状态"
-              value={listed}
-              onChange={(e) => resetPaging(setListed)(Number(e.target.value))}
-              className={selectCls}
-            >
-              {listedOptions.map((o, i) => (
-                <option key={o} value={i}>{o}</option>
-              ))}
-            </select>
+            <div className="relative">
+              <select
+                aria-label="模块分类"
+                value={category}
+                onChange={(e) => resetPaging(setCategory)(Number(e.target.value))}
+                className={selectCls}
+              >
+                <option value={0}>全部分类</option>
+                {categories.map((c, i) => (
+                  <option key={c} value={i + 1}>{c}</option>
+                ))}
+              </select>
+              <ChevronDown
+                size={13}
+                className="absolute right-[8px] top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
+              />
+            </div>
+            <div className="relative">
+              <select
+                aria-label="上架状态"
+                value={listed}
+                onChange={(e) => resetPaging(setListed)(Number(e.target.value))}
+                className={selectCls}
+              >
+                {listedOptions.map((o, i) => (
+                  <option key={o} value={i}>{o}</option>
+                ))}
+              </select>
+              <ChevronDown
+                size={13}
+                className="absolute right-[8px] top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
+              />
+            </div>
           </div>
           <div className="w-[240px]">
             <SearchBar
@@ -199,7 +211,7 @@ export default function VendorCatalog() {
             <thead>
               <tr className="border-b border-hairline">
                 {columns.map((h) => (
-                  <th key={h} className="text-left text-[13px] font-normal text-text-muted px-4 py-3 whitespace-nowrap">
+                  <th key={h} className="text-left text-[13px] font-normal text-text-muted px-5 py-3 whitespace-nowrap">
                     {h}
                   </th>
                 ))}
@@ -215,7 +227,7 @@ export default function VendorCatalog() {
                     className="hover:bg-surface-secondary transition-colors"
                     style={{ borderTop: i ? '1px solid var(--color-divider)' : 'none' }}
                   >
-                    <td className="px-4 py-[12px]">
+                    <td className="px-5 py-[12px]">
                       <div className="flex items-center gap-3">
                         <img
                           src={moduleIconMap[mod.icon] ?? moduleIconMap.building}
@@ -231,27 +243,27 @@ export default function VendorCatalog() {
                       </div>
                     </td>
 
-                    <td className="px-4 py-[12px] text-[14px] text-text-secondary whitespace-nowrap">
+                    <td className="px-5 py-[12px] text-[14px] text-text-secondary whitespace-nowrap">
                       {mod.category}
                     </td>
 
-                    <td className="px-4 py-[12px]">
+                    <td className="px-5 py-[12px]">
                       <StatusBadge status={mod.edition} />
                     </td>
 
-                    <td className="px-4 py-[12px] text-[14px] text-text-secondary whitespace-nowrap">
+                    <td className="px-5 py-[12px] text-[14px] text-text-secondary whitespace-nowrap">
                       <span className="inline-flex items-center gap-[4px]">
                         <Clock size={12} className="text-text-muted" /> {mod.duration} 天
                       </span>
                     </td>
 
-                    <td className="px-4 py-[12px] text-[14px] text-text-secondary whitespace-nowrap">
+                    <td className="px-5 py-[12px] text-[14px] text-text-secondary whitespace-nowrap">
                       <span className="inline-flex items-center gap-[4px]">
                         <Cpu size={12} className="text-text-muted" /> {mod.nodes}
                       </span>
                     </td>
 
-                    <td className="px-4 py-[12px] whitespace-nowrap">
+                    <td className="px-5 py-[12px] whitespace-nowrap">
                       {free ? (
                         <span className="text-[14px] text-text-muted">免费</span>
                       ) : (
@@ -262,7 +274,7 @@ export default function VendorCatalog() {
                       )}
                     </td>
 
-                    <td className="px-4 py-[12px] text-[14px] whitespace-nowrap">
+                    <td className="px-5 py-[12px] text-[14px] whitespace-nowrap">
                       {r.soldSeats > 0 ? (
                         <span className="text-text">{r.soldSeats}</span>
                       ) : (
@@ -270,7 +282,7 @@ export default function VendorCatalog() {
                       )}
                     </td>
 
-                    <td className="px-4 py-[12px] text-[14px] whitespace-nowrap">
+                    <td className="px-5 py-[12px] text-[14px] whitespace-nowrap">
                       {r.orgCount > 0 ? (
                         <span className="text-text-secondary inline-flex items-center gap-[4px]">
                           <Users size={12} className="text-text-muted" /> {r.orgCount}
@@ -280,7 +292,7 @@ export default function VendorCatalog() {
                       )}
                     </td>
 
-                    <td className="px-4 py-[12px]">
+                    <td className="px-5 py-[12px]">
                       <div className="flex items-center gap-[10px]">
                         <Toggle
                           enabled={mod.listed}
@@ -300,7 +312,7 @@ export default function VendorCatalog() {
                       </div>
                     </td>
 
-                    <td className="px-4 py-[12px]">
+                    <td className="px-5 py-[12px]">
                       {free ? (
                         <button
                           disabled
@@ -340,7 +352,7 @@ export default function VendorCatalog() {
               </span>
               <button
                 onClick={() => setShown(shown + PAGE_SIZE)}
-                className="btn-soft h-[34px] px-5 text-[13px] font-semibold cursor-pointer"
+                className="btn-soft h-[32px] px-5 text-[13px] font-semibold cursor-pointer"
               >
                 加载更多（剩余 {rest}）
               </button>

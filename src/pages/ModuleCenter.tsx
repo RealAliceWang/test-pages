@@ -9,9 +9,10 @@ import StatusBadge from '../components/common/StatusBadge';
 import { moduleIconMap } from '../assets/moduleIcons';
 import { categories } from '../domain/seed';
 import { can } from '../domain/permissions';
+import { moduleLabel } from '../domain/format';
 import {
   allocatedSeats, assignmentsOfMember, decideKind, isExpired, kindHint, kindLabels,
-  poolOf, spareSeats, useApp,
+  poolOf, seatStatusOf, spareSeats, useApp,
 } from '../store';
 import type { ModuleEdition } from '../domain/types';
 import { METER_FILL, poolHealth } from '../domain/poolHealth';
@@ -36,8 +37,18 @@ export default function ModuleCenter() {
     setLimit(PAGE);
   };
 
+  /* A raw '生效中' status doesn't know the org was disabled meanwhile —
+     seatStatusOf() folds that in and correctly demotes those seats to
+     '已暂停', so they must not count as "held" here. */
   const mySeatModuleIds = useMemo(
-    () => new Set(assignmentsOfMember(state, me.id).filter((a) => a.status === '生效中').map((a) => a.moduleId)),
+    () => new Set(
+      assignmentsOfMember(state, me.id)
+        .filter((a) => {
+          const status = seatStatusOf(state, a);
+          return status === '生效中' || status === '即将到期';
+        })
+        .map((a) => a.moduleId),
+    ),
     [state, me.id],
   );
 
@@ -85,15 +96,12 @@ export default function ModuleCenter() {
         <div className="panel px-5 py-3.5 flex items-center justify-between gap-4 flex-wrap">
           <TabFilter tabs={catTabs.map((c) => ({ label: c }))} activeIndex={cat} onChange={(i) => { setCat(i); setLimit(PAGE); }} />
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1 border-l border-border pl-3">
-              {editionFilters.map((e, i) => (
-                <button key={e} onClick={() => { setEdition(i); setLimit(PAGE); }}
-                  className={`h-[30px] px-[14px] rounded-full text-[13px] font-semibold cursor-pointer transition-colors ${
-                    i === edition ? 'bg-primary-bg text-primary' : 'text-text-secondary hover:bg-surface-hover'
-                  }`}>
-                  {e}
-                </button>
-              ))}
+            <div className="border-l border-border pl-3">
+              <TabFilter
+                tabs={editionFilters.map((e) => ({ label: e }))}
+                activeIndex={edition}
+                onChange={(i) => { setEdition(i); setLimit(PAGE); }}
+              />
             </div>
             <div className="w-[220px]">
               <SearchBar placeholder="搜索模块名称或编号..." value={search} onChange={(v) => { setSearch(v); setLimit(PAGE); }} />
@@ -108,13 +116,18 @@ export default function ModuleCenter() {
             const spare = pool ? spareSeats(state, pool) : 0;
             const expired = pool ? isExpired(state, pool) : false;
 
+            // A pool that was never opened reads differently from one that
+            // was opened and has since lapsed — don't collapse both into
+            // the same "未开通" copy (see ModuleDetail.tsx's poolStatus).
             const availability = held
               ? '已开通'
-              : !pool || expired
+              : !pool
                 ? '未开通'
-                : spare > 0
-                  ? '席位充足'
-                  : '席位已满';
+                : expired
+                  ? '已过期'
+                  : spare > 0
+                    ? '席位充足'
+                    : '席位已满';
 
             const kind = decideKind(state, me.orgId, m.id, 1);
             // A pool that exists but is fully allocated is a different story
@@ -137,11 +150,9 @@ export default function ModuleCenter() {
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-[6px]">
-                      <p className="text-[15px] font-bold text-text truncate tracking-[-0.01em]">{m.name}</p>
-                      <span className={`shrink-0 text-[12px] font-semibold px-2 py-[2px] rounded-full ${
-                        m.edition === '商业版' ? 'bg-orange-bg text-orange' : 'bg-surface-hover text-text-muted'
-                      }`}>
-                        {m.edition}
+                      <p className="text-[15px] font-bold text-text truncate tracking-[-0.01em]">{moduleLabel(m)}</p>
+                      <span className="shrink-0">
+                        <StatusBadge status={m.edition} />
                       </span>
                     </div>
                     <p className="text-[13px] text-text-muted mt-[3px]">{m.code}</p>
@@ -205,7 +216,7 @@ export default function ModuleCenter() {
 
         {list.length > limit && (
           <button onClick={() => setLimit(limit + PAGE)}
-            className="btn-ghost mx-auto h-[40px] px-7 text-[13.5px] font-semibold cursor-pointer">
+            className="btn-ghost mx-auto h-[38px] px-7 text-[13.5px] font-semibold cursor-pointer">
             加载更多（还有 {list.length - limit} 个）
           </button>
         )}

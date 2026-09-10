@@ -11,11 +11,11 @@ import StatusBadge from '../components/common/StatusBadge';
 import Modal from '../components/common/Modal';
 import { moduleIconMap } from '../assets/moduleIcons';
 import { can } from '../domain/permissions';
-import { METER_FILL, POOL_EXPIRING_DAYS, poolHealth } from '../domain/poolHealth';
+import { METER_FILL, poolHealth } from '../domain/poolHealth';
 import { daysLeftLabel, moduleLabel } from '../domain/format';
 import {
   allocatedSeats, daysBetween, deptOf, isExpired, isPoolExpiring, memberOf,
-  moduleOf, spareSeats, useApp,
+  moduleOf, spareSeats, useApp, visibleAssignments,
 } from '../store';
 import type { PayMethod, SeatPool } from '../domain/types';
 
@@ -40,13 +40,21 @@ export default function SeatPools() {
 
   const pools = state.seatPools.filter((p) => p.orgId === me.orgId);
 
-  const totalSeats = pools.reduce((s, p) => s + p.total, 0);
-  const usedSeats = pools.reduce((s, p) => s + allocatedSeats(state, p.id), 0);
+  // A department owns no seat quota of its own — pools are a shared org
+  // resource — so the summary numbers below are scoped down to the pools
+  // the department's own members actually hold seats in (mirrors the
+  // scoping Statistics.tsx applies to this same shared-pool problem). Org
+  // admins keep seeing every pool (scopePools === pools).
+  const deptHeldSeats = manage ? [] : visibleAssignments(state, me).filter((a) => a.status === '生效中');
+  const scopePools = manage ? pools : pools.filter((p) => deptHeldSeats.some((a) => a.poolId === p.id));
+
+  const totalSeats = scopePools.reduce((s, p) => s + p.total, 0);
+  const usedSeats = scopePools.reduce((s, p) => s + allocatedSeats(state, p.id), 0);
   const idleSeats = totalSeats - usedSeats;
   const utilisation = totalSeats ? Math.round((usedSeats / totalSeats) * 100) : 0;
 
   // Idle commercial seats are real money sitting unused — surface the number.
-  const idleCost = pools.reduce((sum, p) => {
+  const idleCost = scopePools.reduce((sum, p) => {
     const mod = moduleOf(state, p.moduleId);
     if (!mod || mod.unitPrice === 0) return sum;
     return sum + spareSeats(state, p) * mod.unitPrice;
@@ -80,7 +88,7 @@ export default function SeatPools() {
   };
 
   const stats: Metric[] = [
-    { icon: KeyRound, value: totalSeats, label: '持有席位总数', hint: `分布在 ${pools.length} 个席位池`, tone: 'accent' },
+    { icon: KeyRound, value: totalSeats, label: '持有席位总数', hint: `分布在 ${scopePools.length} 个席位池`, tone: 'accent' },
     { icon: UserPlus, value: usedSeats, label: '已分配', hint: '已发放给在职成员', tone: 'positive' },
     { icon: UserMinus, value: idleSeats, label: '空闲可分配', hint: '可直接分配，无需采购', tone: 'attention' },
     {
@@ -135,7 +143,7 @@ export default function SeatPools() {
             const health = poolHealth(pct);
             const left = daysBetween(state.now, pool.expireDate);
             const expired = isExpired(state, pool);
-            const expiring = !expired && left >= 0 && left <= POOL_EXPIRING_DAYS;
+            const expiring = isPoolExpiring(state, pool);
             const expanded = open === pool.id;
             const holders = state.assignments.filter((a) => a.poolId === pool.id && a.status === '生效中');
             const visibleHolders = me.role === 'ORG_ADMIN'
@@ -178,7 +186,7 @@ export default function SeatPools() {
                         <span
                           style={{
                             width: `${pct}%`,
-                            background: expired ? 'var(--color-text-placeholder)' : METER_FILL[health],
+                            background: METER_FILL[health],
                           }}
                         />
                       </div>
@@ -223,7 +231,7 @@ export default function SeatPools() {
                           </button>
                           {mod && mod.unitPrice > 0 && (
                             <button onClick={() => { setRenewing(pool); setRenewSeats(pool.total); setPayMethod('在线支付'); setOrderPlaced(false); }}
-                              className="h-[32px] px-4 rounded-full text-[13px] font-semibold text-primary bg-primary-bg hover:brightness-95 transition-colors cursor-pointer inline-flex items-center gap-[6px]">
+                              className="btn-outline h-[32px] px-4 text-[13px] font-semibold cursor-pointer inline-flex items-center gap-[6px]">
                               <RefreshCw size={14} /> 续费
                             </button>
                           )}
@@ -240,7 +248,7 @@ export default function SeatPools() {
                           return (
                             <div key={a.id} className="px-4 py-3 flex items-center gap-4">
                               <div className="w-[32px] h-[32px] rounded-full flex items-center justify-center text-white text-[13px] shrink-0"
-                                style={{ background: holder?.avatarColor ?? '#CBD5E1' }}>
+                                style={{ background: holder?.avatarColor ?? 'var(--color-text-placeholder)' }}>
                                 {holder?.name.charAt(0) ?? '—'}
                               </div>
                               <div className="w-[150px] shrink-0">

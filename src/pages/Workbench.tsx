@@ -147,7 +147,6 @@ export default function Workbench() {
               total: orgTotal,
               hint: `空闲 ${orgTotal - orgUsed} 个，可直接分配无需采购`,
               icon: KeyRound,
-              warn: utilisation < 60,
               onClick: () => navigate('/seats'),
             },
           ];
@@ -181,11 +180,20 @@ export default function Workbench() {
     me.role === 'VENDOR_OPS' ? '客户企业管理员' : me.role === 'ORG_ADMIN' ? '企业成员' : '我的部门';
 
   /* Column count chosen so the faces always land in two rows and the last row
-     is never left holding a single portrait. */
-  const teamCols = team.length > 6 ? 'grid-cols-4' : team.length > 4 ? 'grid-cols-3' : 'grid-cols-2';
+     is never left holding a single portrait. 3 is the one count that a 2-up
+     grid would split 2+1, so it gets its own single full row instead. */
+  const teamCols =
+    team.length === 3
+      ? 'grid-cols-3'
+      : team.length > 6
+        ? 'grid-cols-4'
+        : team.length > 4
+          ? 'grid-cols-3'
+          : 'grid-cols-2';
 
   const canSeeMembers = can(me.role, 'member:view-dept') || can(me.role, 'member:manage');
   const canSeeStats = canAny(me.role, ['stats:dept', 'stats:org', 'stats:platform']);
+  const canSeeSeats = canAny(me.role, ['seat:view-dept', 'seat:manage']);
 
   /* Things running out of time, unified across roles into one shape. */
   const watchlist: { id: string; name: string; note: string; left: number }[] =
@@ -229,14 +237,16 @@ export default function Workbench() {
   const hour = Number(state.now.slice(11, 13)) || 9;
   const greeting = `${hour < 12 ? '早上好' : hour < 18 ? '下午好' : '晚上好'}，${me.name}`;
 
-  /* Publish the work queue into the shell's right-hand rail. */
+  /* Publish the work queue into the shell's right-hand rail. Keyed on each
+     item's id + status, not just the array length — an application moving
+     from one approval stage to the next leaves the list the same size, so a
+     length-only dependency would leave the rail showing a stale status. */
+  const asideQueueItems = me.role === 'MEMBER' ? myApps : inbox;
+  const asideQueueKey = asideQueueItems.map((a) => `${a.id}:${a.status}`).join('|');
+
   useAside(
-    <WorkQueue
-      items={me.role === 'MEMBER' ? myApps : inbox}
-      pools={orgPools}
-      ownView={me.role === 'MEMBER'}
-    />,
-    [me.id, myApps.length, inbox.length, orgPools.length, state.assignments.length],
+    <WorkQueue items={asideQueueItems} pools={orgPools} ownView={me.role === 'MEMBER'} />,
+    [me.id, asideQueueKey, orgPools.length, state.assignments.length],
   );
 
   return (
@@ -265,7 +275,7 @@ export default function Workbench() {
                 value={hero.ring}
                 size={78}
                 thickness={8}
-                track="rgba(255,255,255,0.24)"
+                track="var(--color-divider)"
                 caption={hero.unit}
                 label={
                   <span className="display-num text-[16px] text-white">{Math.round(hero.ring)}%</span>
@@ -347,16 +357,19 @@ export default function Workbench() {
               ))}
             </div>
           ) : (
-            <p className="flex-1 flex items-center justify-center text-[13px] text-text-muted">
-              暂无可展示的成员
-            </p>
+            <div className="flex-1 flex flex-col justify-center py-8 text-center">
+              <span className="w-[44px] h-[44px] rounded-full bg-surface-hover flex items-center justify-center mx-auto mb-3">
+                <Users size={20} className="text-text-placeholder" />
+              </span>
+              <p className="text-[13px] text-text-muted">暂无可展示的成员</p>
+            </div>
           )}
         </SectionCard>
 
         {/* Expiry watchlist, or the member's own seats */}
         <SectionCard
           title={me.role === 'MEMBER' ? '我的席位' : '到期预警'}
-          actionLabel="查看全部"
+          actionLabel={me.role === 'MEMBER' || canSeeSeats ? '查看全部' : undefined}
           to={me.role === 'MEMBER' ? '/my-modules' : '/seats'}
           className="xl:col-span-5 xl:order-5"
         >
@@ -364,7 +377,10 @@ export default function Workbench() {
             {watchlist.slice(0, 3).map((w) => (
               <button
                 key={w.id}
-                onClick={() => navigate(me.role === 'MEMBER' ? '/my-modules' : '/seats')}
+                onClick={() => {
+                  if (me.role === 'MEMBER') navigate('/my-modules');
+                  else if (canSeeSeats) navigate('/seats');
+                }}
                 className="panel-inset flex-1 px-4 py-3 flex items-center justify-between gap-3 text-left cursor-pointer transition-colors hover:bg-surface-hover"
               >
                 <div className="min-w-0">

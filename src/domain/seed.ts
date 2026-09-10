@@ -78,7 +78,7 @@ export const organizations: Organization[] = [
     code: 'ORG20260001',
     verified: true,
     freeSeatQuota: 40,
-    contactName: '王振华',
+    contactName: '李振华',
     contactPhone: '138****2860',
     industry: '建筑设计',
     scale: '200-500 人',
@@ -138,7 +138,7 @@ export const departments: Department[] = [
 ];
 
 export const members: Member[] = [
-  { id: 'm-1',  orgId: 'org-1', deptId: 'dept-5', name: '王振华', employeeNo: 'YG0001', title: '总工程师',       role: 'ORG_ADMIN',  email: 'wangzh@yungou.com',  phone: '138****2860', status: '在职',   joinedAt: '2025-01-15', lastLogin: '2026-03-31 08:50', avatarColor: '#2563EB' },
+  { id: 'm-1',  orgId: 'org-1', deptId: 'dept-5', name: '李振华', employeeNo: 'YG0001', title: '总工程师',       role: 'ORG_ADMIN',  email: 'wangzh@yungou.com',  phone: '138****2860', status: '在职',   joinedAt: '2025-01-15', lastLogin: '2026-03-31 08:50', avatarColor: '#2563EB' },
   { id: 'm-2',  orgId: 'org-1', deptId: 'dept-1', name: '李明',   employeeNo: 'YG0002', title: '结构一所所长',   role: 'DEPT_ADMIN', email: 'liming@yungou.com',  phone: '139****3170', status: '在职',   joinedAt: '2025-01-20', lastLogin: '2026-03-31 09:12', avatarColor: '#16A34A' },
   { id: 'm-3',  orgId: 'org-1', deptId: 'dept-1', name: '张思远', employeeNo: 'YG0007', title: '结构工程师',     role: 'MEMBER',     email: 'zhangsy@yungou.com', phone: '136****4425', status: '在职',   joinedAt: '2025-03-02', lastLogin: '2026-03-31 09:42', avatarColor: '#F97316' },
   { id: 'm-4',  orgId: 'org-1', deptId: 'dept-1', name: '陈雨',   employeeNo: 'YG0011', title: '结构工程师',     role: 'MEMBER',     email: 'chenyu@yungou.com',  phone: '137****8890', status: '在职',   joinedAt: '2025-05-14', lastLogin: '2026-03-30 17:20', avatarColor: '#8B5CF6' },
@@ -188,6 +188,16 @@ export const seatPools: SeatPool[] = [
   { id: 'p-6', orgId: 'org-1', moduleId: '19', total: 5,  startDate: '2025-04-28', expireDate: '2026-04-28', source: '采购' },
   { id: 'p-7', orgId: 'org-1', moduleId: '21', total: 3,  startDate: '2025-04-20', expireDate: '2026-04-10', source: '采购' },
   { id: 'p-8', orgId: 'org-1', moduleId: '23', total: 2,  startDate: '2025-04-18', expireDate: '2026-04-18', source: '采购' },
+  // Exhausted grants. Each of these three modules ran out of vendor seats,
+  // which is precisely why it has a 免费额度扩容 request in flight — an
+  // approver seeing「已满」on the card is reading the reason, not a blocker.
+  { id: 'p-9',  orgId: 'org-1', moduleId: '3',  total: 3, startDate: '2025-05-12', expireDate: '2026-12-31', source: '厂商赠予' },
+  { id: 'p-10', orgId: 'org-1', moduleId: '4',  total: 4, startDate: '2025-06-03', expireDate: '2026-12-31', source: '厂商赠予' },
+  { id: 'p-11', orgId: 'org-1', moduleId: '11', total: 2, startDate: '2025-08-19', expireDate: '2026-12-31', source: '厂商赠予' },
+  // 网架网壳（商业版）— two seats bought last December (o-6), both held, so
+  // 陈雨's pending request reads as expanding a live pool rather than a first
+  // purchase. Expiry sits clear of the 30-day window above on purpose.
+  { id: 'p-12', orgId: 'org-1', moduleId: '22', total: 2, startDate: '2025-12-08', expireDate: '2026-12-08', source: '采购' },
   // Other organizations, only surfaced in the vendor dashboard
   { id: 'p-20', orgId: 'org-2', moduleId: '1',  total: 8, startDate: '2025-04-10', expireDate: '2026-12-31', source: '厂商赠予' },
   { id: 'p-21', orgId: 'org-2', moduleId: '19', total: 4, startDate: '2025-06-01', expireDate: '2026-06-01', source: '采购' },
@@ -265,6 +275,21 @@ export const assignments: Assignment[] = [
   // p-8 钢构深化（商业版）— 2 of 2
   seat('as-30', 'p-8', '23', 'm-9',  '2025-11-15', 44, '2026-03-31'),
   seat('as-31', 'p-8', '23', 'm-10', '2025-11-15', 39, '2026-03-29'),
+  // p-9 高级分析（免费版）— 3 of 3, pool exhausted
+  seat('as-32', 'p-9', '3', 'm-15', '2025-05-12', 34, '2026-03-30'),
+  seat('as-33', 'p-9', '3', 'm-7',  '2025-05-20', 47, '2026-03-31'),
+  seat('as-34', 'p-9', '3', 'm-10', '2025-09-04', 21, '2026-03-26'),
+  // p-10 厂房（免费版）— 4 of 4, pool exhausted
+  seat('as-35', 'p-10', '4', 'm-16', '2025-06-03', 28, '2026-03-29'),
+  seat('as-36', 'p-10', '4', 'm-8',  '2025-06-11', 39, '2026-03-31'),
+  seat('as-37', 'p-10', '4', 'm-13', '2025-10-27', 16, '2026-03-25'),
+  seat('as-38', 'p-10', '4', 'm-14', '2025-07-15', 23, '2026-03-28'),
+  // p-11 索膜（免费版）— 2 of 2, pool exhausted
+  seat('as-39', 'p-11', '11', 'm-17', '2025-08-19', 11, '2026-03-24'),
+  seat('as-44', 'p-11', '11', 'm-12', '2025-08-19', 18, '2026-03-27'),
+  // p-12 网架网壳（商业版）— 2 of 2, held by the two department admins
+  seat('as-45', 'p-12', '22', 'm-2', '2025-12-08', 52, '2026-03-31'),
+  seat('as-46', 'p-12', '22', 'm-6', '2025-12-08', 45, '2026-03-30'),
   // Other organizations
   seat('as-40', 'p-20', '1',  'x-1', '2025-04-10', 30, '2026-03-30', 'org-2', 'x-0'),
   seat('as-41', 'p-21', '19', 'x-2', '2025-06-01', 44, '2026-03-31', 'org-2', 'x-0'),
@@ -317,7 +342,7 @@ export const applications: Application[] = [
     projectName: '南京河西超高层', status: '待采购',
     steps: [
       { role: 'DEPT_ADMIN', label: '部门审批', action: '通过', approverId: 'm-6', approverName: '赵国栋', comment: '同意。', actedAt: '2026-03-29 16:40' },
-      { role: 'ORG_ADMIN',  label: '企业审批', action: '通过', approverId: 'm-1', approverName: '王振华', comment: '超限审查为刚性需求，同意扩容 1 个席位。', actedAt: '2026-03-30 09:15' },
+      { role: 'ORG_ADMIN',  label: '企业审批', action: '通过', approverId: 'm-1', approverName: '李振华', comment: '超限审查为刚性需求，同意扩容 1 个席位。', actedAt: '2026-03-30 09:15' },
     ],
     createdAt: '2026-03-29 15:02',
   },
@@ -338,7 +363,7 @@ export const applications: Application[] = [
     projectName: '连云港化工厂房群', status: '待厂商审批',
     steps: [
       { role: 'DEPT_ADMIN', label: '部门审批', action: '通过', approverId: 'm-12', approverName: '马涛', comment: '项目工期紧，同意。', actedAt: '2026-03-27 14:20' },
-      { role: 'ORG_ADMIN',  label: '企业审批', action: '通过', approverId: 'm-1', approverName: '王振华', comment: '免费额度内，已上报厂商。', actedAt: '2026-03-27 17:02' },
+      { role: 'ORG_ADMIN',  label: '企业审批', action: '通过', approverId: 'm-1', approverName: '李振华', comment: '免费额度内，已上报厂商。', actedAt: '2026-03-27 17:02' },
       { role: 'VENDOR_OPS', label: '厂商额度审批', action: '待审批' },
     ],
     createdAt: '2026-03-27 11:45',
@@ -445,6 +470,14 @@ export const orders: Order[] = [
     confirmedAt: '2025-11-15 09:45', invoiceNo: 'INV20251115003',
   },
   {
+    // Stocks p-12. Its ¥13,600 is the same 2 × 6800 the pending 网架网壳
+    // request now estimates, so the card's figure has a precedent on file.
+    id: 'o-6', orderNo: 'ORD20251208006', orgId: 'org-1', moduleId: '22', seats: 2,
+    unitPrice: 6800, amount: 13600, payMethod: '对公转账', status: '已完成',
+    createdById: 'm-1', createdAt: '2025-12-04 14:10', paidAt: '2025-12-06 09:50',
+    confirmedAt: '2025-12-08 10:15', invoiceNo: 'INV20251208006',
+  },
+  {
     id: 'o-4', orderNo: 'ORD20260328004', orgId: 'org-1', moduleId: '42', seats: 2,
     unitPrice: 8200, amount: 16400, payMethod: '对公转账', status: '待厂商确认',
     createdById: 'm-1', createdAt: '2026-03-28 15:30', paidAt: '2026-03-30 10:12',
@@ -478,13 +511,13 @@ export const orders: Order[] = [
 export const auditLogs: AuditLog[] = [
   { id: 'log-1',  orgId: 'org-1', actorId: 'm-3',  actorName: '张思远', actorRole: 'MEMBER',     action: '提交申请',     target: 'AP20260331001', detail: '申请「高级分析」免费额度 1 个席位',            createdAt: '2026-03-31 09:20', ip: '192.168.100.42' },
   { id: 'log-2',  orgId: 'org-1', actorId: 'm-14', actorName: '徐磊',   actorRole: 'MEMBER',     action: '提交申请',     target: 'AP20260331007', detail: '申请「多高层」免费额度 1 个席位',              createdAt: '2026-03-31 08:55', ip: '192.168.100.61' },
-  { id: 'log-3',  orgId: 'org-1', actorId: 'm-1',  actorName: '王振华', actorRole: 'ORG_ADMIN',  action: '企业审批通过', target: 'AP20260329003', detail: '同意为「建筑结构（商业版）」扩容 1 个席位',    createdAt: '2026-03-30 09:15', ip: '192.168.100.10' },
-  { id: 'log-4',  orgId: 'org-1', actorId: 'm-1',  actorName: '王振华', actorRole: 'ORG_ADMIN',  action: '支付订单',     target: 'ORD20260328004', detail: '对公转账支付 ¥16,400，等待厂商确认到账',       createdAt: '2026-03-30 10:12', ip: '192.168.100.10' },
+  { id: 'log-3',  orgId: 'org-1', actorId: 'm-1',  actorName: '李振华', actorRole: 'ORG_ADMIN',  action: '企业审批通过', target: 'AP20260329003', detail: '同意为「建筑结构（商业版）」扩容 1 个席位',    createdAt: '2026-03-30 09:15', ip: '192.168.100.10' },
+  { id: 'log-4',  orgId: 'org-1', actorId: 'm-1',  actorName: '李振华', actorRole: 'ORG_ADMIN',  action: '支付订单',     target: 'ORD20260328004', detail: '对公转账支付 ¥16,400，等待厂商确认到账',       createdAt: '2026-03-30 10:12', ip: '192.168.100.10' },
   { id: 'log-5',  orgId: 'org-1', actorId: 'm-2',  actorName: '李明',   actorRole: 'DEPT_ADMIN', action: '部门审批通过', target: 'AP20260330002', detail: '同意上报「网架网壳（商业版）」采购申请',      createdAt: '2026-03-30 15:10', ip: '192.168.100.17' },
-  { id: 'log-6',  orgId: 'org-1', actorId: 'm-1',  actorName: '王振华', actorRole: 'ORG_ADMIN',  action: '创建订单',     target: 'ORD20260330005', detail: '为「基础设计（商业版）」采购 2 个席位',        createdAt: '2026-03-30 17:45', ip: '192.168.100.10' },
+  { id: 'log-6',  orgId: 'org-1', actorId: 'm-1',  actorName: '李振华', actorRole: 'ORG_ADMIN',  action: '创建订单',     target: 'ORD20260330005', detail: '为「基础设计（商业版）」采购 2 个席位',        createdAt: '2026-03-30 17:45', ip: '192.168.100.10' },
   { id: 'log-7',  orgId: 'org-1', actorId: 'm-6',  actorName: '赵国栋', actorRole: 'DEPT_ADMIN', action: '部门审批通过', target: 'AP20260329003', detail: '同意上报「建筑结构（商业版）」采购申请',      createdAt: '2026-03-29 16:40', ip: '192.168.100.23' },
   { id: 'log-8',  orgId: 'org-1', actorId: 'm-6',  actorName: '赵国栋', actorRole: 'DEPT_ADMIN', action: '分配席位',     target: '周敏',           detail: '从「基本分析」池分配 1 个席位给周敏',          createdAt: '2026-03-28 10:05', ip: '192.168.100.23' },
-  { id: 'log-9',  orgId: 'org-1', actorId: 'm-1',  actorName: '王振华', actorRole: 'ORG_ADMIN',  action: '邀请成员',     target: '刘颖',           detail: '邀请刘颖加入结构一所，待激活',                createdAt: '2026-03-28 09:10', ip: '192.168.100.10' },
+  { id: 'log-9',  orgId: 'org-1', actorId: 'm-1',  actorName: '李振华', actorRole: 'ORG_ADMIN',  action: '邀请成员',     target: '刘颖',           detail: '邀请刘颖加入结构一所，待激活',                createdAt: '2026-03-28 09:10', ip: '192.168.100.10' },
   { id: 'log-10', orgId: 'org-1', actorId: 'm-12', actorName: '马涛',   actorRole: 'DEPT_ADMIN', action: '部门审批通过', target: 'AP20260327005', detail: '同意上报「厂房」免费额度扩容申请',            createdAt: '2026-03-27 14:20', ip: '192.168.100.35' },
   { id: 'log-11', orgId: 'org-1', actorId: 'm-9',  actorName: '吴建国', actorRole: 'DEPT_ADMIN', action: '部门审批驳回', target: 'AP20260326006', detail: '驳回「幕墙（商业版）」采购申请：暂无项目落地', createdAt: '2026-03-26 16:30', ip: '192.168.100.28' },
   { id: 'log-12', orgId: 'org-1', actorId: 'm-9',  actorName: '吴建国', actorRole: 'DEPT_ADMIN', action: '回收席位',     target: '何静',           detail: '何静离职，回收「钢构深化」席位 1 个',          createdAt: '2026-02-20 11:20', ip: '192.168.100.28' },

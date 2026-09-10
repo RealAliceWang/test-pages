@@ -32,11 +32,10 @@ export default function Login() {
         x.phone === v ||
         x.name === v,
     );
-    if (!m) {
-      setHint('账号不存在，请检查后重试。可用工号（如 YG0001）、邮箱或姓名登录');
-      return;
-    }
-    dispatch({ type: 'LOGIN', memberId: m.id });
+    /* Account-existence, activation and disabled checks all live in the
+       LOGIN reducer branch (appState.ts) — trust it instead of duplicating
+       the lookup here with a second, divergent error message. */
+    dispatch({ type: 'LOGIN', memberId: m?.id ?? '' });
   }
 
   return (
@@ -49,14 +48,18 @@ export default function Login() {
       <div className="mt-6 flex flex-col gap-4">
         <label className="block">
           <span className="block text-[13px] font-medium text-text-secondary mb-1.5">账号</span>
-          <div className="relative">
-            <UserRound size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-placeholder" />
+          <div className="relative group">
+            <UserRound
+              size={14}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-text-placeholder group-focus-within:text-primary transition-colors pointer-events-none"
+            />
             <input
               className="field w-full h-[38px] pl-10 pr-4 text-[14px]"
               placeholder="工号 / 邮箱 / 姓名，如 YG0001"
               value={account}
               onChange={(e) => setAccount(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && submit()}
+              autoComplete="username"
               autoFocus
             />
           </div>
@@ -64,8 +67,11 @@ export default function Login() {
 
         <label className="block">
           <span className="block text-[13px] font-medium text-text-secondary mb-1.5">密码</span>
-          <div className="relative">
-            <KeyRound size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-placeholder" />
+          <div className="relative group">
+            <KeyRound
+              size={14}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-text-placeholder group-focus-within:text-primary transition-colors pointer-events-none"
+            />
             <input
               type="password"
               className="field w-full h-[38px] pl-10 pr-4 text-[14px]"
@@ -73,6 +79,7 @@ export default function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && submit()}
+              autoComplete="current-password"
             />
           </div>
         </label>
